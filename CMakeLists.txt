@@ -94,6 +94,7 @@ target_link_libraries(
     ${CMAKE_CURRENT_SOURCE_DIR}/Plugins/glm-0.9.9.8/MinSizeRel/glm_static.lib
 )
 
-if (MSVC)
+if (WIN32)
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /NODEFAULTLIB:MSVCRT.LIB")
+    target_compile_definitions(${PROJECT_NAME} PUBLIC WIN32)
 endif()
