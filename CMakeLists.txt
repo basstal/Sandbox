@@ -96,5 +96,4 @@ target_link_libraries(
 
 if (WIN32)
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /NODEFAULTLIB:MSVCRT.LIB")
-    target_compile_definitions(${PROJECT_NAME} PUBLIC WIN32)
 endif()
