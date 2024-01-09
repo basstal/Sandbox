@@ -49,3 +49,5 @@ build
 
 # SPIR-V shader compiler bytecode
 *.spv
+
+*.zip

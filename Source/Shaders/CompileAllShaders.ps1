@@ -1,11 +1,14 @@
-# Vulkan SDK 的 glslc 编译器路径
-$GlslcPath = "glslc"
+# 接受命令行参数或使用默认值
+param(
+    [string]$GlslcPath = "glslc",
+    [string]$OutputFilesTo = "../../build/Debug/shaders"
+)
 
-$OutputFilesTo = "../../build/Debug/shaders"
 # 如果目标目录不存在则创建目标目录文件夹
 if (-not (Test-Path $OutputFilesTo)) {
     New-Item -ItemType Directory -Force -Path $OutputFilesTo
 }
+
 # 获取当前目录下所有 .vert 和 .frag 文件
 $ShaderFiles = Get-ChildItem -Path .\* -Include *.vert, *.frag
 

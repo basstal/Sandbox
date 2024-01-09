@@ -4,8 +4,9 @@ project(Sandbox)
 
 set(CMAKE_CXX_STANDARD 17)
 
-# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Werror -Wpedantic -Wno-unused-parameter -Wno-unused-variable -Wno-unused-function -Wno-unused-private-field -Wno-unused-const-variable -Wno-unused-lambda-capture -Wno-unused-local-typedef -Wno-unused-const-variable -Wno-unused-lambda-capture -Wno-unused-local-typedef -Wno-unused-private-field -Wno-unused-const-variable -Wno-unused-lambda-capture -Wno-unused-local-typedef -Wno-unused-private-field -Wno-unused-const-variable -Wno-unused-lambda-capture -Wno-unused-local-typedef -Wno-unused-private-field -Wno-unused-const-variable -Wno-unused-lambda-capture -Wno-unused-local-typedef -Wno-unused-private-field -Wno-unused-const-variable -Wno-unused-lambda-capture -Wno-unused-local-typedef -Wno-unused-private-field -Wno-unused-const-variable -Wno-unused-lambda-capture -Wno-unused-local-typedef -Wno-unused-private-field -Wno-unused-const-variable -Wno-unused-lambda-capture -Wno-unused-local-typedef -Wno-unused-private-field -Wno-unused-const-variable -Wno-unused-lambda-capture -Wno-unused-local-typedef -Wno-unused-private-field -Wno-unused-const-variable -Wno-unused-lambda-capture -Wno-unused-local-typedef -Wno-unused-private-field -Wno-unused-const-variable -Wno-unused-lambda-capture -Wno-unused-local-typedef -Wno-unused-private-field -Wno-unused-const-variable -Wno-unused-lambda-capture -Wno-unused-local-typedef -Wno-unused-private-field -Wno-unused-const-variable -Wno-unused-lambda-capture")
+set(SHADER_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Source/Shaders")
 
+# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Werror -Wpedantic -Wno-unused-parameter -Wno-unused-variable -Wno-unused-function -Wno-unused-private-field -Wno-unused-const-variable -Wno-unused-lambda-capture -Wno-unused-local-typedef -Wno-unused-const-variable -Wno-unused-lambda-capture -Wno-unused-local-typedef -Wno-unused-private-field -Wno-unused-const-variable -Wno-unused-lambda-capture -Wno-unused-local-typedef -Wno-unused-private-field -Wno-unused-const-variable -Wno-unused-lambda-capture -Wno-unused-local-typedef -Wno-unused-private-field -Wno-unused-const-variable -Wno-unused-lambda-capture -Wno-unused-local-typedef -Wno-unused-private-field -Wno-unused-const-variable -Wno-unused-lambda-capture -Wno-unused-local-typedef -Wno-unused-private-field -Wno-unused-const-variable -Wno-unused-lambda-capture -Wno-unused-local-typedef -Wno-unused-private-field -Wno-unused-const-variable -Wno-unused-lambda-capture -Wno-unused-local-typedef -Wno-unused-private-field -Wno-unused-const-variable -Wno-unused-lambda-capture -Wno-unused-local-typedef -Wno-unused-private-field -Wno-unused-const-variable -Wno-unused-lambda-capture -Wno-unused-local-typedef -Wno-unused-private-field -Wno-unused-const-variable -Wno-unused-lambda-capture -Wno-unused-local-typedef -Wno-unused-private-field -Wno-unused-const-variable -Wno-unused-lambda-capture -Wno-unused-local-typedef -Wno-unused-private-field -Wno-unused-const-variable -Wno-unused-lambda-capture")
 find_package(Vulkan REQUIRED)
 
 # 将 Source 目录下的源码纳入项目中
@@ -76,6 +77,13 @@ file(GLOB_RECURSE SOURCE_FILES
     Source/*.rcall
 )
 
+# compile shaders
+add_custom_target(
+    CompileAllShaders ALL
+    COMMAND PowerShell -ExecutionPolicy Bypass -File CompileAllShaders.ps1 -GlslcPath "${Vulkan_INCLUDE_DIRS}/../Bin/glslc"
+    WORKING_DIRECTORY ${SHADER_SOURCE_DIR}
+    COMMENT "Running PowerShell script CompileAllShaders"
+)
 
 add_executable(${PROJECT_NAME} ${SOURCE_FILES})
 
@@ -92,6 +100,12 @@ target_link_libraries(
     ${Vulkan_LIBRARIES}
     ${CMAKE_CURRENT_SOURCE_DIR}/Plugins/glfw-3.3.9.bin.WIN64/lib-vc2022/glfw3.lib
     ${CMAKE_CURRENT_SOURCE_DIR}/Plugins/glm-0.9.9.8/MinSizeRel/glm_static.lib
+)
+
+target_compile_definitions(
+    ${PROJECT_NAME}
+    PUBLIC
+    UNICODE
 )
 
 if (WIN32)
