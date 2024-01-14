@@ -5,6 +5,8 @@ project(Sandbox)
 set(CMAKE_CXX_STANDARD 17)
 
 set(SHADER_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Source/Shaders")
+set(BUILD_PROJECT_DIR "${CMAKE_CURRENT_SOURCE_DIR}/BuildProject")
+set(OUTPUT_DIR ${CMAKE_BINARY_DIR})
 
 # set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Werror -Wpedantic -Wno-unused-parameter -Wno-unused-variable -Wno-unused-function -Wno-unused-private-field -Wno-unused-const-variable -Wno-unused-lambda-capture -Wno-unused-local-typedef -Wno-unused-const-variable -Wno-unused-lambda-capture -Wno-unused-local-typedef -Wno-unused-private-field -Wno-unused-const-variable -Wno-unused-lambda-capture -Wno-unused-local-typedef -Wno-unused-private-field -Wno-unused-const-variable -Wno-unused-lambda-capture -Wno-unused-local-typedef -Wno-unused-private-field -Wno-unused-const-variable -Wno-unused-lambda-capture -Wno-unused-local-typedef -Wno-unused-private-field -Wno-unused-const-variable -Wno-unused-lambda-capture -Wno-unused-local-typedef -Wno-unused-private-field -Wno-unused-const-variable -Wno-unused-lambda-capture -Wno-unused-local-typedef -Wno-unused-private-field -Wno-unused-const-variable -Wno-unused-lambda-capture -Wno-unused-local-typedef -Wno-unused-private-field -Wno-unused-const-variable -Wno-unused-lambda-capture -Wno-unused-local-typedef -Wno-unused-private-field -Wno-unused-const-variable -Wno-unused-lambda-capture -Wno-unused-local-typedef -Wno-unused-private-field -Wno-unused-const-variable -Wno-unused-lambda-capture -Wno-unused-local-typedef -Wno-unused-private-field -Wno-unused-const-variable -Wno-unused-lambda-capture -Wno-unused-local-typedef -Wno-unused-private-field -Wno-unused-const-variable -Wno-unused-lambda-capture")
 find_package(Vulkan REQUIRED)
@@ -80,9 +82,17 @@ file(GLOB_RECURSE SOURCE_FILES
 # compile shaders
 add_custom_target(
     CompileAllShaders ALL
-    COMMAND PowerShell -ExecutionPolicy Bypass -File CompileAllShaders.ps1 -GlslcPath "${Vulkan_INCLUDE_DIRS}/../Bin/glslc"
-    WORKING_DIRECTORY ${SHADER_SOURCE_DIR}
+    COMMAND PowerShell -ExecutionPolicy Bypass -File CompileAllShaders.ps1 -GlslcPath "${Vulkan_INCLUDE_DIRS}/../Bin/glslc" -OutputFilesTo "${OUTPUT_DIR}" -ShadersPath "${CMAKE_CURRENT_SOURCE_DIR}/Source/Shaders"
+    WORKING_DIRECTORY ${BUILD_PROJECT_DIR}
     COMMENT "Running PowerShell script CompileAllShaders"
+)
+
+# copy asssets
+add_custom_target(
+    CopyAssets ALL
+    COMMAND PowerShell -ExecutionPolicy Bypass -File CopyAssets.ps1 -AssetsPath "${CMAKE_CURRENT_SOURCE_DIR}/Assets" -OutputFilesTo "${OUTPUT_DIR}"
+    WORKING_DIRECTORY ${BUILD_PROJECT_DIR}
+    COMMENT "Running PowerShell script CopyAssets"
 )
 
 add_executable(${PROJECT_NAME} ${SOURCE_FILES})
@@ -93,6 +103,7 @@ target_include_directories(
     ${Vulkan_INCLUDE_DIRS}
     ${CMAKE_CURRENT_SOURCE_DIR}/Plugins/glfw-3.3.9.bin.WIN64/include
     ${CMAKE_CURRENT_SOURCE_DIR}/Plugins/glm-0.9.9.8/glm
+    ${CMAKE_CURRENT_SOURCE_DIR}/Plugins/stb
 )
 
 target_link_libraries(
