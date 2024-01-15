@@ -101,9 +101,12 @@ target_include_directories(
     ${PROJECT_NAME}
     PUBLIC
     ${Vulkan_INCLUDE_DIRS}
+    ${CMAKE_CURRENT_SOURCE_DIR}/Source/Include
     ${CMAKE_CURRENT_SOURCE_DIR}/Plugins/glfw-3.3.9.bin.WIN64/include
     ${CMAKE_CURRENT_SOURCE_DIR}/Plugins/glm-0.9.9.8/glm
     ${CMAKE_CURRENT_SOURCE_DIR}/Plugins/stb
+    ${CMAKE_CURRENT_SOURCE_DIR}/Plugins/assimp-5.2.5/include
+
 )
 
 target_link_libraries(
@@ -111,6 +114,7 @@ target_link_libraries(
     ${Vulkan_LIBRARIES}
     ${CMAKE_CURRENT_SOURCE_DIR}/Plugins/glfw-3.3.9.bin.WIN64/lib-vc2022/glfw3.lib
     ${CMAKE_CURRENT_SOURCE_DIR}/Plugins/glm-0.9.9.8/MinSizeRel/glm_static.lib
+    ${CMAKE_CURRENT_SOURCE_DIR}/Plugins/assimp-5.2.5/lib/x64/assimp-vc143-mt.lib
 )
 
 target_compile_definitions(
