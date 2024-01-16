@@ -454,3 +454,4 @@ FodyWeavers.xsd
 *.zip
 /CMakeSettings.json
 /Plugins/assimp-5.2.5/
+!Assets/**/*.obj

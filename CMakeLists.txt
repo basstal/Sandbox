@@ -6,9 +6,9 @@ set(CMAKE_CXX_STANDARD 17)
 
 set(SHADER_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Source/Shaders")
 set(BUILD_PROJECT_DIR "${CMAKE_CURRENT_SOURCE_DIR}/BuildProject")
-set(OUTPUT_DIR ${CMAKE_BINARY_DIR})
+set(OUTPUT_DIR ${CMAKE_CURRENT_BINARY_DIR})
 
-# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Werror -Wpedantic -Wno-unused-parameter -Wno-unused-variable -Wno-unused-function -Wno-unused-private-field -Wno-unused-const-variable -Wno-unused-lambda-capture -Wno-unused-local-typedef -Wno-unused-const-variable -Wno-unused-lambda-capture -Wno-unused-local-typedef -Wno-unused-private-field -Wno-unused-const-variable -Wno-unused-lambda-capture -Wno-unused-local-typedef -Wno-unused-private-field -Wno-unused-const-variable -Wno-unused-lambda-capture -Wno-unused-local-typedef -Wno-unused-private-field -Wno-unused-const-variable -Wno-unused-lambda-capture -Wno-unused-local-typedef -Wno-unused-private-field -Wno-unused-const-variable -Wno-unused-lambda-capture -Wno-unused-local-typedef -Wno-unused-private-field -Wno-unused-const-variable -Wno-unused-lambda-capture -Wno-unused-local-typedef -Wno-unused-private-field -Wno-unused-const-variable -Wno-unused-lambda-capture -Wno-unused-local-typedef -Wno-unused-private-field -Wno-unused-const-variable -Wno-unused-lambda-capture -Wno-unused-local-typedef -Wno-unused-private-field -Wno-unused-const-variable -Wno-unused-lambda-capture -Wno-unused-local-typedef -Wno-unused-private-field -Wno-unused-const-variable -Wno-unused-lambda-capture -Wno-unused-local-typedef -Wno-unused-private-field -Wno-unused-const-variable -Wno-unused-lambda-capture -Wno-unused-local-typedef -Wno-unused-private-field -Wno-unused-const-variable -Wno-unused-lambda-capture")
+
 find_package(Vulkan REQUIRED)
 
 # 将 Source 目录下的源码纳入项目中
@@ -115,7 +115,10 @@ target_link_libraries(
     ${CMAKE_CURRENT_SOURCE_DIR}/Plugins/glfw-3.3.9.bin.WIN64/lib-vc2022/glfw3.lib
     ${CMAKE_CURRENT_SOURCE_DIR}/Plugins/glm-0.9.9.8/MinSizeRel/glm_static.lib
     ${CMAKE_CURRENT_SOURCE_DIR}/Plugins/assimp-5.2.5/lib/x64/assimp-vc143-mt.lib
+    
 )
+
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/Plugins/assimp-5.2.5/bin/x64/assimp-vc143-mt.dll DESTINATION ${OUTPUT_DIR})
 
 target_compile_definitions(
     ${PROJECT_NAME}
