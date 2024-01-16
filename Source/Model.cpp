@@ -1,25 +1,26 @@
 #include "Model.h"
 #include <stdexcept>
 
-Model::Model(const char *path)
+Model::Model()
 {
-	loadModel(path);
 }
 
 Model::~Model()
 {
 }
 
-void Model::loadModel(const char *path)
+std::shared_ptr<Model> Model::loadModel(const char *path)
 {
+	std::shared_ptr<Model> model = std::make_shared<Model>();
 	Assimp::Importer importer;
 	const aiScene *scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_FlipUVs);
 	if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
 	{
 		throw std::runtime_error("ERROR::ASSIMP::" + std::string(importer.GetErrorString()));
 	}
-	_directory = std::string(path).substr(0, std::string(path).find_last_of('/'));
-	processNode(scene->mRootNode, scene);
+	model->_directory = std::string(path).substr(0, std::string(path).find_last_of('/'));
+	model->processNode(scene->mRootNode, scene);
+	return model;
 }
 
 void Model::processNode(aiNode *node, const aiScene *scene)

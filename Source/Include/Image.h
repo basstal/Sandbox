@@ -11,13 +11,15 @@ protected:
 	int _height;
 	int _channels;
 	unsigned char *_pixels;
-	void load_image(const char *path);
+	unsigned short _mipLevels;
 public:
+	static std::shared_ptr<Image> loadImage(const char *path);
 	int width() const { return _width; }
 	int height() const { return _height; }
 	int channels() const { return _channels; }
 	unsigned char *pixels() const { return _pixels; }
-	Image(const char *path);
+	unsigned short mipLevels() const { return _mipLevels; }
+	Image();
 	~Image();
 };
 #endif // IMAGE_H_INCLUDED
