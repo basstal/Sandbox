@@ -1,4 +1,5 @@
 #include "Model.h"
+#include <stdexcept>
 
 Model::Model(const char *path)
 {
@@ -17,7 +18,7 @@ void Model::loadModel(const char *path)
 	{
 		throw std::runtime_error("ERROR::ASSIMP::" + std::string(importer.GetErrorString()));
 	}
-	directory = std::string(path).substr(0, std::string(path).find_last_of('/'));
+	_directory = std::string(path).substr(0, std::string(path).find_last_of('/'));
 	processNode(scene->mRootNode, scene);
 }
 
@@ -39,24 +40,25 @@ void Model::processMesh(aiMesh *mesh, const aiScene *scene)
 	for (uint32_t i = 0; i < mesh->mNumVertices; i++)
 	{
 		Vertex vertex;
+		vertex.color = { 1.0f, 1.0f, 1.0f };
 		vertex.position = glm::vec3(mesh->mVertices[i].x, mesh->mVertices[i].y, mesh->mVertices[i].z);
 		if (mesh->mTextureCoords[0])
 		{
-			vertex.texcoord = glm::vec2(mesh->mTextureCoords[0][i].x, mesh->mTextureCoords[0][i].y);
+			vertex.texCoord = glm::vec2(mesh->mTextureCoords[0][i].x, mesh->mTextureCoords[0][i].y);
 		}
 		else
 		{
-			vertex.texcoord = glm::vec2(0.0f, 0.0f);
+			vertex.texCoord = glm::vec2(0.0f, 0.0f);
 		}
 		vertex.normal = glm::vec3(mesh->mNormals[i].x, mesh->mNormals[i].y, mesh->mNormals[i].z);
-		vertices.push_back(vertex);
+		_vertices.push_back(vertex);
 	}
 	for (uint32_t i = 0; i < mesh->mNumFaces; i++)
 	{
 		aiFace face = mesh->mFaces[i];
 		for (uint32_t j = 0; j < face.mNumIndices; j++)
 		{
-			indices.push_back(face.mIndices[j]);
+			_indices.push_back(face.mIndices[j]);
 		}
 	}
 }
