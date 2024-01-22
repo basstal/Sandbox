@@ -21,11 +21,11 @@
 #include <fstream>
 #include <filesystem>
 #include <array>
-#include "NativeFileSystem.h"
-#include "Mesh.h"
-#include "Camera.h"
-#include "Image.h"
-#include "Model.h"
+#include "NativeFileSystem.hpp"
+#include "Mesh.hpp"
+#include "Camera.hpp"
+#include "Image.hpp"
+#include "Model.hpp"
 
 VkResult CreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT *pCreateInfo, const VkAllocationCallbacks *pAllocator, VkDebugUtilsMessengerEXT *pDebugMessenger)
 {

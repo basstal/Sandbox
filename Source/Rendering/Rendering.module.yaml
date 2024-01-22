@@ -1,0 +1,10 @@
+type: Cpp
+compile_environment: 
+  definitions: 
+  include_paths:
+  cpp_version: Default
+  dependencies:
+    - glfw
+    - glm
+    - stb
+    - assimp

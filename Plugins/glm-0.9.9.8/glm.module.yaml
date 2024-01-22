@@ -1,0 +1,4 @@
+type: StaticLibrary
+include_paths: glm
+lib_paths:
+  - MinSizeRel/glm_static.lib

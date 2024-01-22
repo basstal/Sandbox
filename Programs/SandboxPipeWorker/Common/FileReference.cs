@@ -1,0 +1,68 @@
+﻿namespace SandboxPipeWorker.Common;
+
+public class FileReference : FileSystemBase, IEquatable<FileReference>, IComparable<FileReference>
+{
+    public FileReference(string fullName) : base(fullName)
+    {
+    }
+
+    public int CompareTo(FileReference? other)
+    {
+        return Comparer.Compare(FullName, other?.FullName);
+    }
+
+    public static bool operator ==(FileReference? left, FileReference? right)
+    {
+        if (left is null)
+        {
+            return right is null;
+        }
+
+        if (right is null)
+        {
+            return false;
+        }
+
+        return left.FullName.Equals(right.FullName, Comparison);
+    }
+
+    public static bool operator !=(FileReference? left, FileReference? right)
+    {
+        return !(left == right);
+    }
+
+    public override bool Equals(object? obj)
+    {
+        return obj is FileReference file && file == this;
+    }
+
+    public override int GetHashCode()
+    {
+        return Comparer.GetHashCode(FullName);
+    }
+
+    public bool Equals(FileReference? obj)
+    {
+        return obj == this;
+    }
+
+    public bool HasExtension(string extension)
+    {
+        return FullName.EndsWith(extension, Comparison);
+    }
+
+    public string GetFileNameWithoutExtension(string extension)
+    {
+        if (!string.IsNullOrEmpty(extension) && HasExtension(extension))
+        {
+            return Path.GetFileName(FullName.Substring(0, FullName.Length - extension.Length));
+        }
+
+        return Path.GetFileNameWithoutExtension(FullName);
+    }
+
+    public DirectoryReference GetDirectory()
+    {
+        return new DirectoryReference(Path.GetDirectoryName(FullName)!);
+    }
+}

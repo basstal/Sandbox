@@ -1,0 +1,37 @@
+﻿# {{this}}
+
+cmake_minimum_required(VERSION 3.10)
+
+
+{{~if PrimaryProjectName
+$CompileEnvironment = PrimaryCompileEnvironment
+$PrimaryName = PrimaryProjectName
+else
+$CompileEnvironment = CompileEnvironment
+$PrimaryName = Name
+end
+~}}
+
+{{~if PrimaryProjectName ~}}
+
+project({{PrimaryProjectName}})
+
+add_executable({{PrimaryProjectName}} {{for SourceFile in $CompileEnvironment.SourceFiles~}} {{SourceFile.FullName}} {{end~}})
+
+add_subdirectory({{for dependency in $CompileEnvironment.Dependencies~}} {{dependency.ParsedFile.FullName}} {{end~}})
+
+{{~else~}}
+
+add_library({{Name}} SHARED {{for SourceFile in $CompileEnvironment.SourceFiles~}} {{SourceFile}} {{end~}})
+
+{{~end~}}
+
+set(CMAKE_CXX_STANDARD {{$CompileEnvironment.CppVersion}})
+
+find_package(Vulkan REQUIRED)
+
+target_include_directories({{$PrimaryName}} PRIVATE {{for IncludeDirectory in $CompileEnvironment.IncludePaths~}} {{ IncludeDirectory }} {{end~}})
+
+target_link_libraries({{$PrimaryName}} PRIVATE {{for Library in $CompileEnvironment.Dependencies~}} {{ Library.Name }} {{end~}})
+
+

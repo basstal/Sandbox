@@ -1,0 +1,6 @@
+type: MiscLibrary
+include_paths: include
+dll_paths:
+  - bin/x64/assimp-vc143-mt.dll
+lib_paths:
+  - lib/x64/assimp-vc143-mt.lib
