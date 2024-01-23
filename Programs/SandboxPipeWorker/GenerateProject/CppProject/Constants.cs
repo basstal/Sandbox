@@ -18,6 +18,5 @@ public enum ModuleType
     Cpp = 1,
     DynamicLibrary = 2,
     StaticLibrary = 3,
-    MiscLibrary = 4,
     HeaderOnlyLibrary = 5,
 }

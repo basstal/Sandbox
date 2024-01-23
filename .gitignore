@@ -456,3 +456,4 @@ FodyWeavers.xsd
 /Plugins/assimp-5.2.5/
 !Assets/**/*.obj
 buildtest/
+Output/

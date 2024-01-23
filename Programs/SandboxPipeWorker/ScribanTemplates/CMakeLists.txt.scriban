@@ -2,36 +2,89 @@
 
 cmake_minimum_required(VERSION 3.10)
 
-
-{{~if PrimaryProjectName
-$CompileEnvironment = PrimaryCompileEnvironment
-$PrimaryName = PrimaryProjectName
-else
-$CompileEnvironment = CompileEnvironment
-$PrimaryName = Name
-end
-~}}
-
 {{~if PrimaryProjectName ~}}
 
 project({{PrimaryProjectName}})
 
-add_executable({{PrimaryProjectName}} {{for SourceFile in $CompileEnvironment.SourceFiles~}} {{SourceFile.FullName}} {{end~}})
+set(BUILD_PROJECT_DIR "${CMAKE_CURRENT_SOURCE_DIR}/BuildProject")
+set(OUTPUT_DIR ${CMAKE_SOURCE_DIR}/Output)
+# 设置运行时、库和归档输出目录
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/Bin)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/Lib)
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/Lib)
 
-add_subdirectory({{for dependency in $CompileEnvironment.Dependencies~}} {{dependency.ParsedFile.FullName}} {{end~}})
-
-{{~else~}}
-
-add_library({{Name}} SHARED {{for SourceFile in $CompileEnvironment.SourceFiles~}} {{SourceFile}} {{end~}})
-
-{{~end~}}
-
-set(CMAKE_CXX_STANDARD {{$CompileEnvironment.CppVersion}})
+set(CMAKE_CXX_STANDARD {{PrimaryCompileEnvironment.CppVersion | string.replace "Cpp" ""}})
 
 find_package(Vulkan REQUIRED)
 
-target_include_directories({{$PrimaryName}} PRIVATE {{for IncludeDirectory in $CompileEnvironment.IncludePaths~}} {{ IncludeDirectory }} {{end~}})
+add_executable({{PrimaryProjectName}} {{for SourceFile in PrimaryCompileEnvironment.SourceFiles~}} ${CMAKE_SOURCE_DIR}/{{SourceFile.RelativeEnginePath}} {{end~}})
 
-target_link_libraries({{$PrimaryName}} PRIVATE {{for Library in $CompileEnvironment.Dependencies~}} {{ Library.Name }} {{end~}})
+{{~for dependency in AllDependencies~}}
+add_subdirectory(${CMAKE_SOURCE_DIR}/{{dependency.SourceDirectory.RelativeEnginePath}})
+{{~end~}}
+
+target_link_libraries({{PrimaryProjectName}} PRIVATE {{for dependency in PrimaryCompileEnvironment.Dependencies~}} {{ dependency.Name }} {{end~}} assimp glm vulkan glfw) # TODO:移除固定的导入
+
+target_include_directories({{PrimaryProjectName}} PRIVATE {{for IncludeDirectory in PrimaryCompileEnvironment.IncludePaths~}} ${CMAKE_SOURCE_DIR}/{{ IncludeDirectory.RelativeEnginePath }} {{end~}})
+
+
+# copy assets
+add_custom_target(
+    CopyAssets ALL
+    COMMAND PowerShell -ExecutionPolicy Bypass -File CopyFiles.ps1 -InputPath "${CMAKE_SOURCE_DIR}/Assets" -OutputTo "${OUTPUT_DIR}/Assets"
+    WORKING_DIRECTORY ${BUILD_PROJECT_DIR}
+    COMMENT "Running PowerShell script CopyFiles to copy assets"
+)
+
+# copy binaries and compile shaders
+add_custom_command(
+    TARGET {{PrimaryProjectName}} POST_BUILD
+    COMMAND PowerShell -ExecutionPolicy Bypass -File CopyFiles.ps1 -InputPath "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}" -OutputTo "${OUTPUT_DIR}/Binaries" -Flat -Clean
+    COMMAND PowerShell -ExecutionPolicy Bypass -File CompileAllShaders.ps1 -GlslcPath "${Vulkan_INCLUDE_DIRS}/../Bin/glslc" -OutputFilesTo "${OUTPUT_DIR}/Binaries/Shaders" -ShadersPath "${CMAKE_SOURCE_DIR}/Source/Shaders"
+    WORKING_DIRECTORY ${BUILD_PROJECT_DIR}
+    COMMENT "Running PowerShell script CopyFiles to copy binaries & CompileAllShaders"
+)
+
+{{~else if Type == "Cpp"~}}
+
+add_library({{Name}} SHARED {{for SourcePath in RelativeModuleSourcePath~}} {{SourcePath}} {{end~}})
+
+target_link_libraries({{Name}} PRIVATE {{for module in CompileEnvironment.Dependencies~}} {{ module.Name }} {{end~}})
+
+target_include_directories({{Name}} PRIVATE {{for path in CompileEnvironment.DependencyIncludePaths~}} ${CMAKE_SOURCE_DIR}/{{ path.RelativeEnginePath }} {{end~}})
+
+# 为共享库目标添加编译定义
+target_compile_definitions({{Name}} PRIVATE {{Name | string.upcase}}_EXPORT_API)
+
+{{~else if Type == "DynamicLibrary"~}}
+
+# 创建一个接口库
+add_library({{Name}} INTERFACE)
+
+# 复制动态链接库
+file(COPY {{for path in PrecompileEnvironment.DllPaths~}} ${CMAKE_SOURCE_DIR}/{{path.RelativeEnginePath}} {{end~}} DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
+# 链接到预编译的库和包含头文件的目录
+target_link_libraries({{Name}} INTERFACE {{for path in PrecompileEnvironment.LibPaths~}} ${CMAKE_SOURCE_DIR}/{{ path.RelativeEnginePath }} {{end~}})
+target_include_directories({{Name}} INTERFACE {{for path in PrecompileEnvironment.IncludePaths~}} ${CMAKE_SOURCE_DIR}/{{ path.RelativeEnginePath }} {{end~}})
+
+{{~else if Type == "StaticLibrary"~}}
+
+add_library({{Name}} INTERFACE)
+
+# 链接到预编译的库和包含头文件的目录
+target_link_libraries({{Name}} INTERFACE {{for path in PrecompileEnvironment.LibPaths~}} ${CMAKE_SOURCE_DIR}/{{ path.RelativeEnginePath }} {{end~}})
+target_include_directories({{Name}} INTERFACE {{for path in PrecompileEnvironment.IncludePaths~}} ${CMAKE_SOURCE_DIR}/{{ path.RelativeEnginePath }} {{end~}})
+
+{{~else if Type == "HeaderOnlyLibrary"~}}
+
+add_library({{Name}} INTERFACE)
+
+target_include_directories({{Name}} INTERFACE {{for path in PrecompileEnvironment.IncludePaths~}} ${CMAKE_SOURCE_DIR}/{{ path.RelativeEnginePath }} {{end~}})
+
+{{~end~}}
+
+
+
+
 
 

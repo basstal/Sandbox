@@ -9,4 +9,10 @@ public class CompileEnvironment
     public List<DirectoryReference> IncludePaths = new List<DirectoryReference>();
     public List<FileReference> SourceFiles = new List<FileReference>();
     public List<Module> Dependencies = new List<Module>();
+
+    public List<DirectoryReference> DependencyIncludePaths =>
+        Dependencies
+            .SelectMany(dependency => dependency.CompileEnvironment?.IncludePaths ??
+                                      dependency.PrecompileEnvironment?.IncludePaths ?? new List<DirectoryReference>())
+            .ToList();
 }

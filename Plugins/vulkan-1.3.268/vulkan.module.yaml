@@ -1,0 +1,4 @@
+type: StaticLibrary
+include_paths: Include
+lib_paths:
+  - Lib/vulkan-1.lib

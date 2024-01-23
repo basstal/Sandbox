@@ -1,4 +1,4 @@
-type: DynamicLibrary
+type: StaticLibrary
 include_paths: include
-dll_paths:
-  - lib-vc2022/glfw3.dll
+lib_paths:
+  - lib-vc2022/glfw3.lib

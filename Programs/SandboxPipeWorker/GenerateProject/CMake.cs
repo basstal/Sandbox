@@ -21,10 +21,11 @@ public class CMake : IProjectGenerator
         var template = Scriban.Template.Parse(cmakeListsTxtTemplate);
         string primaryProjectFile = template.Render(projectFile, member => member.Name);
         File.WriteAllText(Sandbox.RootDirectory.GetFile("CMakeLists.txt").FullName, primaryProjectFile);
-        foreach (var module in projectFile.PrimaryCompileEnvironment.Dependencies)
+        foreach (var entry in Module.RegisteredModules)
         {
-            var moduleProjectFile = template.Render(module, member => member.Name);
-            File.WriteAllText(module.ParsedFile!.GetDirectory().GetFile("CMakeLists.txt").FullName, moduleProjectFile);
+            var moduleProjectFile = template.Render(entry.Value, member => member.Name);
+            File.WriteAllText(entry.Value.ParsedFile!.GetDirectory().GetFile("CMakeLists.txt").FullName,
+                moduleProjectFile);
         }
 
         return true;

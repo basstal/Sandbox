@@ -1,5 +1,5 @@
-#ifndef IMAGE_H_INCLUDED
-#define IMAGE_H_INCLUDED
+#ifndef IMAGE_INCLUDED
+#define IMAGE_INCLUDED
 
 
 #include <memory>
@@ -22,4 +22,4 @@ public:
 	Image();
 	~Image();
 };
-#endif // IMAGE_H_INCLUDED
+#endif // IMAGE_INCLUDED

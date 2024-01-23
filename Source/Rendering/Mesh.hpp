@@ -1,5 +1,5 @@
-#ifndef MESH_H_INCLUDED
-#define MESH_H_INCLUDED
+#ifndef MESH_INCLUDED
+#define MESH_INCLUDED
 
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
@@ -18,4 +18,4 @@ struct Vertex
 	static std::array<VkVertexInputAttributeDescription, 3> getAttributeDescriptions();
 };
 
-#endif
+#endif // MESH_INCLUDED

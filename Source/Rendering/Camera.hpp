@@ -1,5 +1,5 @@
-#ifndef CAMERA_H_INCLUDED
-#define CAMERA_H_INCLUDED
+#ifndef CAMERA_INCLUDED
+#define CAMERA_INCLUDED
 
 #include <glm/glm.hpp>
 
@@ -10,4 +10,4 @@ struct UniformBufferObject
 	alignas(16) glm::mat4 proj;
 };
 
-#endif // CAMERA_H_INCLUDED
+#endif // CAMERA_INCLUDED

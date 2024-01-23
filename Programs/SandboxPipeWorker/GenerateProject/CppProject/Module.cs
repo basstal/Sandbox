@@ -9,7 +9,14 @@ public class Module
     public string Name;
     public ModuleType Type;
     public FileReference? ParsedFile;
+    public DirectoryReference? SourceDirectory => ParsedFile?.GetDirectory();
     public CompileEnvironment? CompileEnvironment;
+
+    public IEnumerable<string>? RelativeModuleSourcePath =>
+        SourceDirectory != null
+            ? CompileEnvironment?.SourceFiles.Select(file => file.GetRelativePath(SourceDirectory.FullName))
+            : null;
+
     public PrecompileEnvironment? PrecompileEnvironment;
 
     public static Dictionary<string, Module> RegisteredModules = new Dictionary<string, Module>();
@@ -53,14 +60,10 @@ public class Module
                 break;
             case ModuleType.DynamicLibrary:
                 module.ParseDynamicLibrary(root, fileReference.GetDirectory());
-                module.ParseHeaderOnlyLibrary(root, fileReference.GetDirectory());
-                break;
-            case ModuleType.StaticLibrary:
                 module.ParseStaticLibrary(root, fileReference.GetDirectory());
                 module.ParseHeaderOnlyLibrary(root, fileReference.GetDirectory());
                 break;
-            case ModuleType.MiscLibrary:
-                module.ParseDynamicLibrary(root, fileReference.GetDirectory());
+            case ModuleType.StaticLibrary:
                 module.ParseStaticLibrary(root, fileReference.GetDirectory());
                 module.ParseHeaderOnlyLibrary(root, fileReference.GetDirectory());
                 break;
@@ -77,6 +80,11 @@ public class Module
     internal void ParseHeaderOnlyLibrary(YamlMappingNode root, DirectoryReference sourceDirectory)
     {
         PrecompileEnvironment ??= new PrecompileEnvironment();
+        if (SourceDirectory == null)
+        {
+            throw new Exception("SourceDirectory is null!");
+        }
+
         if (root["include_paths"] is YamlSequenceNode includePaths)
         {
             PrecompileEnvironment.IncludePaths.AddRange(includePaths.Select(x =>
@@ -84,7 +92,7 @@ public class Module
         }
         else if (root["include_paths"] is YamlScalarNode includePath)
         {
-            PrecompileEnvironment.IncludePaths.Add(new DirectoryReference(includePath.ToString()));
+            PrecompileEnvironment.IncludePaths.Add(SourceDirectory.Combine(includePath.ToString()));
         }
     }
 
@@ -123,6 +131,7 @@ public class Module
             }
 
             var includePaths = compileEnvironmentMapping["include_paths"];
+            CompileEnvironment.IncludePaths.Add(sourceDirectory);
             if (includePaths is YamlSequenceNode includePathsSequence)
             {
                 foreach (var includePath in includePathsSequence)
@@ -130,6 +139,7 @@ public class Module
                     CompileEnvironment.IncludePaths.Add(new DirectoryReference(includePath.ToString()));
                 }
             }
+
 
             var cppVersion = compileEnvironmentMapping["cpp_version"];
             Enum.TryParse(cppVersion.ToString(), out CompileEnvironment.CppVersion);
@@ -150,6 +160,15 @@ public class Module
                         RegisteredModules.Add(dependencyName, dependencyModule);
                         CompileEnvironment.Dependencies.Add(dependencyModule);
                     }
+                }
+            }
+
+            // 扫描 SourceDirectory 下所有 cpp 文件
+            foreach (var file in SourceDirectory!.EnumerateFiles())
+            {
+                if (file.HasExtension(".cpp"))
+                {
+                    CompileEnvironment.SourceFiles.Add(file);
                 }
             }
         }

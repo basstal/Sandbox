@@ -1,6 +1,7 @@
 [submodule "Plugins/glm-0.9.9.8/glm"]
 	path = Plugins/glm-0.9.9.8/glm
 	url = https://github.com/g-truc/glm.git
-[submodule "Plugins/stb"]
-	path = Plugins/stb
+
+[submodule "Plugins/stb_image/stb"]
+	path = Plugins/stb_image/stb
 	url = https://github.com/nothings/stb

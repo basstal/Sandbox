@@ -11,6 +11,35 @@ public class ProjectFile
 
     public string PrimaryProjectName = Sandbox.PrimaryProjectName;
     public CompileEnvironment PrimaryCompileEnvironment = new();
+    public IEnumerable<Module> AllDependencies => GetAllDependencies();
+
+
+    /// <summary>
+    /// 递归 CompileEnvironment.Dependencies 获取所有依赖项
+    /// </summary>
+    /// <returns></returns>
+    public IEnumerable<Module> GetAllDependencies()
+    {
+        var dependencies = new HashSet<Module>();
+        var queue = new Queue<Module>();
+        PrimaryCompileEnvironment.Dependencies.ForEach(module => queue.Enqueue(module));
+        while (queue.Count > 0)
+        {
+            var module = queue.Dequeue();
+            dependencies.Add(module);
+            if (module.CompileEnvironment?.Dependencies == null)
+            {
+                continue;
+            }
+
+            foreach (var dependency in module.CompileEnvironment?.Dependencies!)
+            {
+                queue.Enqueue(dependency);
+            }
+        }
+
+        return dependencies;
+    }
 
     public void AddModules()
     {
@@ -25,9 +54,22 @@ public class ProjectFile
             }
         }
 
+        ValidateRegisteredModules();
+
         foreach (var compilableModule in compilableModules)
         {
             AddModule(compilableModule);
+        }
+    }
+
+    public void ValidateRegisteredModules()
+    {
+        foreach (var entry in Module.RegisteredModules)
+        {
+            if (entry.Value.Type == ModuleType.None)
+            {
+                throw new Exception($"Module {entry.Key} has an invalid type!");
+            }
         }
     }
 
@@ -36,10 +78,9 @@ public class ProjectFile
         var compileEnvironment = module.CompileEnvironment;
         if (compileEnvironment != null)
         {
-            PrimaryCompileEnvironment = new CompileEnvironment();
             AddPreprocessorDefinitions(compileEnvironment.Definitions);
             AddIncludePaths(compileEnvironment.IncludePaths);
-            // ?? 一个 Module 一个 Version 是支持的吗？
+            // TODO: 一个 Module 一个 Version 是支持的吗？
             PrimaryCompileEnvironment.CppVersion = compileEnvironment.CppVersion;
             PrimaryCompileEnvironment.Dependencies.Add(module);
         }

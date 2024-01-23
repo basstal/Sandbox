@@ -1,4 +1,4 @@
-type: MiscLibrary
+type: DynamicLibrary
 include_paths: include
 dll_paths:
   - bin/x64/assimp-vc143-mt.dll
