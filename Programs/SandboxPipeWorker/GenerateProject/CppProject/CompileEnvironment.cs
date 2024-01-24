@@ -15,4 +15,11 @@ public class CompileEnvironment
             .SelectMany(dependency => dependency.CompileEnvironment?.IncludePaths ??
                                       dependency.PrecompileEnvironment?.IncludePaths ?? new List<DirectoryReference>())
             .ToList();
+
+    public string GetAdditionalIncludeDirectories()
+    {
+        var includePaths = IncludePaths.Select(includePath => includePath.FullName).ToList();
+        includePaths.AddRange(DependencyIncludePaths.Select(includePath => includePath.FullName));
+        return string.Join(";", includePaths);
+    }
 }

@@ -1,5 +1,4 @@
-#ifndef MODEL_INCLUDED
-#define MODEL_INCLUDED
+#pragma once
 
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
@@ -26,4 +25,3 @@ private:
 	//std::vector<Texture> textures;
 	std::string _directory;
 };
-#endif // MODEL_INCLUDED

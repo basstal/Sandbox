@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="VcsDirectoryMappings">
+    <mapping directory="" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/Plugins/glm-0.9.9.8/glm" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/Plugins/stb_image/stb" vcs="Git" />
+  </component>
+</project>

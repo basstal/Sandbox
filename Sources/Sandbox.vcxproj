@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="20.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{209c52b6-4a6c-4af0-9160-6c8a842d8716}</ProjectGuid>
+    <Keyword>Win64Proj</Keyword>
+    <Platform>x64</Platform>
+    <RootNamespace>Sandbox</RootNamespace>
+  </PropertyGroup>
+
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v142</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v142</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+
+  <ItemGroup>
+    <ClCompile Include="Infrastructures/NativeFileSystem.cpp">
+        <AdditionalIncludeDirectories>C:/Users/xj/Documents/GitHub/Sandbox/Sources/Infrastructures;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <ClCompile Include="Rendering/Camera.cpp">
+        <AdditionalIncludeDirectories>C:/Users/xj/Documents/GitHub/Sandbox/Sources/Rendering;C:/Users/xj/Documents/GitHub/Sandbox/Plugins/glfw-3.3.9.bin.WIN64/include;C:/Users/xj/Documents/GitHub/Sandbox/Plugins/glm-0.9.9.8/glm;C:/Users/xj/Documents/GitHub/Sandbox/Plugins/stb_image/stb;C:/Users/xj/Documents/GitHub/Sandbox/Plugins/assimp-5.2.5/include;C:/Users/xj/Documents/GitHub/Sandbox/Plugins/vulkan-1.3.268/Include;C:/Users/xj/Documents/GitHub/Sandbox/Sources/Infrastructures;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <ClCompile Include="Rendering/Graphics.cpp">
+        <AdditionalIncludeDirectories>C:/Users/xj/Documents/GitHub/Sandbox/Sources/Rendering;C:/Users/xj/Documents/GitHub/Sandbox/Plugins/glfw-3.3.9.bin.WIN64/include;C:/Users/xj/Documents/GitHub/Sandbox/Plugins/glm-0.9.9.8/glm;C:/Users/xj/Documents/GitHub/Sandbox/Plugins/stb_image/stb;C:/Users/xj/Documents/GitHub/Sandbox/Plugins/assimp-5.2.5/include;C:/Users/xj/Documents/GitHub/Sandbox/Plugins/vulkan-1.3.268/Include;C:/Users/xj/Documents/GitHub/Sandbox/Sources/Infrastructures;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <ClCompile Include="Rendering/Image.cpp">
+        <AdditionalIncludeDirectories>C:/Users/xj/Documents/GitHub/Sandbox/Sources/Rendering;C:/Users/xj/Documents/GitHub/Sandbox/Plugins/glfw-3.3.9.bin.WIN64/include;C:/Users/xj/Documents/GitHub/Sandbox/Plugins/glm-0.9.9.8/glm;C:/Users/xj/Documents/GitHub/Sandbox/Plugins/stb_image/stb;C:/Users/xj/Documents/GitHub/Sandbox/Plugins/assimp-5.2.5/include;C:/Users/xj/Documents/GitHub/Sandbox/Plugins/vulkan-1.3.268/Include;C:/Users/xj/Documents/GitHub/Sandbox/Sources/Infrastructures;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <ClCompile Include="Rendering/Mesh.cpp">
+        <AdditionalIncludeDirectories>C:/Users/xj/Documents/GitHub/Sandbox/Sources/Rendering;C:/Users/xj/Documents/GitHub/Sandbox/Plugins/glfw-3.3.9.bin.WIN64/include;C:/Users/xj/Documents/GitHub/Sandbox/Plugins/glm-0.9.9.8/glm;C:/Users/xj/Documents/GitHub/Sandbox/Plugins/stb_image/stb;C:/Users/xj/Documents/GitHub/Sandbox/Plugins/assimp-5.2.5/include;C:/Users/xj/Documents/GitHub/Sandbox/Plugins/vulkan-1.3.268/Include;C:/Users/xj/Documents/GitHub/Sandbox/Sources/Infrastructures;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <ClCompile Include="Rendering/Model.cpp">
+        <AdditionalIncludeDirectories>C:/Users/xj/Documents/GitHub/Sandbox/Sources/Rendering;C:/Users/xj/Documents/GitHub/Sandbox/Plugins/glfw-3.3.9.bin.WIN64/include;C:/Users/xj/Documents/GitHub/Sandbox/Plugins/glm-0.9.9.8/glm;C:/Users/xj/Documents/GitHub/Sandbox/Plugins/stb_image/stb;C:/Users/xj/Documents/GitHub/Sandbox/Plugins/assimp-5.2.5/include;C:/Users/xj/Documents/GitHub/Sandbox/Plugins/vulkan-1.3.268/Include;C:/Users/xj/Documents/GitHub/Sandbox/Sources/Infrastructures;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <ClInclude Include="Infrastructures/NativeFileSystem.hpp" />
+    <ClInclude Include="Infrastructures/Shared.hpp" />
+    <ClInclude Include="Rendering/Camera.hpp" />
+    <ClInclude Include="Rendering/Graphics.hpp" />
+    <ClInclude Include="Rendering/Image.hpp" />
+    <ClInclude Include="Rendering/Mesh.hpp" />
+    <ClInclude Include="Rendering/Model.hpp" />
+    <ClInclude Include="Rendering/Shared.hpp" />
+  </ItemGroup>
+
+  
+
+
+  <ImportGroup Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+</Project>

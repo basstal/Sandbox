@@ -1,0 +1,52 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31314.256
+MinimumVisualStudioVersion = 10.0.40219.1
+{{~
+for Project in Projects
+if Project.ProjectType == "Folder"
+~}}
+
+Project("{%{{}%}{{Project.SlnProjectTypeGuid}}{%{}}%}") = "{{Project.PrimaryProjectName}}", "{{Project.ProjectDirectory.RelativeEnginePath}}", "{%{{}%}{{Project.Guid}}{%{}}%}"
+EndProject
+
+{{~else~}}
+
+Project("{%{{}%}{{Project.SlnProjectTypeGuid}}{%{}}%}") = "{{Project.PrimaryProjectName}}", "{{Project.GeneratedProjectPath.RelativeEnginePath}}", "{%{{}%}{{Project.Guid}}{%{}}%}"
+EndProject
+
+{{~
+end
+end
+~}}
+Global
+    GlobalSection(SolutionConfigurationPlatforms) = preSolution
+        {{~for Configuration in Configurations~}}
+        {{~for pa in PlatformsAndArchitectures~}}
+        {{Configuration}}|{{pa}} = {{Configuration}}|{{pa}}
+        {{~end~}}
+        {{~end~}}
+    EndGlobalSection
+    GlobalSection(ProjectConfigurationPlatforms) = postSolution
+        {{~for Project in Projects
+        if Project.ProjectType != "Folder"
+        ~}}
+        {{~for Configuration in Configurations~}}
+        {{~for pa in PlatformsAndArchitectures~}}
+        {%{{}%}{{Project.Guid}}{%{}}%}.{{Configuration}}|{{pa}}.ActiveCfg = {{Configuration}}|{{pa}}
+        {%{{}%}{{Project.Guid}}{%{}}%}.{{Configuration}}|{{pa}}.Build.0 = {{Configuration}}|{{pa}}
+        {{~end
+        end
+        end
+        end
+        ~}}
+    EndGlobalSection
+    GlobalSection(NestedProjects) = preSolution
+		{{~for Project in FolderProjects~}}
+		    {{~for SubProject in Project.SubProjects~}}
+		{%{{}%}{{SubProject.Guid}}{%{}}%} = {%{{}%}{{Project.Guid}}{%{}}%}
+		    {{~end~}}
+		{{~end~}}
+	EndGlobalSection
+	
+EndGlobal

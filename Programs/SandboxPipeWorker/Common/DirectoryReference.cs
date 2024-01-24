@@ -1,4 +1,6 @@
-﻿namespace SandboxPipeWorker.Common;
+﻿using System.Text.RegularExpressions;
+
+namespace SandboxPipeWorker.Common;
 
 public class DirectoryReference : FileSystemBase, IEquatable<DirectoryReference>, IComparable<DirectoryReference>
 {
@@ -79,5 +81,50 @@ public class DirectoryReference : FileSystemBase, IEquatable<DirectoryReference>
     public FileReference GetFile(string fileName)
     {
         return new FileReference(Path.Combine(FullName, fileName));
+    }
+
+    public List<FileReference> SearchFiles(string pattern, bool useRegex = false)
+    {
+        var matchedFiles = new List<FileReference>();
+        // 确保提供的目录存在
+        if (!Directory.Exists(FullName))
+        {
+            throw new DirectoryNotFoundException($"The directory '{FullName}' was not found.");
+        }
+
+        // 使用通配符搜索
+        if (!useRegex)
+        {
+            try
+            {
+                matchedFiles.AddRange(Directory.GetFiles(FullName, pattern, SearchOption.AllDirectories)
+                    .Select(file => new FileReference(file)));
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"An error occurred: {ex.Message}");
+            }
+        }
+        // 使用正则表达式搜索
+        else
+        {
+            try
+            {
+                var regex = new Regex(pattern);
+                foreach (var file in Directory.GetFiles(FullName, "*", SearchOption.AllDirectories))
+                {
+                    if (regex.IsMatch(Path.GetFileName(file)))
+                    {
+                        matchedFiles.Add(new FileReference(file));
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"An error occurred: {ex.Message}");
+            }
+        }
+
+        return matchedFiles;
     }
 }

@@ -1,5 +1,4 @@
-#ifndef CAMERA_INCLUDED
-#define CAMERA_INCLUDED
+#pragma once
 
 #include <glm/glm.hpp>
 
@@ -9,5 +8,3 @@ struct UniformBufferObject
 	alignas(16) glm::mat4 view;
 	alignas(16) glm::mat4 proj;
 };
-
-#endif // CAMERA_INCLUDED

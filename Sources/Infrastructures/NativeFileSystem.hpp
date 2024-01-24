@@ -1,5 +1,4 @@
-#ifndef NATIVEFILESYSTEM_INCLUDED
-#define NATIVEFILESYSTEM_INCLUDED
+#pragma once
 #include <string>
 #include "Shared.hpp"
 
@@ -12,4 +11,3 @@ public:
 	static void addDllSearchPath(std::string inSearchPath);
 };
 
-#endif // NATIVEFILESYSTEM_INCLUDED

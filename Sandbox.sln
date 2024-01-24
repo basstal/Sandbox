@@ -1,0 +1,41 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31314.256
+MinimumVisualStudioVersion = 10.0.40219.1
+
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Sources", "Sources", "{ddd1b988-ce92-4add-838e-d2fe07bf0c08}"
+EndProject
+
+
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Sandbox", "Sources/Sandbox.vcxproj", "{209c52b6-4a6c-4af0-9160-6c8a842d8716}"
+EndProject
+
+
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Programs", "Programs", "{cfa1dfe5-b825-4a9b-9a24-f8fc7e74a664}"
+EndProject
+
+
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SandboxPipeWorker", "Programs/SandboxPipeWorker/SandboxPipeWorker.csproj", "{ff8f4069-e68b-4e8c-b09c-be91d4e20862}"
+EndProject
+
+Global
+    GlobalSection(SolutionConfigurationPlatforms) = preSolution
+        Debug|Any CPU = Debug|Any CPU
+        Release|Any CPU = Release|Any CPU
+    EndGlobalSection
+    GlobalSection(ProjectConfigurationPlatforms) = postSolution
+        {209c52b6-4a6c-4af0-9160-6c8a842d8716}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+        {209c52b6-4a6c-4af0-9160-6c8a842d8716}.Debug|Any CPU.Build.0 = Debug|Any CPU
+        {209c52b6-4a6c-4af0-9160-6c8a842d8716}.Release|Any CPU.ActiveCfg = Release|Any CPU
+        {209c52b6-4a6c-4af0-9160-6c8a842d8716}.Release|Any CPU.Build.0 = Release|Any CPU
+        {ff8f4069-e68b-4e8c-b09c-be91d4e20862}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+        {ff8f4069-e68b-4e8c-b09c-be91d4e20862}.Debug|Any CPU.Build.0 = Debug|Any CPU
+        {ff8f4069-e68b-4e8c-b09c-be91d4e20862}.Release|Any CPU.ActiveCfg = Release|Any CPU
+        {ff8f4069-e68b-4e8c-b09c-be91d4e20862}.Release|Any CPU.Build.0 = Release|Any CPU
+    EndGlobalSection
+    GlobalSection(NestedProjects) = preSolution
+		{209c52b6-4a6c-4af0-9160-6c8a842d8716} = {ddd1b988-ce92-4add-838e-d2fe07bf0c08}
+		{ff8f4069-e68b-4e8c-b09c-be91d4e20862} = {cfa1dfe5-b825-4a9b-9a24-f8fc7e74a664}
+	EndGlobalSection
+	
+EndGlobal

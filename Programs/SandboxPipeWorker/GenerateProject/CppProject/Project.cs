@@ -2,23 +2,44 @@
 
 namespace SandboxPipeWorker.GenerateProject.CppProject;
 
-public class ProjectFile
+public class Project
 {
     public readonly HashSet<ModuleType> CompilableModuleTypes = new()
     {
         ModuleType.Cpp
     };
 
+    public ProjectType ProjectType = ProjectType.Folder;
     public string PrimaryProjectName = Sandbox.PrimaryProjectName;
     public CompileEnvironment PrimaryCompileEnvironment = new();
-    public IEnumerable<Module> AllDependencies => GetAllDependencies();
+    public IEnumerable<Module> AllDependencies => EnumerateDependencies();
+    private string _guid = System.Guid.NewGuid().ToString();
+    public string Guid => _guid;
+
+    public static readonly Dictionary<ProjectType, string> ProjectTypeGuidMapping = new()
+    {
+        { ProjectType.Cpp, "8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942" },
+        { ProjectType.CSharp, "FAE04EC0-301F-11D3-BF4B-00C04F79EFBC" },
+        { ProjectType.Folder, "2150E333-8FDC-42A3-9474-1A3956D46DE8" },
+    };
+
+    public static readonly Dictionary<ProjectType, string> ProjectTypeExtensionMapping = new()
+    {
+        { ProjectType.Cpp, ".vcxproj" },
+        { ProjectType.CSharp, ".csproj" },
+    };
+
+    public string SlnProjectTypeGuid => ProjectTypeGuidMapping[ProjectType];
+    public DirectoryReference? ProjectDirectory;
+    public FileReference? GeneratedProjectPath;
+    public List<Project> SubProjects = new();
 
 
     /// <summary>
     /// 递归 CompileEnvironment.Dependencies 获取所有依赖项
     /// </summary>
     /// <returns></returns>
-    public IEnumerable<Module> GetAllDependencies()
+    public IEnumerable<Module> EnumerateDependencies()
     {
         var dependencies = new HashSet<Module>();
         var queue = new Queue<Module>();
@@ -133,4 +154,23 @@ public class ProjectFile
             value = definition.Substring(index + 1);
         }
     }
+
+    public void AddProject(Project project)
+    {
+        SubProjects.Add(project);
+    }
+
+    public IEnumerable<Project> EnumerateSubProjects()
+    {
+        foreach (var subProject in SubProjects)
+        {
+            yield return subProject;
+            foreach (var subSubProject in subProject.EnumerateSubProjects())
+            {
+                yield return subSubProject;
+            }
+        }
+    }
+
+    
 }

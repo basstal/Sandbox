@@ -20,3 +20,10 @@ public enum ModuleType
     StaticLibrary = 3,
     HeaderOnlyLibrary = 5,
 }
+
+public enum ProjectType
+{
+    Cpp,
+    CSharp,
+    Folder,
+}

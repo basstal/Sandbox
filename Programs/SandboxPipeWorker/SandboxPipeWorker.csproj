@@ -17,6 +17,12 @@
       <None Update="ScribanTemplates\CMakeLists.txt.scriban">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </None>
+      <None Update="ScribanTemplates\sln.scriban">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </None>
+      <None Update="ScribanTemplates\vcxproj.scriban">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </None>
     </ItemGroup>
 
 </Project>

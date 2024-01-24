@@ -14,8 +14,10 @@ public class SandboxPipeWorker
 {
     private static int Main(string[] arguments)
     {
-        var cMake = new CMake();
-        cMake.GenerateProjectFiles(new PlatformProjectGeneratorCollection());
+        // var cMake = new CMake();
+        // cMake.GenerateProjectFiles(new PlatformProjectGeneratorCollection());
+        var visualStudio = new VisualStudio();
+        visualStudio.GenerateProjectFiles(new PlatformProjectGeneratorCollection());
         return 0;
     }
 }

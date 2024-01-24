@@ -1,6 +1,4 @@
-#ifndef IMAGE_INCLUDED
-#define IMAGE_INCLUDED
-
+#pragma once
 
 #include <memory>
 
@@ -22,4 +20,3 @@ public:
 	Image();
 	~Image();
 };
-#endif // IMAGE_INCLUDED
