@@ -16,10 +16,10 @@ public class CompileEnvironment
                                       dependency.PrecompileEnvironment?.IncludePaths ?? new List<DirectoryReference>())
             .ToList();
 
-    public string GetAdditionalIncludeDirectories()
+    public IEnumerable<DirectoryReference> EnumerateAdditionalIncludeDirectories()
     {
-        var includePaths = IncludePaths.Select(includePath => includePath.FullName).ToList();
-        includePaths.AddRange(DependencyIncludePaths.Select(includePath => includePath.FullName));
-        return string.Join(";", includePaths);
+        var directIncludePaths = IncludePaths.ToList();
+        directIncludePaths.AddRange(DependencyIncludePaths);
+        return directIncludePaths.Distinct();
     }
 }

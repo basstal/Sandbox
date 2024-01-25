@@ -1,5 +1,7 @@
-#ifdef RENDERING_EXPORT_API
+#if defined(RENDERING_EXPORT_API)
 #define RENDERING_API __declspec(dllexport)
-#else
+#elif defined(RENDERING_IMPORT_API)
 #define RENDERING_API __declspec(dllimport)
+#else
+#define RENDERING_API
 #endif

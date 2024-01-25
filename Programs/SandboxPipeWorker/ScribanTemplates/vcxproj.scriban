@@ -1,47 +1,83 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+﻿{{~$Platform = "x64"~}}
+<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="{{Project.PrimaryCompileEnvironment.CppVersion | string.slice 3}}.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-    {{~for Configuration in Configurations~}}
+{{~for Configuration in Configurations~}}
   <ItemGroup Label="ProjectConfigurations">
-    <ProjectConfiguration Include="{{Configuration}}|x64">
+    <ProjectConfiguration Include="{{Configuration}}|{{$Platform}}">
       <Configuration>{{Configuration}}</Configuration>
-      <Platform>x64</Platform>
+      <Platform>{{$Platform}}</Platform>
     </ProjectConfiguration>
   </ItemGroup>
-  {{~end~}}
+{{~end~}}
 
-  <PropertyGroup Label="Globals">
-    <ProjectGuid>{%{{}%}{{Project.Guid}}{%{}}%}</ProjectGuid>
-    <Keyword>Win64Proj</Keyword>
-    <Platform>x64</Platform>
-    <RootNamespace>{{Project.PrimaryProjectName}}</RootNamespace>
-  </PropertyGroup>
+    <PropertyGroup Label="Globals">
+        <ProjectGuid>{%{{}%}{{Project.Guid}}{%{}}%}</ProjectGuid>
+        <Keyword>Win32Proj</Keyword>
+        <Platform>{{$Platform}}</Platform>
+        <RootNamespace>{{Project.PrimaryProjectName}}</RootNamespace>
+    </PropertyGroup>
 
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
 
 {{~for Configuration in Configurations~}}
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='{{Configuration}}|x64'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
-    <PlatformToolset>v142</PlatformToolset>
-    <CharacterSet>MultiByte</CharacterSet>
-  </PropertyGroup>
+    <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='{{Configuration}}|{{$Platform}}'" Label="Configuration">
+        <ConfigurationType>Application</ConfigurationType>
+        <UseDebugLibraries>{{~if Configuration == "Release"~}}false{{~else~}}true{{~end~}}</UseDebugLibraries>
+        <PlatformToolset>v143</PlatformToolset>
+        <CharacterSet>Unicode</CharacterSet>
+        <OutDir>{{OutputDir}}</OutDir>
+    </PropertyGroup>
 {{~end~}}
 
-  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
-
-  <ItemGroup>
-    {{~for CppSourceInfo in CppSourceInfos~}}
-    <ClCompile Include="{{CppSourceInfo.SourcePath}}">
-        <AdditionalIncludeDirectories>{{CppSourceInfo.AdditionalIncludeDirectories}};%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-    </ClCompile>
-    {{~end~}}
-    {{~for RelativeHeaderPath in RelativeHeaderPaths~}}
-    <ClInclude Include="{{RelativeHeaderPath}}" />
-    {{~end~}}
-  </ItemGroup>
-
+    <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   
+  
+{{~for Configuration in Configurations~}}
+    <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='{{Configuration}}|{{$Platform}}'">
+      <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    </ImportGroup>
+{{~end~}}
+    <PropertyGroup Label="UserMacros" />
 
-  <PropertyGroup Label="Linker">
-    <SubSystem>Console</SubSystem>
-  </PropertyGroup>
+{{~for Configuration in Configurations~}}
+    <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='{{Configuration}}|{{$Platform}}'">
+        <ClCompile>
+            <AdditionalIncludeDirectories>{{AdditionalIncludeDirectories}};%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+            <WarningLevel>Level3</WarningLevel>
+            <SDLCheck>true</SDLCheck>
+            <PreprocessorDefinitions>{{~if Configuration == "Release"~}}NDEBUG;{{~else~}}_DEBUG;{{~end~}}%(PreprocessorDefinitions)</PreprocessorDefinitions>
+            <ConformanceMode>true</ConformanceMode>
+            <LanguageStandard>std{{Project.PrimaryCompileEnvironment.CppVersion | string.downcase}}</LanguageStandard>
+            <LanguageStandard_C>stdc11</LanguageStandard_C>
+            {{~if Configuration == "Release"~}}
+            <FunctionLevelLinking>true</FunctionLevelLinking>
+            <IntrinsicFunctions>true</IntrinsicFunctions>
+            {{~end~}}
+        </ClCompile>
+        <Link>
+            <AdditionalDependencies>{{AdditionalDependencies}};%(AdditionalDependencies)</AdditionalDependencies>
+            <SubSystem>Console</SubSystem>
+            <GenerateDebugInformation>true</GenerateDebugInformation>
+            {{~if Configuration == "Release"~}}
+            <EnableCOMDATFolding>true</EnableCOMDATFolding>
+            <OptimizeReferences>true</OptimizeReferences>
+            {{~end~}}
+        </Link>
+        <PostBuildEvent>
+          <Command>
+            PowerShell -ExecutionPolicy Bypass -File "{{PostBuildCommandsPath}}"
+          </Command>
+        </PostBuildEvent>
+    </ItemDefinitionGroup>
+{{~end~}}
+    <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+    
+    <ItemGroup>
+        {{~for CppSourceInfo in CppSourceInfos~}}
+        <ClCompile Include="{{CppSourceInfo.SourcePath}}" />
+        {{~end~}}
+        {{~for RelativeHeaderPath in RelativeHeaderPaths~}}
+        <ClInclude Include="{{RelativeHeaderPath}}" />
+        {{~end~}}
+    </ItemGroup>
 </Project>

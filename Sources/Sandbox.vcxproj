@@ -13,61 +13,104 @@
     </ProjectConfiguration>
   </ItemGroup>
 
-  <PropertyGroup Label="Globals">
-    <ProjectGuid>{209c52b6-4a6c-4af0-9160-6c8a842d8716}</ProjectGuid>
-    <Keyword>Win64Proj</Keyword>
-    <Platform>x64</Platform>
-    <RootNamespace>Sandbox</RootNamespace>
-  </PropertyGroup>
+    <PropertyGroup Label="Globals">
+        <ProjectGuid>{851de782-af68-49d1-9093-709f060a3ca2}</ProjectGuid>
+        <Keyword>Win32Proj</Keyword>
+        <Platform>x64</Platform>
+        <RootNamespace>Sandbox</RootNamespace>
+    </PropertyGroup>
 
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
 
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
-    <PlatformToolset>v142</PlatformToolset>
-    <CharacterSet>MultiByte</CharacterSet>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
-    <PlatformToolset>v142</PlatformToolset>
-    <CharacterSet>MultiByte</CharacterSet>
-  </PropertyGroup>
+    <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+        <ConfigurationType>Application</ConfigurationType>
+        <UseDebugLibraries>true</UseDebugLibraries>
+        <PlatformToolset>v143</PlatformToolset>
+        <CharacterSet>Unicode</CharacterSet>
+        <OutDir>E:/Documents/git-repository/Sandbox/Output</OutDir>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+        <ConfigurationType>Application</ConfigurationType>
+        <UseDebugLibraries>false</UseDebugLibraries>
+        <PlatformToolset>v143</PlatformToolset>
+        <CharacterSet>Unicode</CharacterSet>
+        <OutDir>E:/Documents/git-repository/Sandbox/Output</OutDir>
+    </PropertyGroup>
 
-  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
-
-  <ItemGroup>
-    <ClCompile Include="Infrastructures/NativeFileSystem.cpp">
-        <AdditionalIncludeDirectories>C:/Users/xj/Documents/GitHub/Sandbox/Sources/Infrastructures;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-    </ClCompile>
-    <ClCompile Include="Rendering/Camera.cpp">
-        <AdditionalIncludeDirectories>C:/Users/xj/Documents/GitHub/Sandbox/Sources/Rendering;C:/Users/xj/Documents/GitHub/Sandbox/Plugins/glfw-3.3.9.bin.WIN64/include;C:/Users/xj/Documents/GitHub/Sandbox/Plugins/glm-0.9.9.8/glm;C:/Users/xj/Documents/GitHub/Sandbox/Plugins/stb_image/stb;C:/Users/xj/Documents/GitHub/Sandbox/Plugins/assimp-5.2.5/include;C:/Users/xj/Documents/GitHub/Sandbox/Plugins/vulkan-1.3.268/Include;C:/Users/xj/Documents/GitHub/Sandbox/Sources/Infrastructures;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-    </ClCompile>
-    <ClCompile Include="Rendering/Graphics.cpp">
-        <AdditionalIncludeDirectories>C:/Users/xj/Documents/GitHub/Sandbox/Sources/Rendering;C:/Users/xj/Documents/GitHub/Sandbox/Plugins/glfw-3.3.9.bin.WIN64/include;C:/Users/xj/Documents/GitHub/Sandbox/Plugins/glm-0.9.9.8/glm;C:/Users/xj/Documents/GitHub/Sandbox/Plugins/stb_image/stb;C:/Users/xj/Documents/GitHub/Sandbox/Plugins/assimp-5.2.5/include;C:/Users/xj/Documents/GitHub/Sandbox/Plugins/vulkan-1.3.268/Include;C:/Users/xj/Documents/GitHub/Sandbox/Sources/Infrastructures;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-    </ClCompile>
-    <ClCompile Include="Rendering/Image.cpp">
-        <AdditionalIncludeDirectories>C:/Users/xj/Documents/GitHub/Sandbox/Sources/Rendering;C:/Users/xj/Documents/GitHub/Sandbox/Plugins/glfw-3.3.9.bin.WIN64/include;C:/Users/xj/Documents/GitHub/Sandbox/Plugins/glm-0.9.9.8/glm;C:/Users/xj/Documents/GitHub/Sandbox/Plugins/stb_image/stb;C:/Users/xj/Documents/GitHub/Sandbox/Plugins/assimp-5.2.5/include;C:/Users/xj/Documents/GitHub/Sandbox/Plugins/vulkan-1.3.268/Include;C:/Users/xj/Documents/GitHub/Sandbox/Sources/Infrastructures;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-    </ClCompile>
-    <ClCompile Include="Rendering/Mesh.cpp">
-        <AdditionalIncludeDirectories>C:/Users/xj/Documents/GitHub/Sandbox/Sources/Rendering;C:/Users/xj/Documents/GitHub/Sandbox/Plugins/glfw-3.3.9.bin.WIN64/include;C:/Users/xj/Documents/GitHub/Sandbox/Plugins/glm-0.9.9.8/glm;C:/Users/xj/Documents/GitHub/Sandbox/Plugins/stb_image/stb;C:/Users/xj/Documents/GitHub/Sandbox/Plugins/assimp-5.2.5/include;C:/Users/xj/Documents/GitHub/Sandbox/Plugins/vulkan-1.3.268/Include;C:/Users/xj/Documents/GitHub/Sandbox/Sources/Infrastructures;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-    </ClCompile>
-    <ClCompile Include="Rendering/Model.cpp">
-        <AdditionalIncludeDirectories>C:/Users/xj/Documents/GitHub/Sandbox/Sources/Rendering;C:/Users/xj/Documents/GitHub/Sandbox/Plugins/glfw-3.3.9.bin.WIN64/include;C:/Users/xj/Documents/GitHub/Sandbox/Plugins/glm-0.9.9.8/glm;C:/Users/xj/Documents/GitHub/Sandbox/Plugins/stb_image/stb;C:/Users/xj/Documents/GitHub/Sandbox/Plugins/assimp-5.2.5/include;C:/Users/xj/Documents/GitHub/Sandbox/Plugins/vulkan-1.3.268/Include;C:/Users/xj/Documents/GitHub/Sandbox/Sources/Infrastructures;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-    </ClCompile>
-    <ClInclude Include="Infrastructures/NativeFileSystem.hpp" />
-    <ClInclude Include="Infrastructures/Shared.hpp" />
-    <ClInclude Include="Rendering/Camera.hpp" />
-    <ClInclude Include="Rendering/Graphics.hpp" />
-    <ClInclude Include="Rendering/Image.hpp" />
-    <ClInclude Include="Rendering/Mesh.hpp" />
-    <ClInclude Include="Rendering/Model.hpp" />
-    <ClInclude Include="Rendering/Shared.hpp" />
-  </ItemGroup>
-
+    <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   
+  
+    <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+      <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    </ImportGroup>
+    <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+      <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    </ImportGroup>
+    <PropertyGroup Label="UserMacros" />
 
-
-  <ImportGroup Label="PropertySheets">
-    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-  </ImportGroup>
+    <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+        <ClCompile>
+            <AdditionalIncludeDirectories>E:/Documents/git-repository/Sandbox/Sources/Infrastructures;E:/Documents/git-repository/Sandbox/Sources/Rendering;E:/Documents/git-repository/Sandbox/Plugins/glfw-3.3.9.bin.WIN64/include;E:/Documents/git-repository/Sandbox/Plugins/glm-0.9.9.8/glm;E:/Documents/git-repository/Sandbox/Plugins/stb_image/stb;E:/Documents/git-repository/Sandbox/Plugins/assimp-5.2.5/include;E:/Documents/git-repository/Sandbox/Plugins/vulkan-1.3.268/Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+            <WarningLevel>Level3</WarningLevel>
+            <SDLCheck>true</SDLCheck>
+            <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+            <ConformanceMode>true</ConformanceMode>
+            <LanguageStandard>stdcpp20</LanguageStandard>
+            <LanguageStandard_C>stdc11</LanguageStandard_C>
+        </ClCompile>
+        <Link>
+            <AdditionalDependencies>E:/Documents/git-repository/Sandbox/Plugins/glfw-3.3.9.bin.WIN64/lib-vc2022/glfw3.lib;E:/Documents/git-repository/Sandbox/Plugins/glm-0.9.9.8/MinSizeRel/glm_static.lib;E:/Documents/git-repository/Sandbox/Plugins/assimp-5.2.5/lib/x64/assimp-vc143-mt.lib;E:/Documents/git-repository/Sandbox/Plugins/vulkan-1.3.268/Lib/vulkan-1.lib;%(AdditionalDependencies)</AdditionalDependencies>
+            <SubSystem>Console</SubSystem>
+            <GenerateDebugInformation>true</GenerateDebugInformation>
+        </Link>
+        <PostBuildEvent>
+          <Command>
+            PowerShell -ExecutionPolicy Bypass -File "E:/Documents/git-repository/Sandbox/Sources/PostBuildCommands.ps1"
+          </Command>
+        </PostBuildEvent>
+    </ItemDefinitionGroup>
+    <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+        <ClCompile>
+            <AdditionalIncludeDirectories>E:/Documents/git-repository/Sandbox/Sources/Infrastructures;E:/Documents/git-repository/Sandbox/Sources/Rendering;E:/Documents/git-repository/Sandbox/Plugins/glfw-3.3.9.bin.WIN64/include;E:/Documents/git-repository/Sandbox/Plugins/glm-0.9.9.8/glm;E:/Documents/git-repository/Sandbox/Plugins/stb_image/stb;E:/Documents/git-repository/Sandbox/Plugins/assimp-5.2.5/include;E:/Documents/git-repository/Sandbox/Plugins/vulkan-1.3.268/Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+            <WarningLevel>Level3</WarningLevel>
+            <SDLCheck>true</SDLCheck>
+            <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+            <ConformanceMode>true</ConformanceMode>
+            <LanguageStandard>stdcpp20</LanguageStandard>
+            <LanguageStandard_C>stdc11</LanguageStandard_C>
+            <FunctionLevelLinking>true</FunctionLevelLinking>
+            <IntrinsicFunctions>true</IntrinsicFunctions>
+        </ClCompile>
+        <Link>
+            <AdditionalDependencies>E:/Documents/git-repository/Sandbox/Plugins/glfw-3.3.9.bin.WIN64/lib-vc2022/glfw3.lib;E:/Documents/git-repository/Sandbox/Plugins/glm-0.9.9.8/MinSizeRel/glm_static.lib;E:/Documents/git-repository/Sandbox/Plugins/assimp-5.2.5/lib/x64/assimp-vc143-mt.lib;E:/Documents/git-repository/Sandbox/Plugins/vulkan-1.3.268/Lib/vulkan-1.lib;%(AdditionalDependencies)</AdditionalDependencies>
+            <SubSystem>Console</SubSystem>
+            <GenerateDebugInformation>true</GenerateDebugInformation>
+            <EnableCOMDATFolding>true</EnableCOMDATFolding>
+            <OptimizeReferences>true</OptimizeReferences>
+        </Link>
+        <PostBuildEvent>
+          <Command>
+            PowerShell -ExecutionPolicy Bypass -File "E:/Documents/git-repository/Sandbox/Sources/PostBuildCommands.ps1"
+          </Command>
+        </PostBuildEvent>
+    </ItemDefinitionGroup>
+    <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+    
+    <ItemGroup>
+        <ClCompile Include="main.cpp" />
+        <ClCompile Include="Infrastructures/NativeFileSystem.cpp" />
+        <ClCompile Include="Rendering/Camera.cpp" />
+        <ClCompile Include="Rendering/Graphics.cpp" />
+        <ClCompile Include="Rendering/Image.cpp" />
+        <ClCompile Include="Rendering/Mesh.cpp" />
+        <ClCompile Include="Rendering/Model.cpp" />
+        <ClInclude Include="Infrastructures/NativeFileSystem.hpp" />
+        <ClInclude Include="Infrastructures/Shared.hpp" />
+        <ClInclude Include="Rendering/Camera.hpp" />
+        <ClInclude Include="Rendering/Graphics.hpp" />
+        <ClInclude Include="Rendering/Image.hpp" />
+        <ClInclude Include="Rendering/Mesh.hpp" />
+        <ClInclude Include="Rendering/Model.hpp" />
+        <ClInclude Include="Rendering/Shared.hpp" />
+    </ItemGroup>
 </Project>

@@ -1,3 +1,8 @@
+{{~
+$CSharpPlatforms = ["Any CPU"]
+$CppPlatforms = ["x64"]
+$SolutionPlatforms = ["Any CPU"]
+~}}
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.31314.256
@@ -21,23 +26,33 @@ end
 ~}}
 Global
     GlobalSection(SolutionConfigurationPlatforms) = preSolution
-        {{~for Configuration in Configurations~}}
-        {{~for pa in PlatformsAndArchitectures~}}
-        {{Configuration}}|{{pa}} = {{Configuration}}|{{pa}}
-        {{~end~}}
-        {{~end~}}
+        {{~
+        for Configuration in Configurations
+        for Platform in $SolutionPlatforms
+        ~}}
+        {{Configuration}}|{{Platform}} = {{Configuration}}|{{Platform}}
+        {{~end
+        end
+        ~}}
     EndGlobalSection
     GlobalSection(ProjectConfigurationPlatforms) = postSolution
         {{~for Project in Projects
-        if Project.ProjectType != "Folder"
-        ~}}
-        {{~for Configuration in Configurations~}}
-        {{~for pa in PlatformsAndArchitectures~}}
-        {%{{}%}{{Project.Guid}}{%{}}%}.{{Configuration}}|{{pa}}.ActiveCfg = {{Configuration}}|{{pa}}
-        {%{{}%}{{Project.Guid}}{%{}}%}.{{Configuration}}|{{pa}}.Build.0 = {{Configuration}}|{{pa}}
-        {{~end
-        end
-        end
+            for Configuration in Configurations
+                if Project.ProjectType == "Cpp"
+                    $TargetPlatforms = $CppPlatforms
+                else if Project.ProjectType == "CSharp"
+                    $TargetPlatforms = $CSharpPlatforms
+                end
+                if Project.ProjectType != "Folder"
+                    for SolutionPlatform in $SolutionPlatforms
+                        for TargetPlatform in $TargetPlatforms
+                ~}}
+                {%{{}%}{{Project.Guid}}{%{}}%}.{{Configuration}}|{{SolutionPlatform}}.ActiveCfg = {{Configuration}}|{{TargetPlatform}}
+                {%{{}%}{{Project.Guid}}{%{}}%}.{{Configuration}}|{{SolutionPlatform}}.Build.0 = {{Configuration}}|{{TargetPlatform}}
+                {{~     end
+                    end
+                end
+            end
         end
         ~}}
     EndGlobalSection

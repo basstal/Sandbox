@@ -2,6 +2,8 @@
 
 public class FileReference : FileSystemBase, IEquatable<FileReference>, IComparable<FileReference>
 {
+    internal static readonly List<FileReference> EmptyList = new List<FileReference>(0);
+
     public FileReference(string fullName) : base(fullName)
     {
     }

@@ -1,0 +1,16 @@
+{{$PostBuildErrorCode = 1}}
+try {
+    {{~for CopyDllPath in CopyDllPaths~}}
+    & "{{Project.ProjectDirectory.FullName}}/../BuildProject/CopyFiles.ps1" -InputFile "{{CopyDllPath}}" -OutputTo "{{OutputDir}}" -Flat -Force
+    {{~end~}}
+} catch {
+    Write-Error "发生错误: $_"
+    exit {{$PostBuildErrorCode++}} 
+}
+
+try {
+    & "{{Project.ProjectDirectory.FullName}}/../BuildProject/CompileAllShaders.ps1" -GlslcPath "{{VulkanSdk}}/Bin/glslc" -OutputFilesTo "{{OutputDir}}/Shaders" -ShadersPath "{{Project.ProjectDirectory.FullName}}/Shaders"
+} catch {
+    Write-Error "发生错误: $_"
+    exit {{$PostBuildErrorCode++}}
+}

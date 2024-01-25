@@ -5,7 +5,7 @@ namespace SandboxPipeWorker;
 
 public static class Sandbox
 {
-    private static readonly string TempRootDirectoryStr = "C:/Users/xj/Documents/GitHub/Sandbox";
+    private static readonly string TempRootDirectoryStr = "E:\\Documents\\git-repository\\Sandbox";
     public static readonly DirectoryReference RootDirectory = new DirectoryReference(TempRootDirectoryStr);
     public static readonly string PrimaryProjectName = "Sandbox";
 }
@@ -16,8 +16,8 @@ public class SandboxPipeWorker
     {
         // var cMake = new CMake();
         // cMake.GenerateProjectFiles(new PlatformProjectGeneratorCollection());
-        var visualStudio = new VisualStudio();
-        visualStudio.GenerateProjectFiles(new PlatformProjectGeneratorCollection());
+        var rider = new Rider();
+        rider.GenerateProjectFiles(new PlatformProjectGeneratorCollection());
         return 0;
     }
 }

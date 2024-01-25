@@ -23,6 +23,9 @@
       <None Update="ScribanTemplates\vcxproj.scriban">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </None>
+      <None Update="ScribanTemplates\PostBuildCommands.ps1.scriban">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </None>
     </ItemGroup>
 
 </Project>
