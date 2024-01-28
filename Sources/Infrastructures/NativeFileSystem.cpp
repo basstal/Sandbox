@@ -1,11 +1,12 @@
 #include <string>
 #include <iostream>
 #include <filesystem>
+#include <fstream>
 #ifdef _WIN64
 #include <windows.h>
 #include "NativeFileSystem.hpp"
 
-std::string LPWSTRToString(WCHAR *lpwstr)
+std::string LPWSTRToString(WCHAR* lpwstr)
 {
 	if (lpwstr == nullptr)
 		return std::string();
@@ -37,7 +38,7 @@ std::string FileSystemBase::getExecutablePath()
 
 void FileSystemBase::addDllSearchPath(std::string inSearchPath)
 {
-	std::cout << inSearchPath << std::endl;
+	std::cout << inSearchPath << '\n';
 	SetDllDirectoryA(inSearchPath.c_str());
 }
 std::string FileSystemBase::getBinariesDir()
@@ -49,6 +50,24 @@ std::string FileSystemBase::getAssetsDir()
 {
 	std::filesystem::path executablePath = std::filesystem::path::path(getExecutablePath());
 	return executablePath.parent_path().parent_path().append("Assets").string();
+}
+
+std::vector<char> FileSystemBase::readFile(const std::string& filename)
+{
+	std::ifstream file(filename, std::ios::ate | std::ios::binary);
+
+	if (!file.is_open())
+	{
+		throw std::runtime_error("failed to open file!" + filename);
+	}
+
+	std::streamsize fileSize = file.tellg();
+	std::vector<char> buffer(fileSize);
+	file.seekg(0);
+	file.read(buffer.data(), fileSize);
+	file.close();
+
+	return buffer;
 }
 #else // not windows
 std::string FileSystemBase::getExecutablePath()
@@ -66,5 +85,9 @@ std::string FileSystemBase::getAssetsDir()
 void FileSystemBase::addDllSearchPath(std::string inSearchPath)
 {
 	throw std::runtime_error("addDllSearchPath not implemented!");
+}
+std::vector<char> FileSystemBase::readFile(const std::string& filename)
+{
+	throw std::runtime_error("readFile not implemented!");
 }
 #endif

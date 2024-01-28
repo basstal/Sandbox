@@ -5,7 +5,7 @@ namespace SandboxPipeWorker;
 
 public static class Sandbox
 {
-    private static readonly string TempRootDirectoryStr = "E:\\Documents\\git-repository\\Sandbox";
+    private static readonly string TempRootDirectoryStr = "C:/Users/xj/Documents/GitHub/Sandbox";
     public static readonly DirectoryReference RootDirectory = new DirectoryReference(TempRootDirectoryStr);
     public static readonly string PrimaryProjectName = "Sandbox";
 }

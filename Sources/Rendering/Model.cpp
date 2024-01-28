@@ -1,6 +1,8 @@
 #include "Model.hpp"
 #include <stdexcept>
 
+#include "Vertex.hpp"
+
 Model::Model()
 {
 }
