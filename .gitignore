@@ -457,3 +457,9 @@ FodyWeavers.xsd
 !Assets/**/*.obj
 buildtest/
 Output/
+.idea/
+
+# 生成的文件
+PostBuildCommands.ps1
+Sandbox.vcxproj
+Sandbox.sln
