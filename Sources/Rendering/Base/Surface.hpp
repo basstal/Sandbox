@@ -12,12 +12,15 @@ private:
 	const char* m_title = "Vulkan";
 	bool m_framebufferResized = false;
 	static void FramebufferResizeCallback(GLFWwindow* window, int width, int height);
+	VkInstance m_vkInstance;
+	bool m_cleaned = false;
 
 public:
 	GLFWwindow* glfwWindow;
 	VkSurfaceKHR vkSurface;
 	Surface(const VkInstance& instance);
 	~Surface();
+	void Cleanup();
 	bool GetFrameBufferResized();
 	void SetFrameBufferResized(bool value);
 };

@@ -5,6 +5,7 @@
 
 Surface::Surface(const VkInstance& instance)
 {
+	m_vkInstance = instance;
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 	glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
 	glfwWindow = glfwCreateWindow(m_width, m_height, m_title, nullptr, nullptr);
@@ -22,6 +23,7 @@ Surface::Surface(const VkInstance& instance)
 
 Surface::~Surface()
 {
+	Cleanup();
 }
 
 bool Surface::GetFrameBufferResized()
@@ -36,6 +38,17 @@ void Surface::SetFrameBufferResized(bool value)
 
 void Surface::FramebufferResizeCallback(GLFWwindow* window, int width, int height)
 {
-	auto surface = reinterpret_cast<Surface*>(glfwGetWindowUserPointer(window));
+	const auto surface = static_cast<Surface*>(glfwGetWindowUserPointer(window));
 	surface->m_framebufferResized = true;
+}
+
+void Surface::Cleanup()
+{
+	if (m_cleaned)
+	{
+		return;
+	}
+	vkDestroySurfaceKHR(m_vkInstance, vkSurface, nullptr);
+	glfwDestroyWindow(glfwWindow);
+	m_cleaned = true;
 }

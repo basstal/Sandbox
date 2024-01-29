@@ -4,7 +4,7 @@
 
 #include "Image.hpp"
 #include "Base/Device.hpp"
-#include "Components/CommandPool.hpp"
+#include "Components/CommandResource.hpp"
 
 
 class RenderTexture
@@ -16,14 +16,16 @@ private:
 	void TransitionImageLayout(VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout, uint32_t mipLevels);
 	void CreateImage(uint32_t width, uint32_t height, uint32_t mipLevels, VkSampleCountFlagBits numSamples, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage,
 	                 VkMemoryPropertyFlags properties);
-	std::shared_ptr<CommandPool> m_commandPool;
+	std::shared_ptr<CommandResource> m_commandPool;
 	std::shared_ptr<Device> m_device;
 
+	bool m_cleaned = false;
 public:
 	VkImage vkImage;
 	VkDeviceMemory vkDeviceMemory;
 	VkImageView vkImageView;
 	VkSampler vkSampler;
-	RenderTexture(const std::shared_ptr<Device>& device, const std::shared_ptr<Image>& image, const std::shared_ptr<CommandPool>& commandPool);
+	RenderTexture(const std::shared_ptr<Device>& device, const std::shared_ptr<Image>& image, const std::shared_ptr<CommandResource>& commandResource);
 	~RenderTexture();
+	void Cleanup();
 };

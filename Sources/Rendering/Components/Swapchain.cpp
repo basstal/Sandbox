@@ -9,6 +9,16 @@
 Swapchain::Swapchain(const std::shared_ptr<Surface>& surface, const std::shared_ptr<Device>& device)
 {
 	m_device = device;
+	CreateSwapchain(surface, device);
+}
+
+Swapchain::~Swapchain()
+{
+	Cleanup();
+}
+
+void Swapchain::CreateSwapchain(const std::shared_ptr<Surface>& surface, const std::shared_ptr<Device>& device)
+{
 	SwapChainSupportDetails swapChainSupport = device->QuerySwapChainSupport();
 
 	uint32_t imageCount = swapChainSupport.capabilities.minImageCount + 1;
@@ -59,34 +69,62 @@ Swapchain::Swapchain(const std::shared_ptr<Surface>& surface, const std::shared_
 	vkFormat = surfaceFormat.format;
 	vkExtent2D = extent;
 	CreateImageViews();
+	m_cleaned = false;
 }
 
-Swapchain::~Swapchain()
+void Swapchain::Cleanup()
 {
+	if (m_cleaned)
+	{
+		return;
+	}
+	auto vkDevice = m_device->vkDevice;
+	if (m_framebufferCreated)
+	{
+		vkDestroyImageView(vkDevice, m_vkColorImageView, nullptr);
+		vkDestroyImage(vkDevice, m_vkColorImage, nullptr);
+		vkFreeMemory(vkDevice, m_vkColorImageMemory, nullptr);
+
+		vkDestroyImageView(vkDevice, m_vkDepthImageView, nullptr);
+		vkDestroyImage(vkDevice, m_vkDepthImage, nullptr);
+		vkFreeMemory(vkDevice, m_vkDepthImageMemory, nullptr);
+
+		for (auto framebuffer : vkFramebuffers)
+		{
+			vkDestroyFramebuffer(vkDevice, framebuffer, nullptr);
+		}
+		m_framebufferCreated = false;
+	}
+	for (auto imageView : vkImageViews)
+	{
+		vkDestroyImageView(vkDevice, imageView, nullptr);
+	}
+	vkDestroySwapchainKHR(vkDevice, vkSwapchain, nullptr);
+	m_cleaned = true;
 }
 
 void Swapchain::CreateFramebuffers(const std::shared_ptr<RenderPass>& renderPass)
 {
-	VkImage colorImage, depthImage;
 	CreateImage(vkExtent2D.width, vkExtent2D.height, 1, vkFormat, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
-	            VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, colorImage, m_vkColorImageMemory);
-	VkImageView colorImageView = m_device->CreateImageView(colorImage, vkFormat, VK_IMAGE_ASPECT_COLOR_BIT, 1);
+	            VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, m_vkColorImage, m_vkColorImageMemory);
+	m_vkColorImageView = m_device->CreateImageView(m_vkColorImage, vkFormat, VK_IMAGE_ASPECT_COLOR_BIT, 1);
 
 	VkFormat depthFormat = renderPass->FindDepthFormat();
 	CreateImage(vkExtent2D.width, vkExtent2D.height, 1, depthFormat, VK_IMAGE_TILING_OPTIMAL,
-	            VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, depthImage, m_vkDepthImageMemory);
-	VkImageView depthImageView = m_device->CreateImageView(depthImage, depthFormat, VK_IMAGE_ASPECT_DEPTH_BIT, 1);
+	            VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, m_vkDepthImage, m_vkDepthImageMemory);
+	m_vkDepthImageView = m_device->CreateImageView(m_vkDepthImage, depthFormat, VK_IMAGE_ASPECT_DEPTH_BIT, 1);
 	vkFramebuffers.resize(vkImageViews.size());
 	for (size_t i = 0; i < vkImageViews.size(); i++)
 	{
 		const std::vector<VkImageView> attachments = {
-			colorImageView,
-			depthImageView,
+			m_vkColorImageView,
+			m_vkDepthImageView,
 			vkImageViews[i]
 		};
 		const Framebuffer framebuffer(m_device, renderPass, vkExtent2D, attachments);
 		vkFramebuffers[i] = framebuffer.vkFramebuffer;
 	}
+	m_framebufferCreated = true;
 }
 
 

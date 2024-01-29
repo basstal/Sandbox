@@ -87,6 +87,7 @@ RenderPass::RenderPass(const std::shared_ptr<Device>& device, const std::shared_
 
 RenderPass::~RenderPass()
 {
+	Cleanup();
 }
 
 VkFormat RenderPass::FindDepthFormat()
@@ -96,6 +97,15 @@ VkFormat RenderPass::FindDepthFormat()
 		VK_IMAGE_TILING_OPTIMAL,
 		VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT
 	);
+}
+
+void RenderPass::Cleanup()
+{
+	if (!m_cleaned)
+	{
+		vkDestroyRenderPass(m_device->vkDevice, vkRenderPass, nullptr);
+		m_cleaned = true;
+	}
 }
 
 

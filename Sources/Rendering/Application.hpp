@@ -7,12 +7,13 @@
 #include "Components/RenderPass.hpp"
 #include "Base/Device.hpp"
 #include "Base/Surface.hpp"
-#include "Components/CommandPool.hpp"
+#include "Components/CommandResource.hpp"
 #include "Components/Pipeline.hpp"
-#include "Components\DescriptorSet.hpp"
+#include "Components\DescriptorResource.hpp"
 #include "Components/Swapchain.hpp"
 #include "Objects/IndexBuffer.hpp"
 #include "Objects/RenderTexture.hpp"
+#include "Objects/SyncObjects.hpp"
 #include "Objects/UniformBuffers.hpp"
 #include "Objects/VertexBuffer.hpp"
 
@@ -30,6 +31,8 @@ private:
 	 * \param glfwExtensions 
 	 */
 	void CheckExtensionsSupport(uint32_t glfwExtensionCount, const char** glfwExtensions);
+	uint32_t m_currentFrame = 0;
+	bool m_cleaned = false;
 
 public:
 	VkInstance vkInstance;
@@ -37,9 +40,9 @@ public:
 	std::shared_ptr<Device> device;
 	std::shared_ptr<Swapchain> swapchain;
 	std::shared_ptr<RenderPass> renderPass;
-	std::shared_ptr<DescriptorSet> descriptorSet;
+	std::shared_ptr<DescriptorResource> descriptorResource;
 	std::shared_ptr<Pipeline> pipeline;
-	std::shared_ptr<CommandPool> commandPool;
+	std::shared_ptr<CommandResource> commandResource;
 
 	// specific to usage
 	std::shared_ptr<RenderTexture> renderTexture;
@@ -48,9 +51,14 @@ public:
 	std::shared_ptr<VertexBuffer> vertexBuffer;
 	std::shared_ptr<IndexBuffer> indexBuffer;
 	std::shared_ptr<UniformBuffers> uniformBuffers;
+	std::shared_ptr<SyncObjects> syncObjects;
 
 	Application();
 	~Application();
+	void Cleanup();
 	void CreateSwapchain();
 	static uint32_t FindMemoryType(VkPhysicalDevice physicalDevice, uint32_t typeFilter, VkMemoryPropertyFlags properties);
+	void DrawFrame();
+	void RecreateSwapchain();
+	void RecordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex);
 };

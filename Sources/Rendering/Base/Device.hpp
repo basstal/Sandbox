@@ -32,9 +32,10 @@ private:
 	VkSampleCountFlagBits GetMaxUsableSampleCount();
 	void CreatePhysicalDevice(const VkInstance& instance);
 	void CreateDevice();
+	bool m_cleaned = false;
 
 public:
-	const int MAX_FRAMES_IN_FLIGHT = 2;
+	static const size_t MAX_FRAMES_IN_FLIGHT = 2;
 	VkPhysicalDevice vkPhysicalDevice;
 	VkDevice vkDevice;
 	VkQueue graphicsQueue;
@@ -46,4 +47,5 @@ public:
 	QueueFamilyIndices FindQueueFamilies();
 	SwapChainSupportDetails QuerySwapChainSupport();
 	VkImageView CreateImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags, uint32_t mipLevels);
+	void Cleanup();
 };

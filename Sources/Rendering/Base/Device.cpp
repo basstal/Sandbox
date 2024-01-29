@@ -20,6 +20,17 @@ Device::Device(const VkInstance& instance, const std::shared_ptr<Surface>& surfa
 
 Device::~Device()
 {
+	Cleanup();
+}
+
+void Device::Cleanup()
+{
+	if (m_cleaned)
+	{
+		return;
+	}
+	vkDestroyDevice(vkDevice, nullptr);
+	m_cleaned = true;
 }
 
 void Device::CreatePhysicalDevice(const VkInstance& instance)

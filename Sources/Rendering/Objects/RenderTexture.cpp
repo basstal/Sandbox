@@ -10,10 +10,10 @@
 #include "Components/Buffer.hpp"
 
 
-RenderTexture::RenderTexture(const std::shared_ptr<Device>& device, const std::shared_ptr<Image>& image, const std::shared_ptr<CommandPool>& commandPool)
+RenderTexture::RenderTexture(const std::shared_ptr<Device>& device, const std::shared_ptr<Image>& image, const std::shared_ptr<CommandResource>& commandResource)
 {
 	m_device = device;
-	m_commandPool = commandPool;
+	m_commandPool = commandResource;
 	VkDeviceSize imageSize = (VkDeviceSize)image->width() * image->height() * 4;
 	Buffer textureStagingBuffer(device, imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
 	                            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
@@ -30,8 +30,6 @@ RenderTexture::RenderTexture(const std::shared_ptr<Device>& device, const std::s
 	TransitionImageLayout(VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, image->mipLevels());
 	CopyFromBuffer(textureStagingBuffer.vkBuffer, static_cast<uint32_t>(image->width()), static_cast<uint32_t>(image->height()));
 	//transitionImageLayout(textureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, image->mipLevels());
-	vkDestroyBuffer(device->vkDevice, textureStagingBuffer.vkBuffer, nullptr);
-	vkFreeMemory(device->vkDevice, textureStagingBuffer.vkDeviceMemory, nullptr);
 	GenerateMipmaps(VK_FORMAT_R8G8B8A8_SRGB, image->width(), image->height(), image->mipLevels());
 	// ReSharper disable once CppObjectMemberMightNotBeInitialized
 	vkImageView = device->CreateImageView(vkImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_ASPECT_COLOR_BIT, image->mipLevels());
@@ -40,6 +38,19 @@ RenderTexture::RenderTexture(const std::shared_ptr<Device>& device, const std::s
 
 RenderTexture::~RenderTexture()
 {
+	Cleanup();
+}
+void RenderTexture::Cleanup()
+{
+	if (m_cleaned)
+	{
+		return;
+	}
+	vkDestroySampler(m_device->vkDevice, vkSampler, nullptr);
+	vkDestroyImageView(m_device->vkDevice, vkImageView, nullptr);
+	vkDestroyImage(m_device->vkDevice, vkImage, nullptr);
+	vkFreeMemory(m_device->vkDevice, vkDeviceMemory, nullptr);
+	m_cleaned = true;
 }
 
 

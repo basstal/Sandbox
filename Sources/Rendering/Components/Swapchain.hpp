@@ -12,8 +12,15 @@ class Swapchain
 	void CreateImage(uint32_t width, uint32_t height, uint32_t mipLevels, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& vkImage,
 	                 VkDeviceMemory& vkDeviceMemory);
 	std::shared_ptr<Device> m_device;
+	VkImage m_vkColorImage;
+	VkImageView m_vkColorImageView;
 	VkDeviceMemory m_vkColorImageMemory;
+	VkImage m_vkDepthImage;
+	VkImageView m_vkDepthImageView;
 	VkDeviceMemory m_vkDepthImageMemory;
+
+	bool m_cleaned = false;
+	bool m_framebufferCreated = false;
 
 public:
 	VkSwapchainKHR vkSwapchain;
@@ -25,5 +32,7 @@ public:
 
 	Swapchain(const std::shared_ptr<Surface>& surface, const std::shared_ptr<Device>& device);
 	~Swapchain();
+	void Cleanup();
+	void CreateSwapchain(const std::shared_ptr<Surface>& surface, const std::shared_ptr<Device>& device);
 	void CreateFramebuffers(const std::shared_ptr<RenderPass>& renderPass);
 };

@@ -2,11 +2,12 @@
 
 #include <stdexcept>
 
-#include "DescriptorSet.hpp"
+#include "DescriptorResource.hpp"
 #include "RenderPass.hpp"
 #include "Vertex.hpp"
 
-Pipeline::Pipeline(const std::shared_ptr<Device>& device, const std::shared_ptr<DescriptorSet> descriptorSet, const std::shared_ptr<RenderPass> renderPass)
+
+Pipeline::Pipeline(const std::shared_ptr<Device>& device, const std::shared_ptr<DescriptorResource> descriptorSet, const std::shared_ptr<RenderPass> renderPass)
 {
 	m_device = device;
 	m_renderPass = renderPass;
@@ -25,6 +26,7 @@ Pipeline::Pipeline(const std::shared_ptr<Device>& device, const std::shared_ptr<
 }
 Pipeline::~Pipeline()
 {
+	Cleanup();
 }
 
 void Pipeline::CreatePipeline(const std::vector<char>& vertexShader, const std::vector<char>& fragmentShader)
@@ -156,6 +158,24 @@ void Pipeline::CreatePipeline(const std::vector<char>& vertexShader, const std::
 	vkPipelines.push_back(vkPipeline);
 	vkDestroyShaderModule(m_device->vkDevice, fragShaderModule, nullptr);
 	vkDestroyShaderModule(m_device->vkDevice, vertShaderModule, nullptr);
+}
+
+void Pipeline::Cleanup()
+{
+	if (!m_cleaned)
+	{
+		for (uint32_t i = 0; i < vkPipelines.size(); i++)
+		{
+			vkDestroyPipeline(m_device->vkDevice, vkPipelines[i], nullptr);
+		}
+		vkDestroyPipelineLayout(m_device->vkDevice, vkPipelineLayout, nullptr);
+		m_cleaned = true;
+	}
+}
+
+VkPipeline Pipeline::GraphicsPipeline()
+{
+	return vkPipelines[0];
 }
 
 

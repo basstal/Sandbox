@@ -8,6 +8,7 @@
 
 Buffer::Buffer(const std::shared_ptr<Device> device, VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties)
 {
+	m_device = device;
 	VkBufferCreateInfo bufferInfo{};
 	bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
 	bufferInfo.size = size;
@@ -34,4 +35,17 @@ Buffer::Buffer(const std::shared_ptr<Device> device, VkDeviceSize size, VkBuffer
 	}
 
 	vkBindBufferMemory(device->vkDevice, vkBuffer, vkDeviceMemory, 0);
+}
+Buffer::~Buffer()
+{
+	Cleanup();
+}
+void Buffer::Cleanup()
+{
+	if (!m_cleaned)
+	{
+		vkDestroyBuffer(m_device->vkDevice, vkBuffer, nullptr);
+		vkFreeMemory(m_device->vkDevice, vkDeviceMemory, nullptr);
+		m_cleaned = true;
+	}
 }
