@@ -25,7 +25,7 @@
         <UseDebugLibraries>{{~if Configuration == "Release"~}}false{{~else~}}true{{~end~}}</UseDebugLibraries>
         <PlatformToolset>v143</PlatformToolset>
         <CharacterSet>Unicode</CharacterSet>
-        <OutDir>{{OutputDir}}</OutDir>
+        <OutDir>{{OutputDir}}/</OutDir>
     </PropertyGroup>
 {{~end~}}
 

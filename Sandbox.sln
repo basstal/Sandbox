@@ -3,19 +3,19 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 VisualStudioVersion = 17.0.31314.256
 MinimumVisualStudioVersion = 10.0.40219.1
 
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Sources", "Sources", "{7f2b4c1a-6666-444a-95c5-845019f6f83f}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Sources", "Sources", "{02967146-9c3c-48ba-8af0-2232e17e6d5f}"
 EndProject
 
 
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Sandbox", "Sources/Sandbox.vcxproj", "{8ae40cfa-8629-41a7-8687-596d52746e2a}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Sandbox", "Sources/Sandbox.vcxproj", "{f9905c8f-3671-4e35-afc8-e40a6c5bbf7e}"
 EndProject
 
 
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Programs", "Programs", "{22486129-e523-44ac-bf96-9cea9a88f17a}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Programs", "Programs", "{090e7238-c96d-4011-926b-e6e12eeed770}"
 EndProject
 
 
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SandboxPipeWorker", "Programs/SandboxPipeWorker/SandboxPipeWorker.csproj", "{d99abf91-6722-411f-b39e-289c9054e031}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SandboxPipeWorker", "Programs/SandboxPipeWorker/SandboxPipeWorker.csproj", "{9031bca0-ce01-4fe0-a329-904a8192cf2f}"
 EndProject
 
 Global
@@ -24,18 +24,18 @@ Global
         Release|Any CPU = Release|Any CPU
     EndGlobalSection
     GlobalSection(ProjectConfigurationPlatforms) = postSolution
-                {8ae40cfa-8629-41a7-8687-596d52746e2a}.Debug|Any CPU.ActiveCfg = Debug|x64
-                {8ae40cfa-8629-41a7-8687-596d52746e2a}.Debug|Any CPU.Build.0 = Debug|x64
-                {8ae40cfa-8629-41a7-8687-596d52746e2a}.Release|Any CPU.ActiveCfg = Release|x64
-                {8ae40cfa-8629-41a7-8687-596d52746e2a}.Release|Any CPU.Build.0 = Release|x64
-                {d99abf91-6722-411f-b39e-289c9054e031}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-                {d99abf91-6722-411f-b39e-289c9054e031}.Debug|Any CPU.Build.0 = Debug|Any CPU
-                {d99abf91-6722-411f-b39e-289c9054e031}.Release|Any CPU.ActiveCfg = Release|Any CPU
-                {d99abf91-6722-411f-b39e-289c9054e031}.Release|Any CPU.Build.0 = Release|Any CPU
+                {f9905c8f-3671-4e35-afc8-e40a6c5bbf7e}.Debug|Any CPU.ActiveCfg = Debug|x64
+                {f9905c8f-3671-4e35-afc8-e40a6c5bbf7e}.Debug|Any CPU.Build.0 = Debug|x64
+                {f9905c8f-3671-4e35-afc8-e40a6c5bbf7e}.Release|Any CPU.ActiveCfg = Release|x64
+                {f9905c8f-3671-4e35-afc8-e40a6c5bbf7e}.Release|Any CPU.Build.0 = Release|x64
+                {9031bca0-ce01-4fe0-a329-904a8192cf2f}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+                {9031bca0-ce01-4fe0-a329-904a8192cf2f}.Debug|Any CPU.Build.0 = Debug|Any CPU
+                {9031bca0-ce01-4fe0-a329-904a8192cf2f}.Release|Any CPU.ActiveCfg = Release|Any CPU
+                {9031bca0-ce01-4fe0-a329-904a8192cf2f}.Release|Any CPU.Build.0 = Release|Any CPU
     EndGlobalSection
     GlobalSection(NestedProjects) = preSolution
-		{8ae40cfa-8629-41a7-8687-596d52746e2a} = {7f2b4c1a-6666-444a-95c5-845019f6f83f}
-		{d99abf91-6722-411f-b39e-289c9054e031} = {22486129-e523-44ac-bf96-9cea9a88f17a}
+		{f9905c8f-3671-4e35-afc8-e40a6c5bbf7e} = {02967146-9c3c-48ba-8af0-2232e17e6d5f}
+		{9031bca0-ce01-4fe0-a329-904a8192cf2f} = {090e7238-c96d-4011-926b-e6e12eeed770}
 	EndGlobalSection
 	
 EndGlobal

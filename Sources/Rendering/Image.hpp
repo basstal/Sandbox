@@ -5,18 +5,19 @@
 class Image
 {
 protected:
-	int _width;
-	int _height;
-	int _channels;
-	unsigned char *_pixels;
-	unsigned short _mipLevels;
+	int m_width;
+	int m_height;
+	int m_channels;
+	unsigned char* m_pixels;
+	unsigned short m_mipLevels;
+
 public:
-	static std::shared_ptr<Image> loadImage(const char *path);
-	int width() const { return _width; }
-	int height() const { return _height; }
-	int channels() const { return _channels; }
-	unsigned char *pixels() const { return _pixels; }
-	unsigned short mipLevels() const { return _mipLevels; }
+	static std::shared_ptr<Image> loadImage(const char* path);
+	int width() const { return m_width; }
+	int height() const { return m_height; }
+	int channels() const { return m_channels; }
+	unsigned char* pixels() const { return m_pixels; }
+	unsigned short mipLevels() const { return m_mipLevels; }
 	Image();
 	~Image();
 };

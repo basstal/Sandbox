@@ -4,32 +4,36 @@
 #include <stdexcept>
 #include <cmath>
 
+#include "Base/Device.hpp"
+#include "Components/Buffer.hpp"
+
 Image::Image()
 {
-	_pixels = nullptr;
-	_width = 0;
-	_height = 0;
-	_channels = 0;
+	m_pixels = nullptr;
+	m_width = 0;
+	m_height = 0;
+	m_channels = 0;
 }
 
 Image::~Image()
 {
-	if (_pixels != nullptr)
+	if (m_pixels != nullptr)
 	{
-		stbi_image_free(_pixels);
+		stbi_image_free(m_pixels);
 	}
 }
 
-std::shared_ptr<Image> Image::loadImage(const char *path)
+std::shared_ptr<Image> Image::loadImage(const char* path)
 {
 	std::shared_ptr<Image> image = std::make_shared<Image>();
-	stbi_uc *pixels = stbi_load(path, &image->_width, &image->_height, &image->_channels, STBI_rgb_alpha);
+	stbi_uc* pixels = stbi_load(path, &image->m_width, &image->m_height, &image->m_channels, STBI_rgb_alpha);
 	//std::cout<< "load image finished" << std::endl;
 	if (!pixels)
 	{
 		throw std::runtime_error("failed to load texture image!");
 	}
-	image->_pixels = pixels;
-	image->_mipLevels = static_cast<unsigned short>(std::floor(std::log2(std::max(image->_width, image->_height)))) + 1;
+	image->m_pixels = pixels;
+	image->m_mipLevels = static_cast<unsigned short>(std::floor(std::log2(std::max(image->m_width, image->m_height)))) +
+		1;
 	return image;
 }

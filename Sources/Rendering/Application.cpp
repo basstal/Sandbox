@@ -11,7 +11,9 @@
 #include "NativeFileSystem.hpp"
 #include "Components/RenderPass.hpp"
 #include "Base/Device.hpp"
+#include "Components/Buffer.hpp"
 #include "Components/CommandPool.hpp"
+#include "Objects/RenderTexture.hpp"
 
 
 std::vector<const char*> Application::GetRequiredExtensions()
@@ -90,8 +92,12 @@ Application::Application()
 	commandPool = std::make_shared<CommandPool>(device);
 	std::filesystem::path assetsDir = FileSystemBase::getAssetsDir();
 
-	auto model = Model::loadModel((assetsDir / "Models/viking_room.obj").string().c_str());
-	auto image = Image::loadImage((assetsDir / "Textures/viking_room.png").string().c_str());
+	model = Model::loadModel((assetsDir / "Models/viking_room.obj").string().c_str());
+	image = Image::loadImage((assetsDir / "Textures/viking_room.png").string().c_str());
+	renderTexture = std::make_shared<RenderTexture>(device, image, commandPool);
+	vertexBuffer = std::make_shared<VertexBuffer>(device, model, commandPool);
+	indexBuffer = std::make_shared<IndexBuffer>(device, model, commandPool);
+	uniformBuffers = std::make_shared<UniformBuffers>(device);
 }
 
 Application::~Application()

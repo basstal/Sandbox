@@ -68,8 +68,7 @@ Swapchain::~Swapchain()
 void Swapchain::CreateFramebuffers(const std::shared_ptr<RenderPass>& renderPass)
 {
 	VkImage colorImage, depthImage;
-	CreateImage(vkExtent2D.width, vkExtent2D.height, 1, vkFormat, VK_IMAGE_TILING_OPTIMAL,
-	            VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
+	CreateImage(vkExtent2D.width, vkExtent2D.height, 1, vkFormat, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
 	            VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, colorImage, m_vkColorImageMemory);
 	VkImageView colorImageView = m_device->CreateImageView(colorImage, vkFormat, VK_IMAGE_ASPECT_COLOR_BIT, 1);
 
@@ -147,7 +146,7 @@ void Swapchain::CreateImageViews()
 
 
 void Swapchain::CreateImage(uint32_t width, uint32_t height, uint32_t mipLevels, VkFormat format, VkImageTiling tiling,
-                            VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& vkImage, VkDeviceMemory& m_vkDeviceMemory)
+                            VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& vkImage, VkDeviceMemory& vkDeviceMemory)
 {
 	VkImageCreateInfo imageInfo{};
 	imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
@@ -177,10 +176,10 @@ void Swapchain::CreateImage(uint32_t width, uint32_t height, uint32_t mipLevels,
 	allocInfo.allocationSize = memRequirements.size;
 	allocInfo.memoryTypeIndex = Application::FindMemoryType(m_device->vkPhysicalDevice, memRequirements.memoryTypeBits, properties);
 
-	if (vkAllocateMemory(m_device->vkDevice, &allocInfo, nullptr, &m_vkDeviceMemory) != VK_SUCCESS)
+	if (vkAllocateMemory(m_device->vkDevice, &allocInfo, nullptr, &vkDeviceMemory) != VK_SUCCESS)
 	{
 		throw std::runtime_error("failed to allocate image memory!");
 	}
 
-	vkBindImageMemory(m_device->vkDevice, vkImage, m_vkDeviceMemory, 0);
+	vkBindImageMemory(m_device->vkDevice, vkImage, vkDeviceMemory, 0);
 }

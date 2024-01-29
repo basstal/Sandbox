@@ -164,12 +164,10 @@ public class Module
             }
 
             // 扫描 SourceDirectory 下所有 cpp 文件
-            foreach (var file in SourceDirectory!.EnumerateFiles())
+            var sourceFiles = SourceDirectory!.SearchFiles("*.cpp");
+            foreach (var file in sourceFiles)
             {
-                if (file.HasExtension(".cpp"))
-                {
-                    CompileEnvironment.SourceFiles.Add(file);
-                }
+                CompileEnvironment.SourceFiles.Add(file);
             }
         }
     }

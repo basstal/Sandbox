@@ -90,13 +90,35 @@ void HelloTriangleApplication::initVulkan()
 	swapChainFramebuffers = application->swapchain->vkFramebuffers;
 	commandPool = application->commandPool->vkCommandPool;
 	// createCommandPool();
-	loadModel();
-	createTextureImage();
-	createTextureImageView();
-	createTextureSampler();
-	createVertexBuffer();
-	createIndexBuffer();
-	createUniformBuffers();
+	// loadModel();
+	// createTextureImage();
+	textureImage = application->renderTexture->vkImage;
+	textureImageMemory = application->renderTexture->vkDeviceMemory;
+	image = application->image;
+	model= application->model;
+	textureImageView = application->renderTexture->vkImageView;
+	// createTextureImageView();
+	textureSampler = application->renderTexture->vkSampler;
+	// createTextureSampler();
+	// createVertexBuffer();
+	vertexBuffer = application->vertexBuffer->buffer->vkBuffer;
+	vertexBufferMemory = application->vertexBuffer->buffer->vkDeviceMemory;
+	
+	// createIndexBuffer();
+	indexBuffer = application->indexBuffer->buffer->vkBuffer;
+	indexBufferMemory = application->indexBuffer->buffer->vkDeviceMemory;
+	
+	// createUniformBuffers();
+	auto size = application->uniformBuffers->uniformBuffers.size();
+	uniformBuffers.resize(size);
+	uniformBuffersMapped.resize(size);
+	uniformBuffersMemory.resize(size);
+	for(int i = 0 ; i < size; ++i)
+	{
+		uniformBuffers[i] = application->uniformBuffers->uniformBuffers[i]->vkBuffer;
+		uniformBuffersMemory[i] = application->uniformBuffers->uniformBuffers[i]->vkDeviceMemory;
+		uniformBuffersMapped[i] = application->uniformBuffers->uniformBuffersMapped[i];
+	}
 	createDescriptorPool();
 	createDescriptorSets();
 	createCommandBuffers();

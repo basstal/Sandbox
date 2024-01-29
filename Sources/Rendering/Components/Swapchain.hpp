@@ -10,7 +10,7 @@ class Swapchain
 	VkPresentModeKHR ChooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes);
 	void CreateImageViews();
 	void CreateImage(uint32_t width, uint32_t height, uint32_t mipLevels, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& vkImage,
-	                 VkDeviceMemory& m_vkDeviceMemory);
+	                 VkDeviceMemory& vkDeviceMemory);
 	std::shared_ptr<Device> m_device;
 	VkDeviceMemory m_vkColorImageMemory;
 	VkDeviceMemory m_vkDepthImageMemory;

@@ -3,6 +3,7 @@
 #include <vector>
 #include <vulkan/vulkan_core.h>
 
+#include "Model.hpp"
 #include "Components/RenderPass.hpp"
 #include "Base/Device.hpp"
 #include "Base/Surface.hpp"
@@ -10,6 +11,10 @@
 #include "Components/Pipeline.hpp"
 #include "Components\DescriptorSet.hpp"
 #include "Components/Swapchain.hpp"
+#include "Objects/IndexBuffer.hpp"
+#include "Objects/RenderTexture.hpp"
+#include "Objects/UniformBuffers.hpp"
+#include "Objects/VertexBuffer.hpp"
 
 class Application
 {
@@ -35,6 +40,15 @@ public:
 	std::shared_ptr<DescriptorSet> descriptorSet;
 	std::shared_ptr<Pipeline> pipeline;
 	std::shared_ptr<CommandPool> commandPool;
+
+	// specific to usage
+	std::shared_ptr<RenderTexture> renderTexture;
+	std::shared_ptr<Model> model;
+	std::shared_ptr<Image> image;
+	std::shared_ptr<VertexBuffer> vertexBuffer;
+	std::shared_ptr<IndexBuffer> indexBuffer;
+	std::shared_ptr<UniformBuffers> uniformBuffers;
+
 	Application();
 	~Application();
 	void CreateSwapchain();
