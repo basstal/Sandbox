@@ -2,9 +2,9 @@
 #include <memory>
 #include <vulkan/vulkan_core.h>
 
-#include "Image.hpp"
-#include "Base/Device.hpp"
-#include "Components/CommandResource.hpp"
+#include "Rendering/Image.hpp"
+#include "Rendering/Base/Device.hpp"
+#include "Rendering/Components/CommandResource.hpp"
 
 
 class RenderTexture

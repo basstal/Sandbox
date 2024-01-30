@@ -9,4 +9,3 @@ compile_environment:
     - stb
     - assimp
     - vulkan
-    - Infrastructures

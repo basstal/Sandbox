@@ -1,7 +1,7 @@
 ﻿#pragma once
-#include "Base/Device.hpp"
-#include "Objects/RenderTexture.hpp"
-#include "Objects/UniformBuffers.hpp"
+#include "Rendering/Base/Device.hpp"
+#include "Rendering/Objects/RenderTexture.hpp"
+#include "Rendering/Objects/UniformBuffers.hpp"
 
 class DescriptorResource
 {

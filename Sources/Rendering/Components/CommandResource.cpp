@@ -4,7 +4,7 @@
 #include <stdexcept>
 #include <vulkan/vulkan_core.h>
 
-#include "Base/Device.hpp"
+#include "Rendering/Base/Device.hpp"
 
 
 CommandResource::CommandResource(const std::shared_ptr<Device>& device)

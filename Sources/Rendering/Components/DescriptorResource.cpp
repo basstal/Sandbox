@@ -4,10 +4,10 @@
 #include <stdexcept>
 #include <vulkan/vulkan_core.h>
 
-#include "Camera.hpp"
-#include "Base/Device.hpp"
-#include "Objects/RenderTexture.hpp"
-#include "Objects/UniformBuffers.hpp"
+#include "Rendering/Camera.hpp"
+#include "Rendering/Base/Device.hpp"
+#include "Rendering/Objects/RenderTexture.hpp"
+#include "Rendering/Objects/UniformBuffers.hpp"
 
 
 DescriptorResource::DescriptorResource(const std::shared_ptr<Device>& device):

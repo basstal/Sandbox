@@ -4,8 +4,8 @@
 #include <memory>
 #include <stdexcept>
 
-#include "Base/Device.hpp"
-#include "Swapchain.hpp"
+#include "Rendering/Base/Device.hpp"
+#include "Rendering/Components/Swapchain.hpp"
 
 
 RenderPass::RenderPass(const std::shared_ptr<Device>& device, const std::shared_ptr<Swapchain>& swapchain)

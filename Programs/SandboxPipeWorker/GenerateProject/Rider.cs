@@ -26,7 +26,6 @@ public class Rider : IProjectGenerator
         Project sourceProject = new Project();
         sourceProject.ProjectType = ProjectType.Cpp;
         sourceProject.PrimaryProjectName = "Sandbox";
-        sourceProject.PrimaryCompileEnvironment.SourceFiles.Add(new FileReference("Sources/main.cpp"));
         sourceProject.ProjectDirectory = sourceFolder.ProjectDirectory;
         sourceProject.GeneratedProjectPath = sourceProject.ProjectDirectory.GetFile(
             $"{sourceProject.PrimaryProjectName}{Project.ProjectTypeExtensionMapping[sourceProject.ProjectType]}");
@@ -55,7 +54,10 @@ public class Rider : IProjectGenerator
         {
             Projects = projects,
             FolderProjects = projects.Where(proj => proj.ProjectType == ProjectType.Folder),
-            Configurations = new[] { "Debug", "Release" },
+            Configurations = new[]
+            {
+                "Debug", "Release"
+            },
         }, member => member.Name);
         File.WriteAllText(Sandbox.RootDirectory.GetFile("Sandbox.sln").FullName, primaryProjectFile);
         return true;
@@ -122,7 +124,10 @@ public class Rider : IProjectGenerator
                 project.PrimaryCompileEnvironment.IncludePaths.SelectMany(include =>
                     include.SearchFiles("*.hpp")
                         .Select(file => file.GetRelativePath(sourceRelativeTo))),
-            Configurations = new[] { "Debug", "Release" },
+            Configurations = new[]
+            {
+                "Debug", "Release"
+            },
             AdditionalIncludeDirectories = string.Join(";", includeDirectoryReferences.Distinct().Select(directory => directory.FullName)),
             AdditionalDependencies = string.Join(";", additionalDependencies.Distinct().Select(file => file.FullName)),
             PostBuildCommandsPath = postBuildCommandsPath,

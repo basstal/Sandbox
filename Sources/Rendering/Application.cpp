@@ -8,7 +8,7 @@
 
 #include "Image.hpp"
 #include "Model.hpp"
-#include "NativeFileSystem.hpp"
+#include "Infrastructures/NativeFileSystem.hpp"
 #include "Components/RenderPass.hpp"
 #include "Base/Device.hpp"
 #include "Components/CommandResource.hpp"

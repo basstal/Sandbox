@@ -2,7 +2,7 @@
 #include <vector>
 #include <vulkan/vulkan_core.h>
 
-#include "Base/Device.hpp"
+#include "Rendering/Base/Device.hpp"
 
 class SyncObjects
 {

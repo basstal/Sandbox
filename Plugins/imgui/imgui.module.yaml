@@ -1,6 +1,9 @@
 type: Cpp
 compile_environment: 
   definitions: 
-  include_paths:
+  include_paths: 
+    - imgui
+    - imgui/backends
+    - imgui/misc/cpp
   cpp_version: Default
   dependencies:

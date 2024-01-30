@@ -1,9 +1,9 @@
 ﻿#include "VertexBuffer.hpp"
 
-#include "Model.hpp"
-#include "Base/Device.hpp"
-#include "Components/Buffer.hpp"
-#include "Components/CommandResource.hpp"
+#include "Rendering/Model.hpp"
+#include "Rendering/Base/Device.hpp"
+#include "Rendering/Components/Buffer.hpp"
+#include "Rendering/Components/CommandResource.hpp"
 
 
 VertexBuffer::VertexBuffer(const std::shared_ptr<Device>& device, const std::shared_ptr<Model>& model, const std::shared_ptr<CommandResource>& commandResource)

@@ -1,8 +1,8 @@
 ﻿#pragma once
 
-#include "DescriptorResource.hpp"
-#include "RenderPass.hpp"
-#include "Base/Device.hpp"
+#include "Rendering/Components/DescriptorResource.hpp"
+#include "Rendering/Components/RenderPass.hpp"
+#include "Rendering/Base/Device.hpp"
 
 class Pipeline
 {

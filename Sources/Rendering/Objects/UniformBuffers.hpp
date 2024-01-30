@@ -1,6 +1,6 @@
 ﻿#pragma once
-#include "Base/Device.hpp"
-#include "Components/Buffer.hpp"
+#include "Rendering/Base/Device.hpp"
+#include "Rendering/Components/Buffer.hpp"
 
 class UniformBuffers
 {

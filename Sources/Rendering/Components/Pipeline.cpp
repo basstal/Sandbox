@@ -2,9 +2,9 @@
 
 #include <stdexcept>
 
-#include "DescriptorResource.hpp"
-#include "RenderPass.hpp"
-#include "Vertex.hpp"
+#include "Rendering/Components/DescriptorResource.hpp"
+#include "Rendering/Components/RenderPass.hpp"
+#include "Rendering/Vertex.hpp"
 
 
 Pipeline::Pipeline(const std::shared_ptr<Device>& device, const std::shared_ptr<DescriptorResource> descriptorSet, const std::shared_ptr<RenderPass> renderPass)

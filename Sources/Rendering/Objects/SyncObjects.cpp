@@ -3,7 +3,7 @@
 #include <memory>
 #include <stdexcept>
 
-#include "Base/Device.hpp"
+#include "Rendering/Base/Device.hpp"
 
 SyncObjects::SyncObjects(const std::shared_ptr<Device>& device)
 {

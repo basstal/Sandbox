@@ -3,8 +3,8 @@
 #include <algorithm>
 #include <stdexcept>
 
-#include "Application.hpp"
-#include "Framebuffer.hpp"
+#include "Rendering/Application.hpp"
+#include "Rendering/Components/Framebuffer.hpp"
 
 Swapchain::Swapchain(const std::shared_ptr<Surface>& surface, const std::shared_ptr<Device>& device)
 {

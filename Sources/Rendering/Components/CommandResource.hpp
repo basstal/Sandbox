@@ -1,5 +1,5 @@
 ﻿#pragma once
-#include "Base/Device.hpp"
+#include "Rendering/Base/Device.hpp"
 
 class CommandResource
 {

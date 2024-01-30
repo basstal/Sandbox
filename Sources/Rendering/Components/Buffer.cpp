@@ -2,8 +2,8 @@
 
 #include <stdexcept>
 
-#include "Application.hpp"
-#include "Base/Device.hpp"
+#include "Rendering/Application.hpp"
+#include "Rendering/Base/Device.hpp"
 
 
 Buffer::Buffer(const std::shared_ptr<Device> device, VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties)

@@ -1,7 +1,7 @@
 ﻿#pragma once
-#include "Model.hpp"
-#include "Components/CommandResource.hpp"
-#include "Components/Buffer.hpp"
+#include "Rendering/Model.hpp"
+#include "Rendering/Components/CommandResource.hpp"
+#include "Rendering/Components/Buffer.hpp"
 
 class IndexBuffer
 {

@@ -3,8 +3,8 @@
 #include <memory>
 #include <string>
 
-#include "Application.hpp"
-#include "NativeFileSystem.hpp"
+#include "Rendering/Application.hpp"
+#include "Infrastructures/NativeFileSystem.hpp"
 int main()
 {
 	std::string binariesDir = FileSystemBase::getBinariesDir();

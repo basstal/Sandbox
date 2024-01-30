@@ -175,23 +175,14 @@ public class Module
     public static IEnumerable<FileReference> EnumerateModuleFiles()
     {
         HashSet<FileReference> moduleFiles = new();
+
         foreach (DirectoryReference baseDirectory in EnumerateBaseDirectories())
         {
-            foreach (DirectoryReference subDirectory in baseDirectory.EnumerateDirectories())
+            var searchFiles = baseDirectory.SearchFiles($"*{ModuleFileExtension}");
+            foreach (var searchFile in searchFiles)
             {
-                var subDirectoryName = subDirectory.GetDirectoryName();
-                if (subDirectoryName.StartsWith(".", StringComparison.Ordinal))
-                {
-                    continue;
-                }
-
-                foreach (FileReference fileReference in subDirectory.EnumerateFiles())
-                {
-                    if (fileReference.HasExtension(ModuleFileExtension))
-                    {
-                        moduleFiles.Add(fileReference);
-                    }
-                }
+                // TODO:是否需要检测同名模块
+                moduleFiles.Add(searchFile);
             }
         }
 

@@ -5,9 +5,9 @@
 #include <stdexcept>
 #include <vulkan/vulkan_core.h>
 
-#include "Application.hpp"
-#include "Image.hpp"
-#include "Components/Buffer.hpp"
+#include "Rendering/Application.hpp"
+#include "Rendering/Image.hpp"
+#include "Rendering/Components/Buffer.hpp"
 
 
 RenderTexture::RenderTexture(const std::shared_ptr<Device>& device, const std::shared_ptr<Image>& image, const std::shared_ptr<CommandResource>& commandResource)

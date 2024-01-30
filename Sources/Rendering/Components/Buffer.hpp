@@ -1,7 +1,7 @@
 ﻿#pragma once
 #include <inttypes.h>
 
-#include "Base/Device.hpp"
+#include "Rendering/Base/Device.hpp"
 
 class Buffer
 {
