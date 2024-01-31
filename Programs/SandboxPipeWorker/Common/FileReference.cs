@@ -67,4 +67,16 @@ public class FileReference : FileSystemBase, IEquatable<FileReference>, ICompara
     {
         return new DirectoryReference(Path.GetDirectoryName(FullName)!);
     }
+
+    public override FileReference[] GetFiles(string pattern, bool recursive = true, bool useRegex = false)
+    {
+        // TODO: pattern match 
+
+        return new[] { this };
+    }
+
+    public override bool Exists()
+    {
+        return File.Exists(FullName);
+    }
 }

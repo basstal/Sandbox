@@ -6,20 +6,21 @@ public class CompileEnvironment
 {
     public CppVersion CppVersion = CppVersion.Default;
     public List<string> Definitions = new List<string>();
-    public List<DirectoryReference> IncludePaths = new List<DirectoryReference>();
+    public List<FileSystemBase> IncludePaths = new List<FileSystemBase>();
     public List<FileReference> SourceFiles = new List<FileReference>();
     public List<Module> Dependencies = new List<Module>();
+    public List<Project> ProjectDependencies = new List<Project>();
 
-    public List<DirectoryReference> DependencyIncludePaths =>
+    public List<FileSystemBase> DependencyIncludePaths =>
         Dependencies
             .SelectMany(dependency => dependency.CompileEnvironment?.IncludePaths ??
-                                      dependency.PrecompileEnvironment?.IncludePaths ?? new List<DirectoryReference>())
+                                      dependency.PrecompileEnvironment?.IncludePaths ?? new List<FileSystemBase>())
             .ToList();
 
     public IEnumerable<DirectoryReference> EnumerateAdditionalIncludeDirectories()
     {
         var directIncludePaths = IncludePaths.ToList();
         directIncludePaths.AddRange(DependencyIncludePaths);
-        return directIncludePaths.Distinct();
+        return directIncludePaths.OfType<DirectoryReference>().Distinct();
     }
 }

@@ -23,7 +23,9 @@ public enum ModuleType
 
 public enum ProjectType
 {
+    None,
     Cpp,
     CSharp,
+    Library,
     Folder,
 }

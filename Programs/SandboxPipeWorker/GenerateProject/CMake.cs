@@ -7,7 +7,7 @@ public class CMake : IProjectGenerator
 {
     public bool GenerateProjectFiles(PlatformProjectGeneratorCollection platformProjectGeneratorCollection)
     {
-        Project project = new Project();
+        Project project = new Project("Sandbox");
         project.AddModules();
         // TODO:替换绝对路径
         project.AddSourceFile(new FileReference("Source/Main.cpp"));

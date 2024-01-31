@@ -24,4 +24,32 @@ public abstract class FileSystemBase
     {
         return Path.GetRelativePath(relativeTo, FullName).Replace('\\', '/');
     }
+
+    public abstract FileReference[] GetFiles(string pattern, bool recursive = true, bool useRegex = false);
+
+    public static FileSystemBase Create(string path, string? relativeTo = null)
+    {
+        var combinedPath = path;
+        if (!Path.IsPathRooted(path))
+        {
+            relativeTo ??= Sandbox.RootDirectory.FullName;
+            combinedPath = Path.Combine(relativeTo, path);
+        }
+
+        var file = new FileReference(combinedPath);
+        if (file.Exists())
+        {
+            return file;
+        }
+
+        var directory = new DirectoryReference(combinedPath);
+        if (directory.Exists())
+        {
+            return directory;
+        }
+
+        throw new Exception($"{combinedPath} don't exist.");
+    }
+
+    public abstract bool Exists();
 }

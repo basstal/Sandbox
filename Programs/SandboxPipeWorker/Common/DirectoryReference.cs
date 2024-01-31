@@ -83,7 +83,7 @@ public class DirectoryReference : FileSystemBase, IEquatable<DirectoryReference>
         return new FileReference(Path.Combine(FullName, fileName));
     }
 
-    public List<FileReference> SearchFiles(string pattern, bool useRegex = false)
+    public List<FileReference> SearchFiles(string pattern, bool useRegex = false, bool recursive = true)
     {
         var matchedFiles = new List<FileReference>();
         // 确保提供的目录存在
@@ -97,7 +97,7 @@ public class DirectoryReference : FileSystemBase, IEquatable<DirectoryReference>
         {
             try
             {
-                matchedFiles.AddRange(Directory.GetFiles(FullName, pattern, SearchOption.AllDirectories)
+                matchedFiles.AddRange(Directory.GetFiles(FullName, pattern, recursive ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly)
                     .Select(file => new FileReference(file)));
             }
             catch (Exception ex)
@@ -126,5 +126,16 @@ public class DirectoryReference : FileSystemBase, IEquatable<DirectoryReference>
         }
 
         return matchedFiles;
+    }
+
+    public override FileReference[] GetFiles(string pattern, bool recursive = true, bool useRegex = false)
+    {
+        var searchResult = SearchFiles(pattern, recursive: recursive, useRegex: useRegex);
+        return searchResult.ToArray();
+    }
+
+    public override bool Exists()
+    {
+        return Directory.Exists(FullName);
     }
 }

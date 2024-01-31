@@ -80,4 +80,14 @@
         <ClInclude Include="{{RelativeHeaderPath}}" />
         {{~end~}}
     </ItemGroup>
+    
+    <ItemGroup>
+        {{~for ReferenceProject in ReferenceProjects~}}
+        <ProjectReference Include="{{ReferenceProject.RelativePathToProject}}">
+            <Project>{%{{}%}{{ReferenceProject.Guid}}{%{}}%}</Project>
+            <Name>{{ReferenceProject.PrimaryProjectName}}</Name>
+        </ProjectReference>
+        {{~end~}}
+    </ItemGroup>
+
 </Project>

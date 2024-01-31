@@ -12,12 +12,17 @@ for Project in Projects
 if Project.ProjectType == "Folder"
 ~}}
 
-Project("{%{{}%}{{Project.SlnProjectTypeGuid}}{%{}}%}") = "{{Project.PrimaryProjectName}}", "{{Project.ProjectDirectory.RelativeEnginePath}}", "{%{{}%}{{Project.Guid}}{%{}}%}"
+Project("{%{{}%}2150E333-8FDC-42A3-9474-1A3956D46DE8{%{}}%}") = "{{Project.PrimaryProjectName}}", "{{Project.ProjectDirectory.RelativeEnginePath}}", "{%{{}%}{{Project.Guid}}{%{}}%}"
 EndProject
 
-{{~else~}}
+{{~else if Project.ProjectType == "Cpp"~}}
 
-Project("{%{{}%}{{Project.SlnProjectTypeGuid}}{%{}}%}") = "{{Project.PrimaryProjectName}}", "{{Project.GeneratedProjectPath.RelativeEnginePath}}", "{%{{}%}{{Project.Guid}}{%{}}%}"
+Project("{%{{}%}8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942{%{}}%}") = "{{Project.PrimaryProjectName}}", "{{Project.GeneratedProjectPath.RelativeEnginePath}}", "{%{{}%}{{Project.Guid}}{%{}}%}"
+EndProject
+
+{{~else if Project.ProjectType == "CSharp"~}}
+
+Project("{%{{}%}FAE04EC0-301F-11D3-BF4B-00C04F79EFBC{%{}}%}") = "{{Project.PrimaryProjectName}}", "{{Project.GeneratedProjectPath.RelativeEnginePath}}", "{%{{}%}{{Project.Guid}}{%{}}%}"
 EndProject
 
 {{~
@@ -42,8 +47,10 @@ Global
                     $TargetPlatforms = $CppPlatforms
                 else if Project.ProjectType == "CSharp"
                     $TargetPlatforms = $CSharpPlatforms
+                else
+                    $TargetPlatforms = []
                 end
-                if Project.ProjectType != "Folder"
+                if !$TargetPlatforms.empty?
                     for SolutionPlatform in $SolutionPlatforms
                         for TargetPlatform in $TargetPlatforms
                 ~}}
