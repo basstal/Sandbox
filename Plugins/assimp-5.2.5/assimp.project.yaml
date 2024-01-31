@@ -1,5 +1,6 @@
 type: Library
-include_paths: include
+additional_include_paths: 
+  - include
 dll_paths:
   - bin/x64/assimp-vc143-mt.dll
 lib_paths:

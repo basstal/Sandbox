@@ -21,7 +21,11 @@
 
 {{~for Configuration in Configurations~}}
     <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='{{Configuration}}|{{$Platform}}'" Label="Configuration">
+        {{~if Project.PrimaryProjectName == "Sandbox"~}}
         <ConfigurationType>Application</ConfigurationType>
+        {{~else~}}
+        <ConfigurationType>StaticLibrary</ConfigurationType>
+        {{~end~}}
         <UseDebugLibraries>{{~if Configuration == "Release"~}}false{{~else~}}true{{~end~}}</UseDebugLibraries>
         <PlatformToolset>v143</PlatformToolset>
         <CharacterSet>Unicode</CharacterSet>
@@ -63,11 +67,13 @@
             <OptimizeReferences>true</OptimizeReferences>
             {{~end~}}
         </Link>
+        {{~if Project.PrimaryProjectName == "Sandbox"~}}
         <PostBuildEvent>
           <Command>
             PowerShell -ExecutionPolicy Bypass -File "{{PostBuildCommandsPath}}"
           </Command>
         </PostBuildEvent>
+        {{~end~}}
     </ItemDefinitionGroup>
 {{~end~}}
     <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
@@ -87,6 +93,12 @@
             <Project>{%{{}%}{{ReferenceProject.Guid}}{%{}}%}</Project>
             <Name>{{ReferenceProject.PrimaryProjectName}}</Name>
         </ProjectReference>
+        {{~end~}}
+    </ItemGroup>
+    
+    <ItemGroup>
+        {{~for RawFile in RawFiles~}}
+        <None Include="{{RawFile.FullName}}" />
         {{~end~}}
     </ItemGroup>
 

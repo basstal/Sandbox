@@ -1,4 +1,5 @@
 type: Library
-include_paths: include
+additional_include_paths: 
+  - include
 lib_paths:
   - lib-vc2022/glfw3.lib

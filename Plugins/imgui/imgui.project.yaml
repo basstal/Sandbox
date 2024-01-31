@@ -1,7 +1,7 @@
 type: Cpp
-compile_environment: 
-  definitions: 
-  include_paths: 
+compile_environment:
+  definitions:
+  include_paths:
     - imgui/imconfig.h
     - imgui/imgui.h
     - imgui/imgui_internal.h
@@ -10,9 +10,11 @@ compile_environment:
     - imgui/imstb_truetype.h
     - imgui/backends/imgui_impl_vulkan.h
     - imgui/misc/cpp/imgui_stdlib.h
-    
+  additional_include_paths:
+    - imgui
   cpp_version: Default
   dependencies:
+    - vulkan
   source_paths:
     - imgui/imgui_demo.cpp
     - imgui/imgui_draw.cpp

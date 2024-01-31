@@ -1,7 +1,10 @@
 type: Cpp
-compile_environment: 
-  definitions: 
+compile_environment:
+  definitions:
   include_paths:
+    - .
+  additional_include_paths:
+    - .
   cpp_version: Default
   dependencies:
     - glfw

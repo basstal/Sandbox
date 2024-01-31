@@ -77,6 +77,21 @@ public class Module
         return module;
     }
 
+    internal List<FileReference> ReadIncludePaths(YamlMappingNode yamlMappingNode)
+    {
+        var result = new List<FileReference>();
+        if (yamlMappingNode.Children.ContainsKey("include_paths") && yamlMappingNode["include_paths"] is YamlSequenceNode includePathsSequence)
+        {
+            foreach (var includePath in includePathsSequence)
+            {
+                var rawReference = FileSystemBase.Create(includePath.ToString(), SourceDirectory!.FullName);
+                result.AddRange(rawReference.GetFiles(".*\\.h(pp)?", useRegex: true));
+            }
+        }
+
+        return result;
+    }
+
     internal void ParseHeaderOnlyLibrary(YamlMappingNode root, DirectoryReference sourceDirectory)
     {
         PrecompileEnvironment ??= new PrecompileEnvironment();
@@ -85,15 +100,7 @@ public class Module
             throw new Exception("SourceDirectory is null!");
         }
 
-        if (root["include_paths"] is YamlSequenceNode includePaths)
-        {
-            PrecompileEnvironment.IncludePaths.AddRange(includePaths.Select(x =>
-                sourceDirectory.Combine(x.ToString())));
-        }
-        else if (root["include_paths"] is YamlScalarNode includePath)
-        {
-            PrecompileEnvironment.IncludePaths.Add(SourceDirectory.Combine(includePath.ToString()));
-        }
+        PrecompileEnvironment.IncludePaths.AddRange(ReadIncludePaths(root));
     }
 
     internal void ParseStaticLibrary(YamlMappingNode root, DirectoryReference sourceDirectory)
@@ -131,12 +138,12 @@ public class Module
             }
 
             var includePaths = compileEnvironmentMapping["include_paths"];
-            CompileEnvironment.IncludePaths.Add(sourceDirectory);
+            CompileEnvironment.AdditionalIncludePaths.Add(sourceDirectory);
             if (includePaths is YamlSequenceNode includePathsSequence)
             {
                 foreach (var includePath in includePathsSequence)
                 {
-                    CompileEnvironment.IncludePaths.Add(new DirectoryReference(includePath.ToString()));
+                    CompileEnvironment.AdditionalIncludePaths.Add(new DirectoryReference(includePath.ToString()));
                 }
             }
 

@@ -28,13 +28,18 @@ public class Project
 
     public static readonly Dictionary<ProjectType, string> ProjectTypeExtensionMapping = new()
     {
-        { ProjectType.Cpp, ".vcxproj" },
-        { ProjectType.CSharp, ".csproj" },
+        {
+            ProjectType.Cpp, ".vcxproj"
+        },
+        {
+            ProjectType.CSharp, ".csproj"
+        },
     };
 
     // public string SlnProjectTypeGuid => ProjectTypeGuidMapping[ProjectType];
     public FileReference? ParsedFile;
     public DirectoryReference? ProjectDirectory;
+
     public FileReference? GeneratedProjectPath;
     public List<Project> SubProjects = new();
 
@@ -124,15 +129,6 @@ public class Project
         PrimaryCompileEnvironment.SourceFiles.Add(sourceFile);
     }
 
-    public void AddIncludePaths(List<DirectoryReference> includePaths)
-    {
-        foreach (DirectoryReference includePath in includePaths)
-        {
-            PrimaryCompileEnvironment.IncludePaths.Add(includePath);
-        }
-    }
-
-
     public Dictionary<string, string> PreprocessorDefinitions = new();
 
     public void AddPreprocessorDefinitions(List<string> definitions)
@@ -212,7 +208,7 @@ public class Project
         project.ProjectDirectory = fileReference.GetDirectory();
         if (ProjectTypeExtensionMapping.ContainsKey(project.ProjectType))
         {
-            project.GeneratedProjectPath = project.ProjectDirectory.GetFile($"{project.PrimaryProjectName}{ProjectTypeExtensionMapping[project.ProjectType]}");
+            project.GeneratedProjectPath = fileReference.GetDirectory().GetFile($"{project.PrimaryProjectName}{ProjectTypeExtensionMapping[project.ProjectType]}");
         }
 
         switch (project.ProjectType)
@@ -223,7 +219,7 @@ public class Project
             case ProjectType.Library:
                 project.ParseDynamicLibrary(root, fileReference.GetDirectory());
                 project.ParseStaticLibrary(root, fileReference.GetDirectory());
-                project.ParseHeaderOnlyLibrary(root, fileReference.GetDirectory());
+                project.ParseHeaderLibrary(root, fileReference.GetDirectory());
                 break;
             default:
                 throw new Exception($"Module type {project.ProjectType} not specified!\n{fileReference.FullName}");
@@ -233,7 +229,7 @@ public class Project
     }
 
 
-    internal void ParseHeaderOnlyLibrary(YamlMappingNode root, DirectoryReference sourceDirectory)
+    internal void ParseHeaderLibrary(YamlMappingNode root, DirectoryReference sourceDirectory)
     {
         PrecompileEnvironment ??= new PrecompileEnvironment();
         if (ProjectDirectory == null)
@@ -242,6 +238,7 @@ public class Project
         }
 
         PrecompileEnvironment.IncludePaths.AddRange(ReadIncludePaths(root));
+        PrecompileEnvironment.AdditionalIncludePaths.AddRange(ReadAdditionalIncludePaths(root));
     }
 
     internal void ParseStaticLibrary(YamlMappingNode root, DirectoryReference sourceDirectory)
@@ -266,17 +263,27 @@ public class Project
     internal List<FileReference> ReadIncludePaths(YamlMappingNode yamlMappingNode)
     {
         var result = new List<FileReference>();
-        if (!yamlMappingNode.Children.ContainsKey("include_paths"))
-        {
-            return result;
-        }
-
-        if (yamlMappingNode["include_paths"] is YamlSequenceNode includePathsSequence)
+        if (yamlMappingNode.Children.ContainsKey("include_paths") && yamlMappingNode["include_paths"] is YamlSequenceNode includePathsSequence)
         {
             foreach (var includePath in includePathsSequence)
             {
                 var rawReference = FileSystemBase.Create(includePath.ToString(), ProjectDirectory!.FullName);
                 result.AddRange(rawReference.GetFiles(".*\\.h(pp)?", useRegex: true));
+            }
+        }
+
+        return result;
+    }
+
+    internal List<DirectoryReference> ReadAdditionalIncludePaths(YamlMappingNode yamlMappingNode)
+    {
+        var result = new List<DirectoryReference>();
+
+        if (yamlMappingNode.Children.ContainsKey("additional_include_paths") && yamlMappingNode["additional_include_paths"] is YamlSequenceNode additionalIncludePathsSequence)
+        {
+            foreach (var additionalIncludePath in additionalIncludePathsSequence)
+            {
+                result.Add(ProjectDirectory!.Combine(additionalIncludePath.ToString()));
             }
         }
 
@@ -317,8 +324,8 @@ public class Project
                 }
             }
 
-            PrimaryCompileEnvironment.IncludePaths.Add(sourceDirectory);
             PrimaryCompileEnvironment.IncludePaths.AddRange(ReadIncludePaths(compileEnvironmentMapping));
+            PrimaryCompileEnvironment.AdditionalIncludePaths.AddRange(ReadAdditionalIncludePaths(compileEnvironmentMapping));
 
             var cppVersion = compileEnvironmentMapping["cpp_version"];
             Enum.TryParse(cppVersion.ToString(), out PrimaryCompileEnvironment.CppVersion);
@@ -353,20 +360,24 @@ public class Project
         var cppSourceInfos = new List<CppSourceInfo>();
         var sourceRelativeTo = ProjectDirectory!.FullName;
 
-        var additionalIncludeDirectories = PrimaryCompileEnvironment.EnumerateAdditionalIncludeDirectories();
-        var includeDirectoryReferences = additionalIncludeDirectories.ToList();
+        var includeDirectoryReferences = PrimaryCompileEnvironment.AdditionalIncludePaths.ToList();
         var additionalIncludeDirectoriesParameter = string.Join(";", includeDirectoryReferences.Select(directory => directory.FullName));
         var additionalDependencies = PrimaryCompileEnvironment.ProjectDependencies.SelectMany(module => module.PrecompileEnvironment?.LibPaths ?? FileReference.EmptyList).ToList();
         var dllPaths = PrimaryCompileEnvironment.ProjectDependencies.SelectMany(module => module.PrecompileEnvironment?.DllPaths ?? FileReference.EmptyList).ToList();
-        cppSourceInfos.AddRange(PrimaryCompileEnvironment.SourceFiles.Select(file => new CppSourceInfo(file.GetRelativePath(sourceRelativeTo), additionalIncludeDirectoriesParameter)));
+        cppSourceInfos.AddRange(
+            PrimaryCompileEnvironment.SourceFiles.Select(file => new CppSourceInfo(file.GetRelativePath(sourceRelativeTo), additionalIncludeDirectoriesParameter)));
         foreach (var dependency in PrimaryCompileEnvironment.ProjectDependencies.Where(project => project.ProjectType != ProjectType.None))
         {
-            var dependencyAdditionalIncludeDirectories = dependency.PrimaryCompileEnvironment.EnumerateAdditionalIncludeDirectories();
-            var dependencyDirectoryReferences = dependencyAdditionalIncludeDirectories.ToList();
-            includeDirectoryReferences.AddRange(dependencyDirectoryReferences);
+            includeDirectoryReferences.AddRange(dependency.PrimaryCompileEnvironment.AdditionalIncludePaths);
+            if (dependency.PrecompileEnvironment != null)
+            {
+                includeDirectoryReferences.AddRange(dependency.PrecompileEnvironment.AdditionalIncludePaths);
+            }
+
             // var dependencyAdditionalIncludeDirectoriesParameter = string.Join(";", dependencyDirectoryReferences.Select(directory => directory.FullName));
             // dependency.PrimaryCompileEnvironment.SourceFiles.ForEach(file => cppSourceInfos.Add(new CppSourceInfo(file.GetRelativePath(sourceRelativeTo), dependencyAdditionalIncludeDirectoriesParameter)));
-            additionalDependencies.AddRange(dependency.PrimaryCompileEnvironment.ProjectDependencies.SelectMany(module => module.PrecompileEnvironment?.LibPaths ?? FileReference.EmptyList));
+            additionalDependencies.AddRange(
+                dependency.PrimaryCompileEnvironment.ProjectDependencies.SelectMany(module => module.PrecompileEnvironment?.LibPaths ?? FileReference.EmptyList));
             dllPaths.AddRange(dependency.PrimaryCompileEnvironment.ProjectDependencies.SelectMany(module => module.PrecompileEnvironment?.DllPaths ?? FileReference.EmptyList));
         }
 
@@ -381,26 +392,22 @@ public class Project
         }, member => member.Name);
         var postBuildCommandsPath = ProjectDirectory.GetFile("PostBuildCommands.ps1").FullName;
         var referenceProjects = PrimaryCompileEnvironment.ProjectDependencies.Where(dependProject => dependProject.ProjectType == ProjectType.Cpp)
-            .Select(dependProject => new { dependProject.PrimaryProjectName, dependProject.Guid, RelativePathToProject = dependProject.GeneratedProjectPath!.GetRelativePath(ProjectDirectory.FullName) });
+            .Select(dependProject => new
+            {
+                dependProject.PrimaryProjectName,
+                dependProject.Guid,
+                RelativePathToProject = dependProject.GeneratedProjectPath!.GetRelativePath(ProjectDirectory.FullName)
+            });
+        var rawFiles = new List<FileReference>
+        {
+            ParsedFile!
+        };
         File.WriteAllText(postBuildCommandsPath, postBuildCommands);
         string primaryProjectFile = template.Render(new
         {
             Project = this,
             CppSourceInfos = cppSourceInfos,
-            RelativeHeaderPaths = PrimaryCompileEnvironment.IncludePaths.SelectMany(include =>
-            {
-                List<string> result = new List<string>();
-                if (include is DirectoryReference includeDirectory)
-                {
-                    result.AddRange(includeDirectory.SearchFiles(".*\\.h(pp)?", true).Select(file => file.GetRelativePath(sourceRelativeTo)));
-                }
-                else if (include is FileReference includeFile)
-                {
-                    result.Add(includeFile.GetRelativePath(sourceRelativeTo));
-                }
-
-                return result;
-            }),
+            RelativeHeaderPaths = PrimaryCompileEnvironment.IncludePaths.Select(include => include.GetRelativePath(sourceRelativeTo)),
             Configurations = new[]
             {
                 "Debug", "Release"
@@ -410,6 +417,7 @@ public class Project
             PostBuildCommandsPath = postBuildCommandsPath,
             OutputDir = outputDir,
             ReferenceProjects = referenceProjects,
+            RawFiles = rawFiles,
         }, member => member.Name);
         File.WriteAllText(GeneratedProjectPath!.FullName, primaryProjectFile);
     }
