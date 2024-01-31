@@ -1,23 +1,22 @@
 
 #include <iostream>
 #include <memory>
-#include <string>
 
+#include "Editor/ApplicationEditor.hpp"
 #include "Rendering/Application.hpp"
-#include "Infrastructures/NativeFileSystem.hpp"
 int main()
 {
-	std::string binariesDir = FileSystemBase::getBinariesDir();
-	FileSystemBase::addDllSearchPath(binariesDir + "/../ThirdPartyLibs");
+	// std::string binariesDir = FileSystemBase::getBinariesDir();
+	// FileSystemBase::addDllSearchPath(binariesDir + "/../ThirdPartyLibs");
 
 	try
 	{
-		// app.run();
 		auto application = std::make_unique<Application>();
+		auto applicationEditor = std::make_unique<ApplicationEditor>(application);
 		while (!glfwWindowShouldClose(application->surface->glfwWindow))
 		{
 			glfwPollEvents();
-			application->DrawFrame();
+			application->DrawFrame(applicationEditor);
 		}
 		vkDeviceWaitIdle(application->device->vkDevice);
 		application->Cleanup();

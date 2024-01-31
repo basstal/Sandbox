@@ -11,11 +11,14 @@
 #include "Components/Pipeline.hpp"
 #include "Components\DescriptorResource.hpp"
 #include "Components/Swapchain.hpp"
+
 #include "Objects/IndexBuffer.hpp"
 #include "Objects/RenderTexture.hpp"
 #include "Objects/SyncObjects.hpp"
 #include "Objects/UniformBuffers.hpp"
 #include "Objects/VertexBuffer.hpp"
+
+class ApplicationEditor;
 
 class Application
 {
@@ -53,12 +56,14 @@ public:
 	std::shared_ptr<UniformBuffers> uniformBuffers;
 	std::shared_ptr<SyncObjects> syncObjects;
 
+	glm::vec4 clearColor = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+
 	Application();
 	~Application();
 	void Cleanup();
 	void CreateSwapchain();
 	static uint32_t FindMemoryType(VkPhysicalDevice physicalDevice, uint32_t typeFilter, VkMemoryPropertyFlags properties);
-	void DrawFrame();
+	void DrawFrame(const std::unique_ptr<ApplicationEditor>& applicationEditor);
 	void RecreateSwapchain();
-	void RecordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex);
+	void RecordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex, const std::unique_ptr<ApplicationEditor>& applicationEditor);
 };

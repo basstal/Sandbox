@@ -9,12 +9,13 @@ compile_environment:
     - imgui/imstb_textedit.h
     - imgui/imstb_truetype.h
     - imgui/backends/imgui_impl_vulkan.h
-    - imgui/misc/cpp/imgui_stdlib.h
+    - imgui/backends/imgui_impl_glfw.h
   additional_include_paths:
     - imgui
   cpp_version: Default
   dependencies:
     - vulkan
+    - glfw
   source_paths:
     - imgui/imgui_demo.cpp
     - imgui/imgui_draw.cpp
@@ -22,4 +23,4 @@ compile_environment:
     - imgui/imgui_widgets.cpp
     - imgui/imgui.cpp
     - imgui/backends/imgui_impl_vulkan.cpp
-    - imgui/misc/cpp/imgui_stdlib.cpp
+    - imgui/backends/imgui_impl_glfw.cpp

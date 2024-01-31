@@ -120,11 +120,11 @@ QueueFamilyIndices Device::FindQueueFamilies(const VkPhysicalDevice& device)
 	uint32_t queueFamilyCount = 0;
 	vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, nullptr);
 
-	std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
-	vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, queueFamilies.data());
+	std::vector<VkQueueFamilyProperties> queueFamiliesFinder(queueFamilyCount);
+	vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, queueFamiliesFinder.data());
 	// We need to find at least one queue family that supports VK_QUEUE_GRAPHICS_BIT.
 	int i = 0;
-	for (const auto& queueFamily : queueFamilies)
+	for (const auto& queueFamily : queueFamiliesFinder)
 	{
 		if (queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT)
 		{
@@ -238,10 +238,10 @@ VkSampleCountFlagBits Device::GetMaxUsableSampleCount()
 
 void Device::CreateDevice()
 {
-	QueueFamilyIndices indices = FindQueueFamilies();
+	queueFamilies = FindQueueFamilies();
 
 	std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
-	std::set<uint32_t> uniqueQueueFamilies = {*indices.graphicsFamily, *indices.presentFamily};
+	std::set<uint32_t> uniqueQueueFamilies = {*queueFamilies.graphicsFamily, *queueFamilies.presentFamily};
 
 	float queuePriority = 1.0f;
 	for (uint32_t queueFamily : uniqueQueueFamilies)
@@ -271,8 +271,8 @@ void Device::CreateDevice()
 	{
 		throw std::runtime_error("failed to create logical device!");
 	}
-	vkGetDeviceQueue(vkDevice, *indices.graphicsFamily, 0, &graphicsQueue);
-	vkGetDeviceQueue(vkDevice, *indices.presentFamily, 0, &presentQueue);
+	vkGetDeviceQueue(vkDevice, *queueFamilies.graphicsFamily, 0, &graphicsQueue);
+	vkGetDeviceQueue(vkDevice, *queueFamilies.presentFamily, 0, &presentQueue);
 }
 
 VkImageView Device::CreateImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags, uint32_t mipLevels)

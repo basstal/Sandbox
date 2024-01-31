@@ -12,6 +12,7 @@
 #include "Components/RenderPass.hpp"
 #include "Base/Device.hpp"
 #include "Components/CommandResource.hpp"
+#include "Editor/ApplicationEditor.hpp"
 #include "Objects/RenderTexture.hpp"
 
 
@@ -152,7 +153,7 @@ uint32_t Application::FindMemoryType(VkPhysicalDevice physicalDevice, uint32_t t
 	throw std::runtime_error("failed to find suitable memory type!");
 }
 
-void Application::DrawFrame()
+void Application::DrawFrame(const std::unique_ptr<ApplicationEditor>& applicationEditor)
 {
 	vkWaitForFences(device->vkDevice, 1, &syncObjects->inFlightFences[m_currentFrame], VK_TRUE, UINT64_MAX);
 	uint32_t imageIndex;
@@ -170,7 +171,7 @@ void Application::DrawFrame()
 	// Only reset the fence if we are submitting work
 	vkResetFences(device->vkDevice, 1, &syncObjects->inFlightFences[m_currentFrame]);
 	vkResetCommandBuffer(commandResource->vkCommandBuffers[m_currentFrame], 0);
-	RecordCommandBuffer(commandResource->vkCommandBuffers[m_currentFrame], imageIndex);
+	RecordCommandBuffer(commandResource->vkCommandBuffers[m_currentFrame], imageIndex, applicationEditor);
 	uniformBuffers->UpdateUniformBuffer(m_currentFrame, swapchain->vkExtent2D);
 	VkSubmitInfo submitInfo{};
 	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -230,7 +231,7 @@ void Application::RecreateSwapchain()
 	swapchain->CreateFramebuffers(renderPass);
 }
 
-void Application::RecordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex)
+void Application::RecordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex, const std::unique_ptr<ApplicationEditor>& applicationEditor)
 {
 	VkCommandBufferBeginInfo beginInfo{};
 	beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -249,7 +250,7 @@ void Application::RecordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t im
 	renderPassInfo.renderArea.offset = {0, 0};
 	renderPassInfo.renderArea.extent = swapchain->vkExtent2D;
 	std::array<VkClearValue, 2> clearValues{};
-	clearValues[0].color = {{0.0f, 0.0f, 0.0f, 1.0f}};
+	clearValues[0].color = {{clearColor.r, clearColor.g, clearColor.b, clearColor.a}};
 	clearValues[1].depthStencil = {1.0f, 0};
 
 	renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
@@ -278,6 +279,9 @@ void Application::RecordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t im
 	vkCmdBindIndexBuffer(commandBuffer, indexBuffer->buffer->vkBuffer, 0, VK_INDEX_TYPE_UINT32);
 	vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->vkPipelineLayout, 0, 1, &descriptorResource->vkDescriptorSets[m_currentFrame], 0, nullptr);
 	vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(model->indices().size()), 1, 0, 0, 0);
+
+	applicationEditor->DrawFrame(*this, commandBuffer);
+
 	vkCmdEndRenderPass(commandBuffer);
 	if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS)
 	{

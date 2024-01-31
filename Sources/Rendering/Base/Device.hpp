@@ -41,6 +41,7 @@ public:
 	VkQueue graphicsQueue;
 	VkQueue presentQueue;
 	VkSampleCountFlagBits msaaSamples;
+	QueueFamilyIndices queueFamilies;
 	Device(const VkInstance& instance, const std::shared_ptr<Surface>& surface);
 	~Device();
 	const std::vector<const char*> GetDeviceExtensions() const;

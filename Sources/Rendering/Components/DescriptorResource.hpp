@@ -8,6 +8,7 @@ class DescriptorResource
 private:
 	std::shared_ptr<Device> m_device;
 	bool m_cleaned = false;
+	static const uint32_t DESCRIPTOR_POOL_SIZE = 10;
 
 public:
 	VkDescriptorSetLayout vkDescriptorSetLayout;
