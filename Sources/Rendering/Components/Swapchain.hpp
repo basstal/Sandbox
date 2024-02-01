@@ -23,7 +23,7 @@ class Swapchain
 	bool m_framebufferCreated = false;
 
 public:
-	static const VkFormat COLOR_FORMAT = VK_FORMAT_B8G8R8A8_UNORM;
+	static const VkFormat COLOR_FORMAT = VK_FORMAT_R8G8B8A8_UNORM;
 	static const VkColorSpaceKHR COLOR_SPACE = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
 	VkSwapchainKHR vkSwapchain;
 	std::vector<VkImage> vkImages;
