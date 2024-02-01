@@ -81,7 +81,7 @@ Application::Application()
 	surface = std::make_shared<Surface>(vkInstance);
 	device = std::make_shared<Device>(vkInstance, surface);
 	CreateSwapchain();
-	renderPass = std::make_shared<RenderPass>(device, swapchain);
+	renderPass = std::make_shared<RenderPass>(device, swapchain, RenderPassType::GAME_RENDER_PASS);
 	descriptorResource = std::make_shared<DescriptorResource>(device);
 	pipeline = std::make_shared<Pipeline>(device, descriptorResource, renderPass);
 	std::filesystem::path binariesDir = FileSystemBase::getBinariesDir();
@@ -231,22 +231,23 @@ void Application::RecreateSwapchain()
 	swapchain->CreateFramebuffers(renderPass);
 }
 
-void Application::RecordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex, const std::unique_ptr<ApplicationEditor>& applicationEditor)
+void Application::RecordCommandBuffer(VkCommandBuffer currentCommandBuffer, uint32_t imageIndex, const std::unique_ptr<ApplicationEditor>& applicationEditor)
 {
 	VkCommandBufferBeginInfo beginInfo{};
 	beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 	beginInfo.flags = 0; // Optional
 	beginInfo.pInheritanceInfo = nullptr; // Optional
 
-	if (vkBeginCommandBuffer(commandBuffer, &beginInfo) != VK_SUCCESS)
+	if (vkBeginCommandBuffer(currentCommandBuffer, &beginInfo) != VK_SUCCESS)
 	{
 		throw std::runtime_error("failed to begin recording command buffer!");
 	}
 
+	VkFramebuffer currentFramebuffer = swapchain->vkFramebuffers[imageIndex];
 	VkRenderPassBeginInfo renderPassInfo{};
 	renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
 	renderPassInfo.renderPass = renderPass->vkRenderPass;
-	renderPassInfo.framebuffer = swapchain->vkFramebuffers[imageIndex];
+	renderPassInfo.framebuffer = currentFramebuffer;
 	renderPassInfo.renderArea.offset = {0, 0};
 	renderPassInfo.renderArea.extent = swapchain->vkExtent2D;
 	std::array<VkClearValue, 2> clearValues{};
@@ -255,8 +256,8 @@ void Application::RecordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t im
 
 	renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
 	renderPassInfo.pClearValues = clearValues.data();
-	vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
-	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->GraphicsPipeline());
+	vkCmdBeginRenderPass(currentCommandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+	vkCmdBindPipeline(currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->GraphicsPipeline());
 
 	VkViewport viewport;
 	viewport.x = 0.0f;
@@ -265,25 +266,25 @@ void Application::RecordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t im
 	viewport.height = static_cast<float>(swapchain->vkExtent2D.height);
 	viewport.minDepth = 0.0f;
 	viewport.maxDepth = 1.0f;
-	vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
+	vkCmdSetViewport(currentCommandBuffer, 0, 1, &viewport);
 
 	VkRect2D scissor;
 	scissor.offset = {0, 0};
 	scissor.extent = swapchain->vkExtent2D;
-	vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
+	vkCmdSetScissor(currentCommandBuffer, 0, 1, &scissor);
 
 	VkBuffer vertexBuffers[] = {vertexBuffer->buffer->vkBuffer};
 	VkDeviceSize offsets[] = {0};
-	vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
+	vkCmdBindVertexBuffers(currentCommandBuffer, 0, 1, vertexBuffers, offsets);
 
-	vkCmdBindIndexBuffer(commandBuffer, indexBuffer->buffer->vkBuffer, 0, VK_INDEX_TYPE_UINT32);
-	vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->vkPipelineLayout, 0, 1, &descriptorResource->vkDescriptorSets[m_currentFrame], 0, nullptr);
-	vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(model->indices().size()), 1, 0, 0, 0);
+	vkCmdBindIndexBuffer(currentCommandBuffer, indexBuffer->buffer->vkBuffer, 0, VK_INDEX_TYPE_UINT32);
+	vkCmdBindDescriptorSets(currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->vkPipelineLayout, 0, 1, &descriptorResource->vkDescriptorSets[m_currentFrame], 0, nullptr);
+	vkCmdDrawIndexed(currentCommandBuffer, static_cast<uint32_t>(model->indices().size()), 1, 0, 0, 0);
 
-	applicationEditor->DrawFrame(*this, commandBuffer);
-
-	vkCmdEndRenderPass(commandBuffer);
-	if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS)
+	vkCmdEndRenderPass(currentCommandBuffer);
+	// ui render pass
+	applicationEditor->DrawFrame(*this, currentCommandBuffer, currentFramebuffer);
+	if (vkEndCommandBuffer(currentCommandBuffer) != VK_SUCCESS)
 	{
 		throw std::runtime_error("failed to record command buffer!");
 	}

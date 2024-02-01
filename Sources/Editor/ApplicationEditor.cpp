@@ -16,6 +16,8 @@ static void check_vk_result(VkResult err)
 
 ApplicationEditor::ApplicationEditor(const std::unique_ptr<Application>& application)
 {
+	renderPass = std::make_shared<RenderPass>(application->device, application->swapchain, RenderPassType::EDITOR_RENDER_PASS);
+
 	// Setup Dear ImGui context
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
@@ -50,17 +52,29 @@ ApplicationEditor::ApplicationEditor(const std::unique_ptr<Application>& applica
 	init_info.Subpass = 0;
 	init_info.MinImageCount = 2;
 	init_info.ImageCount = static_cast<uint32_t>(application->swapchain->vkImages.size());
-	init_info.MSAASamples = application->device->msaaSamples;
+	init_info.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
 	init_info.Allocator = nullptr;
 	init_info.CheckVkResultFn = check_vk_result;
-	ImGui_ImplVulkan_Init(&init_info, application->renderPass->vkRenderPass);
+	ImGui_ImplVulkan_Init(&init_info, renderPass->vkRenderPass);
 }
 
 ApplicationEditor::~ApplicationEditor()
 {
+	Cleanup();
 }
 
-void ApplicationEditor::DrawFrame(Application& application, VkCommandBuffer currentCommandBuffer)
+
+void ApplicationEditor::Cleanup()
+{
+	if (m_cleaned)
+	{
+		return;
+	}
+	renderPass->Cleanup();
+	m_cleaned = true;
+}
+
+void ApplicationEditor::DrawFrame(Application& application, VkCommandBuffer currentCommandBuffer, VkFramebuffer currentFramebuffer)
 {
 	ImGuiIO& io = ImGui::GetIO();
 
@@ -116,8 +130,25 @@ void ApplicationEditor::DrawFrame(Application& application, VkCommandBuffer curr
 	application.clearColor.a = clear_color.w;
 	if (!main_is_minimized)
 	{
+		{
+			VkRenderPassBeginInfo info = {};
+			info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+			info.renderPass = renderPass->vkRenderPass;
+			info.framebuffer = currentFramebuffer;
+			info.renderArea.extent.width = application.swapchain->vkExtent2D.width;
+			info.renderArea.extent.height = application.swapchain->vkExtent2D.width;
+			std::array<VkClearValue, 2> clearValues{};
+			clearValues[0].color = {{application.clearColor.r, application.clearColor.g, application.clearColor.b, application.clearColor.a}};
+			clearValues[1].depthStencil = {1.0f, 0};
+
+			info.clearValueCount = static_cast<uint32_t>(clearValues.size());
+			info.pClearValues = clearValues.data();
+			vkCmdBeginRenderPass(currentCommandBuffer, &info, VK_SUBPASS_CONTENTS_INLINE);
+		}
 		// Record dear imgui primitives into command buffer
 		ImGui_ImplVulkan_RenderDrawData(main_draw_data, currentCommandBuffer);
+		// Submit command buffer
+		vkCmdEndRenderPass(currentCommandBuffer);
 	}
 
 	// Update and Render additional Platform Windows

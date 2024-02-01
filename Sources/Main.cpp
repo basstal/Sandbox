@@ -19,6 +19,7 @@ int main()
 			application->DrawFrame(applicationEditor);
 		}
 		vkDeviceWaitIdle(application->device->vkDevice);
+		applicationEditor->Cleanup();
 		application->Cleanup();
 	}
 	catch (const std::exception& e)

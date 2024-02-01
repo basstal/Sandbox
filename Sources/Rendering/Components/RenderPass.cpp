@@ -7,13 +7,69 @@
 #include "Rendering/Base/Device.hpp"
 #include "Rendering/Components/Swapchain.hpp"
 
-
-RenderPass::RenderPass(const std::shared_ptr<Device>& device, const std::shared_ptr<Swapchain>& swapchain)
+RenderPass::RenderPass(const std::shared_ptr<Device>& device, const std::shared_ptr<Swapchain>& swapchain, RenderPassType renderPassType)
 {
 	m_device = device;
+	m_swapchain = swapchain;
+	if (renderPassType == RenderPassType::GAME_RENDER_PASS)
+	{
+		CreateGameRenderPass();
+	}
+	else if (renderPassType == RenderPassType::EDITOR_RENDER_PASS)
+	{
+		CreateEditorRenderPass();
+	}
+}
+
+RenderPass::~RenderPass()
+{
+	Cleanup();
+}
+
+void RenderPass::CreateEditorRenderPass()
+{
+	VkAttachmentDescription attachment = {};
+	attachment.format = m_swapchain->vkFormat;
+	attachment.samples = VK_SAMPLE_COUNT_1_BIT;
+	attachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR; // wd->ClearEnable ? VK_ATTACHMENT_LOAD_OP_CLEAR : VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+	attachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+	attachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+	attachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+	attachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+	attachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+	VkAttachmentReference colorAttachment;
+	colorAttachment.attachment = 0;
+	colorAttachment.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+	VkSubpassDescription subpass = {};
+	subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+	subpass.colorAttachmentCount = 1;
+	subpass.pColorAttachments = &colorAttachment;
+	VkSubpassDependency dependency = {};
+	dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
+	dependency.dstSubpass = 0;
+	dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	dependency.srcAccessMask = 0;
+	dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+	VkRenderPassCreateInfo info = {};
+	info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+	info.attachmentCount = 1;
+	info.pAttachments = &attachment;
+	info.subpassCount = 1;
+	info.pSubpasses = &subpass;
+	info.dependencyCount = 1;
+	info.pDependencies = &dependency;
+	if (vkCreateRenderPass(m_device->vkDevice, &info, nullptr, &vkRenderPass) != VK_SUCCESS)
+	{
+		throw std::runtime_error("failed to create editor render pass!");
+	}
+}
+
+void RenderPass::CreateGameRenderPass()
+{
 	VkAttachmentDescription colorAttachment{};
-	colorAttachment.format = swapchain->vkFormat;
-	colorAttachment.samples = device->msaaSamples;
+	colorAttachment.format = m_swapchain->vkFormat;
+	colorAttachment.samples = m_device->msaaSamples;
 	colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
 	colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
 
@@ -24,7 +80,7 @@ RenderPass::RenderPass(const std::shared_ptr<Device>& device, const std::shared_
 
 	VkAttachmentDescription depthAttachment{};
 	depthAttachment.format = FindDepthFormat();
-	depthAttachment.samples = device->msaaSamples;
+	depthAttachment.samples = m_device->msaaSamples;
 	depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
 	depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 	depthAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
@@ -33,7 +89,7 @@ RenderPass::RenderPass(const std::shared_ptr<Device>& device, const std::shared_
 	depthAttachment.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
 	VkAttachmentDescription colorAttachmentResolve{};
-	colorAttachmentResolve.format = swapchain->vkFormat;
+	colorAttachmentResolve.format = m_swapchain->vkFormat;
 	colorAttachmentResolve.samples = VK_SAMPLE_COUNT_1_BIT;
 	colorAttachmentResolve.loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 	colorAttachmentResolve.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
@@ -79,15 +135,10 @@ RenderPass::RenderPass(const std::shared_ptr<Device>& device, const std::shared_
 
 	renderPassInfo.dependencyCount = 1;
 	renderPassInfo.pDependencies = &dependency;
-	if (vkCreateRenderPass(device->vkDevice, &renderPassInfo, nullptr, &vkRenderPass) != VK_SUCCESS)
+	if (vkCreateRenderPass(m_device->vkDevice, &renderPassInfo, nullptr, &vkRenderPass) != VK_SUCCESS)
 	{
-		throw std::runtime_error("failed to create render pass!");
+		throw std::runtime_error("failed to create game render pass!");
 	}
-}
-
-RenderPass::~RenderPass()
-{
-	Cleanup();
 }
 
 VkFormat RenderPass::FindDepthFormat()

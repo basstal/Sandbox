@@ -65,5 +65,5 @@ public:
 	static uint32_t FindMemoryType(VkPhysicalDevice physicalDevice, uint32_t typeFilter, VkMemoryPropertyFlags properties);
 	void DrawFrame(const std::unique_ptr<ApplicationEditor>& applicationEditor);
 	void RecreateSwapchain();
-	void RecordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex, const std::unique_ptr<ApplicationEditor>& applicationEditor);
+	void RecordCommandBuffer(VkCommandBuffer currentCommandBuffer, uint32_t imageIndex, const std::unique_ptr<ApplicationEditor>& applicationEditor);
 };
