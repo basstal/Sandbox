@@ -4,7 +4,6 @@
 #include <stdexcept>
 
 #include "Rendering/Application.hpp"
-#include "Rendering/Components/Framebuffer.hpp"
 
 Swapchain::Swapchain(const std::shared_ptr<Surface>& surface, const std::shared_ptr<Device>& device)
 {
@@ -105,13 +104,13 @@ void Swapchain::Cleanup()
 
 void Swapchain::CreateFramebuffers(const std::shared_ptr<RenderPass>& renderPass)
 {
-	CreateImage(vkExtent2D.width, vkExtent2D.height, 1, vkFormat, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
-	            VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, m_vkColorImage, m_vkColorImageMemory);
+	m_device->CreateImage(vkExtent2D.width, vkExtent2D.height, 1, m_device->msaaSamples, vkFormat, VK_IMAGE_TILING_OPTIMAL,
+	                      VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, m_vkColorImage, m_vkColorImageMemory);
 	m_vkColorImageView = m_device->CreateImageView(m_vkColorImage, vkFormat, VK_IMAGE_ASPECT_COLOR_BIT, 1);
 
 	VkFormat depthFormat = renderPass->FindDepthFormat();
-	CreateImage(vkExtent2D.width, vkExtent2D.height, 1, depthFormat, VK_IMAGE_TILING_OPTIMAL,
-	            VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, m_vkDepthImage, m_vkDepthImageMemory);
+	m_device->CreateImage(vkExtent2D.width, vkExtent2D.height, 1, m_device->msaaSamples, depthFormat,
+	                      VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, m_vkDepthImage, m_vkDepthImageMemory);
 	m_vkDepthImageView = m_device->CreateImageView(m_vkDepthImage, depthFormat, VK_IMAGE_ASPECT_DEPTH_BIT, 1);
 	vkFramebuffers.resize(vkImageViews.size());
 	for (size_t i = 0; i < vkImageViews.size(); i++)
@@ -121,12 +120,28 @@ void Swapchain::CreateFramebuffers(const std::shared_ptr<RenderPass>& renderPass
 			m_vkDepthImageView,
 			vkImageViews[i]
 		};
-		const Framebuffer framebuffer(m_device, renderPass, vkExtent2D, attachments);
-		vkFramebuffers[i] = framebuffer.vkFramebuffer;
+		CreateFramebuffer(vkFramebuffers[i], renderPass->vkRenderPass, attachments);
 	}
 	m_framebufferCreated = true;
 }
 
+
+void Swapchain::CreateFramebuffer(VkFramebuffer& vkFramebuffer, const VkRenderPass& vkRenderPass, const std::vector<VkImageView>& attachments)
+{
+	VkFramebufferCreateInfo framebufferInfo{};
+	framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+	framebufferInfo.renderPass = vkRenderPass;
+	framebufferInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
+	framebufferInfo.pAttachments = attachments.data();
+	framebufferInfo.width = vkExtent2D.width;
+	framebufferInfo.height = vkExtent2D.height;
+	framebufferInfo.layers = 1;
+
+	if (vkCreateFramebuffer(m_device->vkDevice, &framebufferInfo, nullptr, &vkFramebuffer) != VK_SUCCESS)
+	{
+		throw std::runtime_error("failed to create framebuffer!");
+	}
+}
 
 VkSurfaceFormatKHR Swapchain::ChooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats)
 {
@@ -180,44 +195,4 @@ void Swapchain::CreateImageViews()
 	{
 		vkImageViews[i] = m_device->CreateImageView(vkImages[i], vkFormat, VK_IMAGE_ASPECT_COLOR_BIT, 1);
 	}
-}
-
-
-void Swapchain::CreateImage(uint32_t width, uint32_t height, uint32_t mipLevels, VkFormat format, VkImageTiling tiling,
-                            VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& vkImage, VkDeviceMemory& vkDeviceMemory)
-{
-	VkImageCreateInfo imageInfo{};
-	imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-	imageInfo.imageType = VK_IMAGE_TYPE_2D;
-	imageInfo.extent.width = width;
-	imageInfo.extent.height = height;
-	imageInfo.extent.depth = 1;
-	imageInfo.mipLevels = mipLevels;
-	imageInfo.arrayLayers = 1;
-	imageInfo.format = format;
-	imageInfo.tiling = tiling;
-	imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-	imageInfo.usage = usage;
-	imageInfo.samples = m_device->msaaSamples;
-	imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-
-	if (vkCreateImage(m_device->vkDevice, &imageInfo, nullptr, &vkImage) != VK_SUCCESS)
-	{
-		throw std::runtime_error("failed to create image!");
-	}
-
-	VkMemoryRequirements memRequirements;
-	vkGetImageMemoryRequirements(m_device->vkDevice, vkImage, &memRequirements);
-
-	VkMemoryAllocateInfo allocInfo{};
-	allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-	allocInfo.allocationSize = memRequirements.size;
-	allocInfo.memoryTypeIndex = Application::FindMemoryType(m_device->vkPhysicalDevice, memRequirements.memoryTypeBits, properties);
-
-	if (vkAllocateMemory(m_device->vkDevice, &allocInfo, nullptr, &vkDeviceMemory) != VK_SUCCESS)
-	{
-		throw std::runtime_error("failed to allocate image memory!");
-	}
-
-	vkBindImageMemory(m_device->vkDevice, vkImage, vkDeviceMemory, 0);
 }

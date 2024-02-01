@@ -1,8 +1,7 @@
 #pragma once
 #include <string>
-#include "Shared.hpp"
 
-class INFRASTRUCTURES_API FileSystemBase
+class FileSystemBase
 {
 public:
 	static std::string getExecutablePath();

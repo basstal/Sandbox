@@ -1,5 +1,7 @@
 #include "ApplicationEditor.hpp"
 
+#include <stdexcept>
+
 #include "imgui.h"
 #include "backends/imgui_impl_glfw.h"
 #include "backends/imgui_impl_vulkan.h"
@@ -16,7 +18,9 @@ static void check_vk_result(VkResult err)
 
 ApplicationEditor::ApplicationEditor(const std::unique_ptr<Application>& application)
 {
+	m_device = application->device;
 	renderPass = std::make_shared<RenderPass>(application->device, application->swapchain, RenderPassType::EDITOR_RENDER_PASS);
+	CreateFramebuffer(application);
 
 	// Setup Dear ImGui context
 	IMGUI_CHECKVERSION();
@@ -26,7 +30,7 @@ ApplicationEditor::ApplicationEditor(const std::unique_ptr<Application>& applica
 	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
 	io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad; // Enable Gamepad Controls
 	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable; // Enable Docking
-	io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable; // Enable Multi-Viewport / Platform Windows
+	// io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable; // Enable Multi-Viewport / Platform Windows
 
 	// Setup Dear ImGui style
 	ImGui::StyleColorsDark();
@@ -50,7 +54,7 @@ ApplicationEditor::ApplicationEditor(const std::unique_ptr<Application>& applica
 	init_info.PipelineCache = VK_NULL_HANDLE; // TODO: PipelineCache
 	init_info.DescriptorPool = application->descriptorResource->vkDescriptorPool;
 	init_info.Subpass = 0;
-	init_info.MinImageCount = 2;
+	init_info.MinImageCount = IMAGE_COUNT;
 	init_info.ImageCount = static_cast<uint32_t>(application->swapchain->vkImages.size());
 	init_info.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
 	init_info.Allocator = nullptr;
@@ -63,6 +67,64 @@ ApplicationEditor::~ApplicationEditor()
 	Cleanup();
 }
 
+void ApplicationEditor::CreateFramebuffer(const std::unique_ptr<Application>& application)
+{
+	// // Create Image
+	// {
+	// 	auto vkExtent2D = application->swapchain->vkExtent2D;
+	// 	std::shared_ptr<Device> device = application->device;
+	// 	for (uint32_t i = 0; i < IMAGE_COUNT; i++)
+	// 	{
+	// 		device->CreateImage(vkExtent2D.width, vkExtent2D.height, 1, VK_SAMPLE_COUNT_1_BIT, Swapchain::COLOR_FORMAT,
+	// 		                    VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+	// 		                    vkImages[i], m_vkDepthImageMemory);
+	// 	}
+	// }
+	// Create The Image Views
+	{
+		vkImageViews.resize(IMAGE_COUNT);
+		VkImageViewCreateInfo info = {};
+		info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+		info.viewType = VK_IMAGE_VIEW_TYPE_2D;
+		info.format = Swapchain::COLOR_FORMAT;
+		info.components.r = VK_COMPONENT_SWIZZLE_R;
+		info.components.g = VK_COMPONENT_SWIZZLE_G;
+		info.components.b = VK_COMPONENT_SWIZZLE_B;
+		info.components.a = VK_COMPONENT_SWIZZLE_A;
+		VkImageSubresourceRange image_range = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1};
+		info.subresourceRange = image_range;
+		for (uint32_t i = 0; i < IMAGE_COUNT; i++)
+		{
+			info.image = application->swapchain->vkImages[i];
+			if (vkCreateImageView(application->device->vkDevice, &info, nullptr, &vkImageViews[i]) != VK_SUCCESS)
+			{
+				throw std::runtime_error("failed to create framebuffer!");
+			}
+		}
+	}
+
+	// Create Framebuffer
+	{
+		vkFramebuffers.resize(IMAGE_COUNT);
+		VkImageView attachment[1];
+		VkFramebufferCreateInfo info = {};
+		info.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+		info.renderPass = renderPass->vkRenderPass;
+		info.attachmentCount = 1;
+		info.pAttachments = attachment;
+		info.width = application->swapchain->vkExtent2D.width;
+		info.height = application->swapchain->vkExtent2D.height;
+		info.layers = 1;
+		for (uint32_t i = 0; i < IMAGE_COUNT; i++)
+		{
+			attachment[0] = vkImageViews[i];
+			if (vkCreateFramebuffer(application->device->vkDevice, &info, nullptr, &vkFramebuffers[i]) != VK_SUCCESS)
+			{
+				throw std::runtime_error("failed to create framebuffer!");
+			}
+		}
+	}
+}
 
 void ApplicationEditor::Cleanup()
 {
@@ -70,11 +132,20 @@ void ApplicationEditor::Cleanup()
 	{
 		return;
 	}
+	for (auto framebuffer : vkFramebuffers)
+	{
+		vkDestroyFramebuffer(m_device->vkDevice, framebuffer, nullptr);
+	}
+	for (auto imageView : vkImageViews)
+	{
+		vkDestroyImageView(m_device->vkDevice, imageView, nullptr);
+	}
+
 	renderPass->Cleanup();
 	m_cleaned = true;
 }
 
-void ApplicationEditor::DrawFrame(Application& application, VkCommandBuffer currentCommandBuffer, VkFramebuffer currentFramebuffer)
+void ApplicationEditor::DrawFrame(Application& application, VkCommandBuffer currentCommandBuffer, uint32_t currentFrame)
 {
 	ImGuiIO& io = ImGui::GetIO();
 
@@ -134,15 +205,14 @@ void ApplicationEditor::DrawFrame(Application& application, VkCommandBuffer curr
 			VkRenderPassBeginInfo info = {};
 			info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
 			info.renderPass = renderPass->vkRenderPass;
-			info.framebuffer = currentFramebuffer;
-			info.renderArea.extent.width = application.swapchain->vkExtent2D.width;
-			info.renderArea.extent.height = application.swapchain->vkExtent2D.width;
-			std::array<VkClearValue, 2> clearValues{};
-			clearValues[0].color = {{application.clearColor.r, application.clearColor.g, application.clearColor.b, application.clearColor.a}};
-			clearValues[1].depthStencil = {1.0f, 0};
+			info.framebuffer = vkFramebuffers[currentFrame];
+			info.renderArea.extent = application.swapchain->vkExtent2D;
+			// std::array<VkClearValue, 2> clearValues{};
+			// clearValues[0].color = {{application.clearColor.r, application.clearColor.g, application.clearColor.b, application.clearColor.a}};
+			// clearValues[1].depthStencil = {1.0f, 0};
 
-			info.clearValueCount = static_cast<uint32_t>(clearValues.size());
-			info.pClearValues = clearValues.data();
+			// info.clearValueCount = static_cast<uint32_t>(clearValues.size());
+			// info.pClearValues = clearValues.data();
 			vkCmdBeginRenderPass(currentCommandBuffer, &info, VK_SUBPASS_CONTENTS_INLINE);
 		}
 		// Record dear imgui primitives into command buffer

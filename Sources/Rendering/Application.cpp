@@ -243,11 +243,10 @@ void Application::RecordCommandBuffer(VkCommandBuffer currentCommandBuffer, uint
 		throw std::runtime_error("failed to begin recording command buffer!");
 	}
 
-	VkFramebuffer currentFramebuffer = swapchain->vkFramebuffers[imageIndex];
 	VkRenderPassBeginInfo renderPassInfo{};
 	renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
 	renderPassInfo.renderPass = renderPass->vkRenderPass;
-	renderPassInfo.framebuffer = currentFramebuffer;
+	renderPassInfo.framebuffer = swapchain->vkFramebuffers[imageIndex];
 	renderPassInfo.renderArea.offset = {0, 0};
 	renderPassInfo.renderArea.extent = swapchain->vkExtent2D;
 	std::array<VkClearValue, 2> clearValues{};
@@ -282,8 +281,19 @@ void Application::RecordCommandBuffer(VkCommandBuffer currentCommandBuffer, uint
 	vkCmdDrawIndexed(currentCommandBuffer, static_cast<uint32_t>(model->indices().size()), 1, 0, 0, 0);
 
 	vkCmdEndRenderPass(currentCommandBuffer);
+
+	// 等待 pipeline 命令完成，因为 Editor DrawFrame 需要切换 pipeline
+	vkCmdPipelineBarrier(
+		currentCommandBuffer,
+		VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, // 等待上一个Pipeline的颜色输出完成
+		VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, // 在开始下一个Pipeline前
+		0,
+		0, nullptr,
+		0, nullptr,
+		0, nullptr);
+
 	// ui render pass
-	applicationEditor->DrawFrame(*this, currentCommandBuffer, currentFramebuffer);
+	applicationEditor->DrawFrame(*this, currentCommandBuffer, m_currentFrame);
 	if (vkEndCommandBuffer(currentCommandBuffer) != VK_SUCCESS)
 	{
 		throw std::runtime_error("failed to record command buffer!");
