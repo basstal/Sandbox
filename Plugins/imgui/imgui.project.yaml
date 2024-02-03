@@ -1,5 +1,6 @@
 type: Cpp
 compile_environment:
+  build_type: Static
   definitions:
   include_paths:
     - imgui/imconfig.h

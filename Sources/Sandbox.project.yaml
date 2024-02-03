@@ -1,5 +1,6 @@
 type: Cpp
 compile_environment:
+  build_type: Main
   definitions:
   include_paths:
     - .

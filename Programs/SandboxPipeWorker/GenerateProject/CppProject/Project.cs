@@ -324,6 +324,11 @@ public class Project
                 }
             }
 
+            if (Enum.TryParse(compileEnvironmentMapping["build_type"].ToString(), out BuildType buildType))
+            {
+                PrimaryCompileEnvironment.BuildType = buildType;
+            }
+
             PrimaryCompileEnvironment.IncludePaths.AddRange(ReadIncludePaths(compileEnvironmentMapping));
             PrimaryCompileEnvironment.AdditionalIncludePaths.AddRange(ReadAdditionalIncludePaths(compileEnvironmentMapping));
 
@@ -355,8 +360,8 @@ public class Project
 
     public void GenerateVcxproj()
     {
-        string txtTemplate = File.ReadAllText("ScribanTemplates/vcxproj.scriban");
-        var template = Scriban.Template.Parse(txtTemplate);
+        string content = File.ReadAllText("ScribanTemplates/vcxproj.scriban");
+        var vcxprojTemplate = Scriban.Template.Parse(content);
         var cppSourceInfos = new List<CppSourceInfo>();
         var sourceRelativeTo = ProjectDirectory!.FullName;
 
@@ -403,7 +408,23 @@ public class Project
             ParsedFile!
         };
         File.WriteAllText(postBuildCommandsPath, postBuildCommands);
-        string primaryProjectFile = template.Render(new
+        var Constanst = new
+        {
+            Platform = "x64",
+            BuildTypeMapping = new Dictionary<BuildType, string>()
+            {
+                {
+                    BuildType.Main, "Application"
+                },
+                {
+                    BuildType.Static, "StaticLibrary"
+                },
+                {
+                    BuildType.Dynamic, "DynamicLibrary"
+                },
+            }
+        };
+        string primaryProjectFile = vcxprojTemplate.Render(new
         {
             Project = this,
             CppSourceInfos = cppSourceInfos,
@@ -418,6 +439,7 @@ public class Project
             OutputDir = outputDir,
             ReferenceProjects = referenceProjects,
             RawFiles = rawFiles,
+            Constants = Constanst,
         }, member => member.Name);
         File.WriteAllText(GeneratedProjectPath!.FullName, primaryProjectFile);
     }

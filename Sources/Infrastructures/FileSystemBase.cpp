@@ -4,7 +4,7 @@
 #include <fstream>
 #ifdef _WIN64
 #include <windows.h>
-#include "NativeFileSystem.hpp"
+#include "FileSystemBase.hpp"
 
 std::string LPWSTRToString(WCHAR* lpwstr)
 {
@@ -41,6 +41,10 @@ void FileSystemBase::addDllSearchPath(std::string inSearchPath)
 	std::cout << inSearchPath << '\n';
 	SetDllDirectoryA(inSearchPath.c_str());
 }
+bool FileSystemBase::fileExists(const std::string& string)
+{
+	return std::filesystem::exists(string);
+}
 std::string FileSystemBase::getBinariesDir()
 {
 	std::filesystem::path executablePath = std::filesystem::path::path(getExecutablePath());
@@ -50,6 +54,11 @@ std::string FileSystemBase::getAssetsDir()
 {
 	std::filesystem::path executablePath = std::filesystem::path::path(getExecutablePath());
 	return executablePath.parent_path().parent_path().append("Assets").string();
+}
+std::string FileSystemBase::getSettingsDir()
+{
+	std::filesystem::path executablePath = std::filesystem::path::path(getExecutablePath());
+	return executablePath.parent_path().parent_path().append("Assets").append("Settings").string();
 }
 
 std::vector<char> FileSystemBase::readFile(const std::string& filename)

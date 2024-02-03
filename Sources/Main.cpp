@@ -3,14 +3,15 @@
 
 #include "Editor/ApplicationEditor.hpp"
 #include "Rendering/Application.hpp"
+#include "Rendering/Settings.hpp"
 int main()
 {
 	// std::string binariesDir = FileSystemBase::getBinariesDir();
 	// FileSystemBase::addDllSearchPath(binariesDir + "/../ThirdPartyLibs");
-
 	try
 	{
-		Application::Instance = std::make_unique<Application>();
+		auto setting = std::make_shared<Settings>();
+		Application::Instance = std::make_unique<Application>(setting);
 		auto applicationEditor = std::make_unique<ApplicationEditor>(Application::Instance);
 		while (!glfwWindowShouldClose(Application::Instance->surface->glfwWindow))
 		{

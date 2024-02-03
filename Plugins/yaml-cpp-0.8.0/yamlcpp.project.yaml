@@ -1,5 +1,6 @@
 type: Cpp
 compile_environment:
+  build_type: Dynamic
   definitions:
     - yaml_cpp_EXPORTS
   include_paths:

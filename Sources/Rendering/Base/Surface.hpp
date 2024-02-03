@@ -4,21 +4,21 @@
 
 #include <vulkan/vulkan_core.h>
 
+#include "Rendering/Settings.hpp"
+
 class Surface
 {
 private:
-	int32_t m_width = 800;
-	int32_t m_height = 600;
-	const char* m_title = "Vulkan";
 	bool m_framebufferResized = false;
 	static void FramebufferResizeCallback(GLFWwindow* window, int width, int height);
 	VkInstance m_vkInstance;
 	bool m_cleaned = false;
+	std::shared_ptr<Settings> m_settings;
 
 public:
 	GLFWwindow* glfwWindow;
 	VkSurfaceKHR vkSurface;
-	Surface(const VkInstance& instance);
+	Surface(const VkInstance& instance, const std::shared_ptr<Settings>& settings);
 	~Surface();
 	void Cleanup();
 	bool GetFrameBufferResized();

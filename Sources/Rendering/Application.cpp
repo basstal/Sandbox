@@ -8,7 +8,7 @@
 
 #include "Image.hpp"
 #include "Model.hpp"
-#include "Infrastructures/NativeFileSystem.hpp"
+#include "..\Infrastructures\FileSystemBase.hpp"
 #include "Components/RenderPass.hpp"
 #include "Base/Device.hpp"
 #include "Components/CommandResource.hpp"
@@ -55,13 +55,14 @@ void Application::CheckExtensionsSupport(uint32_t glfwExtensionCount, const char
 	}
 }
 
-Application::Application()
+Application::Application(const std::shared_ptr<Settings>& settings)
 {
+	m_settings = settings;
 	glfwInit();
 
 	VkApplicationInfo appInfo{};
 	appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-	appInfo.pApplicationName = "Hello Triangle";
+	appInfo.pApplicationName = m_settings->ApplicationName.c_str();
 	appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
 	appInfo.pEngineName = "No Engine";
 	appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
@@ -81,7 +82,7 @@ Application::Application()
 	{
 		throw std::runtime_error("failed to create instance!");
 	}
-	surface = std::make_shared<Surface>(vkInstance);
+	surface = std::make_shared<Surface>(vkInstance, settings);
 	device = std::make_shared<Device>(vkInstance, surface);
 	CreateSwapchain();
 	renderPass = std::make_shared<RenderPass>(device, swapchain, RenderPassType::GAME_RENDER_PASS);
@@ -133,6 +134,10 @@ void Application::Cleanup()
 	surface->Cleanup();
 	vkDestroyInstance(vkInstance, nullptr);
 	glfwTerminate();
+	if (m_settings != nullptr)
+	{
+		m_settings->Save();
+	}
 	m_cleaned = true;
 }
 

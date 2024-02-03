@@ -1,14 +1,18 @@
 ﻿#include "Surface.hpp"
 
+#include <memory>
 #include <stdexcept>
 #include <vulkan/vulkan_core.h>
 
-Surface::Surface(const VkInstance& instance)
+#include "Rendering/Settings.hpp"
+
+Surface::Surface(const VkInstance& instance, const std::shared_ptr<Settings>& settings)
 {
+	m_settings = settings;
 	m_vkInstance = instance;
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 	glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
-	glfwWindow = glfwCreateWindow(m_width, m_height, m_title, nullptr, nullptr);
+	glfwWindow = glfwCreateWindow((int)settings->Width, (int)settings->Height, settings->ApplicationName.c_str(), nullptr, nullptr);
 	if (glfwWindow == nullptr)
 	{
 		throw std::runtime_error("failed to create window!");
@@ -40,6 +44,8 @@ void Surface::FramebufferResizeCallback(GLFWwindow* window, int width, int heigh
 {
 	const auto surface = static_cast<Surface*>(glfwGetWindowUserPointer(window));
 	surface->m_framebufferResized = true;
+	surface->m_settings->Width = width;
+	surface->m_settings->Height = height;
 }
 
 void Surface::Cleanup()

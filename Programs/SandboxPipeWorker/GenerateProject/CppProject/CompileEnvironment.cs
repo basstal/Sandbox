@@ -11,6 +11,7 @@ public class CompileEnvironment
     public List<FileReference> SourceFiles = new List<FileReference>();
     public List<Module> Dependencies = new List<Module>();
     public List<Project> ProjectDependencies = new List<Project>();
+    public BuildType BuildType = BuildType.None;
 
     public List<FileReference> DependencyIncludePaths =>
         Dependencies

@@ -54,10 +54,10 @@ public class DirectoryReference : FileSystemBase, IEquatable<DirectoryReference>
         foreach (string fragment in fragments)
         {
             combinedPath = Path.Combine(combinedPath, fragment);
-            if (!Directory.Exists(combinedPath))
-            {
-                throw new Exception($"Directory not exists: {combinedPath}");
-            }
+            // if (!Directory.Exists(combinedPath))
+            // {
+            //     throw new Exception($"Directory not exists: {combinedPath}");
+            // }
         }
 
         return new DirectoryReference(combinedPath);

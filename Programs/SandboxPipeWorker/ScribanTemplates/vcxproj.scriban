@@ -1,11 +1,10 @@
-﻿{{~$Platform = "x64"~}}
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="{{Project.PrimaryCompileEnvironment.CppVersion | string.slice 3}}.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 {{~for Configuration in Configurations~}}
   <ItemGroup Label="ProjectConfigurations">
-    <ProjectConfiguration Include="{{Configuration}}|{{$Platform}}">
+    <ProjectConfiguration Include="{{Configuration}}|{{Constants.Platform}}">
       <Configuration>{{Configuration}}</Configuration>
-      <Platform>{{$Platform}}</Platform>
+      <Platform>{{Constants.Platform}}</Platform>
     </ProjectConfiguration>
   </ItemGroup>
 {{~end~}}
@@ -13,19 +12,15 @@
     <PropertyGroup Label="Globals">
         <ProjectGuid>{%{{}%}{{Project.Guid}}{%{}}%}</ProjectGuid>
         <Keyword>Win32Proj</Keyword>
-        <Platform>{{$Platform}}</Platform>
+        <Platform>{{Constants.Platform}}</Platform>
         <RootNamespace>{{Project.PrimaryProjectName}}</RootNamespace>
     </PropertyGroup>
 
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
 
 {{~for Configuration in Configurations~}}
-    <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='{{Configuration}}|{{$Platform}}'" Label="Configuration">
-        {{~if Project.PrimaryProjectName == "Sandbox"~}}
-        <ConfigurationType>Application</ConfigurationType>
-        {{~else~}}
-        <ConfigurationType>StaticLibrary</ConfigurationType>
-        {{~end~}}
+    <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='{{Configuration}}|{{Constants.Platform}}'" Label="Configuration">
+        <ConfigurationType>{{Constants.BuildTypeMapping[Project.PrimaryCompileEnvironment.BuildType]}}</ConfigurationType>
         <UseDebugLibraries>{{~if Configuration == "Release"~}}false{{~else~}}true{{~end~}}</UseDebugLibraries>
         <PlatformToolset>v143</PlatformToolset>
         <CharacterSet>Unicode</CharacterSet>
@@ -37,14 +32,14 @@
   
   
 {{~for Configuration in Configurations~}}
-    <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='{{Configuration}}|{{$Platform}}'">
+    <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='{{Configuration}}|{{Constants.Platform}}'">
       <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
     </ImportGroup>
 {{~end~}}
     <PropertyGroup Label="UserMacros" />
 
 {{~for Configuration in Configurations~}}
-    <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='{{Configuration}}|{{$Platform}}'">
+    <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='{{Configuration}}|{{Constants.Platform}}'">
         <ClCompile>
             <AdditionalIncludeDirectories>{{AdditionalIncludeDirectories}};%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
             <WarningLevel>Level3</WarningLevel>

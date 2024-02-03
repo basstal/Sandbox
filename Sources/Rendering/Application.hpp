@@ -4,6 +4,7 @@
 #include <vulkan/vulkan_core.h>
 
 #include "Model.hpp"
+#include "Settings.hpp"
 #include "Components/RenderPass.hpp"
 #include "Base/Device.hpp"
 #include "Base/Surface.hpp"
@@ -36,6 +37,7 @@ private:
 	void CheckExtensionsSupport(uint32_t glfwExtensionCount, const char** glfwExtensions);
 	uint32_t m_currentFrame = 0;
 	bool m_cleaned = false;
+	std::shared_ptr<Settings> m_settings;
 
 public:
 	VkInstance vkInstance;
@@ -59,7 +61,7 @@ public:
 	glm::vec4 clearColor = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
 
 	static std::unique_ptr<Application> Instance;
-	Application();
+	Application(const std::shared_ptr<Settings>& settings);
 	~Application();
 	void Cleanup();
 	void CreateSwapchain();
