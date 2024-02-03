@@ -12,7 +12,14 @@ Surface::Surface(const VkInstance& instance, const std::shared_ptr<Settings>& se
 	m_vkInstance = instance;
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 	glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
-	glfwWindow = glfwCreateWindow((int)settings->Width, (int)settings->Height, settings->ApplicationName.c_str(), nullptr, nullptr);
+	// 获取一个指向用户的主监视器的指针
+	GLFWmonitor* monitor = settings->IsWindow ? nullptr : glfwGetPrimaryMonitor();
+	// 获取该监视器的视频模式，特别是为了得到屏幕的分辨率。你可以使用glfwGetVideoMode来获取当前视频模式：
+	const GLFWvidmode* mode = settings->IsWindow ? nullptr : glfwGetVideoMode(monitor);
+	int width = settings->IsWindow ? (int)settings->Width : mode->width;
+	int height = settings->IsWindow ? (int)settings->Height : mode->height;
+	// 创建窗口
+	glfwWindow = glfwCreateWindow(width, height, settings->ApplicationName.c_str(), monitor, nullptr);
 	if (glfwWindow == nullptr)
 	{
 		throw std::runtime_error("failed to create window!");

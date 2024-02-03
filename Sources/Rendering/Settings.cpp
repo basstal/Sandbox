@@ -17,8 +17,9 @@ Settings::Settings()
 		Width = config["Width"].as<uint32_t>();
 		Height = config["Height"].as<uint32_t>();
 		ApplicationName = config["ApplicationName"].as<std::string>();
+		IsWindow = config["IsWindow"].as<bool>();
 	}
-	catch (const std::exception&)
+	catch (const std::exception&)  // NOLINT(bugprone-empty-catch)
 	{
 	}
 }
@@ -34,5 +35,6 @@ void Settings::Save()
 	config["Width"] = Width;
 	config["Height"] = Height;
 	config["ApplicationName"] = ApplicationName;
+	config["IsWindow"] = IsWindow;
 	fout << config;
 }
