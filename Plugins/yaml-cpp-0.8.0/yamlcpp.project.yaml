@@ -1,16 +1,12 @@
 type: Cpp
 compile_environment:
   definitions:
+    - yaml_cpp_EXPORTS
   include_paths:
-    - .
+    - yaml-cpp/include
   additional_include_paths:
-    - .
+    - yaml-cpp/include
   cpp_version: Default
   dependencies:
-    - glfw
-    - glm
-    - stb
-    - assimp
-    - vulkan
-    - imgui
-    - yamlcpp
+  source_paths:
+    - yaml-cpp/src

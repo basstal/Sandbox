@@ -8,3 +8,6 @@
 [submodule "Plugins/imgui/imgui"]
 	path = Plugins/imgui/imgui
 	url = https://github.com/ocornut/imgui
+[submodule "Plugins/yaml-cpp-0.8.0/yaml-cpp"]
+	path = Plugins/yaml-cpp-0.8.0/yaml-cpp
+	url = https://github.com/jbeder/yaml-cpp

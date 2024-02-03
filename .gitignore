@@ -461,6 +461,5 @@ Output/
 
 # 生成的文件
 PostBuildCommands.ps1
-Sandbox.vcxproj
 Sandbox.sln
-imgui.vcxproj
+*.vcxproj
