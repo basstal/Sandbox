@@ -1,4 +1,3 @@
-
 #include <iostream>
 #include <memory>
 
@@ -11,16 +10,16 @@ int main()
 
 	try
 	{
-		auto application = std::make_unique<Application>();
-		auto applicationEditor = std::make_unique<ApplicationEditor>(application);
-		while (!glfwWindowShouldClose(application->surface->glfwWindow))
+		Application::Instance = std::make_unique<Application>();
+		auto applicationEditor = std::make_unique<ApplicationEditor>(Application::Instance);
+		while (!glfwWindowShouldClose(Application::Instance->surface->glfwWindow))
 		{
 			glfwPollEvents();
-			application->DrawFrame(applicationEditor);
+			Application::Instance->DrawFrame(applicationEditor);
 		}
-		vkDeviceWaitIdle(application->device->vkDevice);
+		vkDeviceWaitIdle(Application::Instance->device->vkDevice);
 		applicationEditor->Cleanup();
-		application->Cleanup();
+		Application::Instance->Cleanup();
 	}
 	catch (const std::exception& e)
 	{

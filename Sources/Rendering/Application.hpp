@@ -58,12 +58,13 @@ public:
 
 	glm::vec4 clearColor = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
 
+	static std::unique_ptr<Application> Instance;
 	Application();
 	~Application();
 	void Cleanup();
 	void CreateSwapchain();
 	static uint32_t FindMemoryType(VkPhysicalDevice physicalDevice, uint32_t typeFilter, VkMemoryPropertyFlags properties);
 	void DrawFrame(const std::unique_ptr<ApplicationEditor>& applicationEditor);
-	void RecreateSwapchain();
+	void RecreateSwapchain(const std::unique_ptr<ApplicationEditor>& editor);
 	void RecordCommandBuffer(VkCommandBuffer currentCommandBuffer, uint32_t imageIndex, const std::unique_ptr<ApplicationEditor>& applicationEditor);
 };

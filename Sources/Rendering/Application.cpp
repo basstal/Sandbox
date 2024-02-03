@@ -16,6 +16,9 @@
 #include "Objects/RenderTexture.hpp"
 
 
+// 定义和初始化静态成员变量
+std::unique_ptr<Application> Application::Instance = nullptr;
+
 std::vector<const char*> Application::GetRequiredExtensions()
 {
 	uint32_t glfwExtensionCount = 0;
@@ -160,7 +163,7 @@ void Application::DrawFrame(const std::unique_ptr<ApplicationEditor>& applicatio
 	VkResult result = vkAcquireNextImageKHR(device->vkDevice, swapchain->vkSwapchain, UINT64_MAX, syncObjects->imageAvailableSemaphores[m_currentFrame], VK_NULL_HANDLE, &imageIndex);
 	if (result == VK_ERROR_OUT_OF_DATE_KHR)
 	{
-		RecreateSwapchain();
+		RecreateSwapchain(applicationEditor);
 		return;
 	}
 	else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR)
@@ -169,9 +172,10 @@ void Application::DrawFrame(const std::unique_ptr<ApplicationEditor>& applicatio
 	}
 
 	// Only reset the fence if we are submitting work
+	VkCommandBuffer currentCommandBuffer = commandResource->vkCommandBuffers[m_currentFrame];
 	vkResetFences(device->vkDevice, 1, &syncObjects->inFlightFences[m_currentFrame]);
-	vkResetCommandBuffer(commandResource->vkCommandBuffers[m_currentFrame], 0);
-	RecordCommandBuffer(commandResource->vkCommandBuffers[m_currentFrame], imageIndex, applicationEditor);
+	vkResetCommandBuffer(currentCommandBuffer, 0);
+	RecordCommandBuffer(currentCommandBuffer, imageIndex, applicationEditor);
 	uniformBuffers->UpdateUniformBuffer(m_currentFrame, swapchain->vkExtent2D);
 	VkSubmitInfo submitInfo{};
 	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -182,20 +186,48 @@ void Application::DrawFrame(const std::unique_ptr<ApplicationEditor>& applicatio
 	submitInfo.pWaitSemaphores = waitSemaphores;
 	submitInfo.pWaitDstStageMask = waitStages;
 	submitInfo.commandBufferCount = 1;
-	submitInfo.pCommandBuffers = &commandResource->vkCommandBuffers[m_currentFrame];
-	VkSemaphore signalSemaphores[] = {syncObjects->renderFinishedSemaphores[m_currentFrame]};
+	submitInfo.pCommandBuffers = &currentCommandBuffer;
+	VkSemaphore signalSemaphoresGame[] = {syncObjects->gameRenderFinishedSemaphores[m_currentFrame]};
 	submitInfo.signalSemaphoreCount = 1;
-	submitInfo.pSignalSemaphores = signalSemaphores;
+	submitInfo.pSignalSemaphores = signalSemaphoresGame;
 	if (vkQueueSubmit(device->graphicsQueue, 1, &submitInfo, syncObjects->inFlightFences[m_currentFrame]) != VK_SUCCESS)
 	{
 		throw std::runtime_error("failed to submit draw command buffer!");
 	}
+	vkWaitForFences(device->vkDevice, 1, &syncObjects->inFlightFences[m_currentFrame], VK_TRUE, UINT64_MAX);
+	vkResetFences(device->vkDevice, 1, &syncObjects->inFlightFences[m_currentFrame]);
 
+	// VkImageMemoryBarrier imageMemoryBarrier = {};
+	// imageMemoryBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+	// imageMemoryBarrier.oldLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR; // 当前布局
+	// imageMemoryBarrier.newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL; // 目标布局
+	// imageMemoryBarrier.srcAccessMask = VK_ACCESS_MEMORY_READ_BIT; // 在转换之前必须完成的操作
+	// imageMemoryBarrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT; // 在转换之后必须完成的操作
+	// imageMemoryBarrier.image = swapchain->vkImages[m_currentFrame]; // 需要转换布局的图像
+	// imageMemoryBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT; // 指定影响的图像方面
+	// imageMemoryBarrier.subresourceRange.baseMipLevel = 0; // 起始mip级别
+	// imageMemoryBarrier.subresourceRange.levelCount = 1; // mip级别的数量
+	// imageMemoryBarrier.subresourceRange.baseArrayLayer = 0; // 起始数组层
+	// imageMemoryBarrier.subresourceRange.layerCount = 1; // 数组层的数量
+	//
+	// vkCmdPipelineBarrier(
+	// 	currentCommandBuffer,
+	// 	VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, // 生产者阶段
+	// 	VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, // 消费者阶段
+	// 	0, // 标志
+	// 	0, nullptr,
+	// 	0, nullptr,
+	// 	1, &imageMemoryBarrier); // 图像内存屏障
+
+
+	applicationEditor->DrawFrame(*this, currentCommandBuffer, m_currentFrame, syncObjects, imageIndex);
+
+	VkSemaphore presentWaitSemaphores[] = {syncObjects->renderFinishedSemaphores[m_currentFrame]};
 	VkPresentInfoKHR presentInfo{};
 	presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
 
 	presentInfo.waitSemaphoreCount = 1;
-	presentInfo.pWaitSemaphores = signalSemaphores;
+	presentInfo.pWaitSemaphores = presentWaitSemaphores;
 
 	VkSwapchainKHR swapChains[] = {swapchain->vkSwapchain};
 	presentInfo.swapchainCount = 1;
@@ -206,7 +238,7 @@ void Application::DrawFrame(const std::unique_ptr<ApplicationEditor>& applicatio
 	if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || surface->GetFrameBufferResized())
 	{
 		surface->SetFrameBufferResized(false);
-		RecreateSwapchain();
+		RecreateSwapchain(applicationEditor);
 	}
 	else if (result != VK_SUCCESS)
 	{
@@ -215,7 +247,7 @@ void Application::DrawFrame(const std::unique_ptr<ApplicationEditor>& applicatio
 	m_currentFrame = (m_currentFrame + 1) % device->MAX_FRAMES_IN_FLIGHT;
 }
 
-void Application::RecreateSwapchain()
+void Application::RecreateSwapchain(const std::unique_ptr<ApplicationEditor>& editor)
 {
 	int width = 0, height = 0;
 	glfwGetFramebufferSize(surface->glfwWindow, &width, &height);
@@ -227,8 +259,10 @@ void Application::RecreateSwapchain()
 	vkDeviceWaitIdle(device->vkDevice);
 
 	swapchain->Cleanup();
+	editor->CleanupWhenRecreateSwapchain();
 	swapchain->CreateSwapchain(surface, device);
 	swapchain->CreateFramebuffers(renderPass);
+	editor->CreateFramebuffer(Instance);
 }
 
 void Application::RecordCommandBuffer(VkCommandBuffer currentCommandBuffer, uint32_t imageIndex, const std::unique_ptr<ApplicationEditor>& applicationEditor)
@@ -282,18 +316,6 @@ void Application::RecordCommandBuffer(VkCommandBuffer currentCommandBuffer, uint
 
 	vkCmdEndRenderPass(currentCommandBuffer);
 
-	// 等待 pipeline 命令完成，因为 Editor DrawFrame 需要切换 pipeline
-	vkCmdPipelineBarrier(
-		currentCommandBuffer,
-		VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, // 等待上一个Pipeline的颜色输出完成
-		VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, // 在开始下一个Pipeline前
-		0,
-		0, nullptr,
-		0, nullptr,
-		0, nullptr);
-
-	// ui render pass
-	applicationEditor->DrawFrame(*this, currentCommandBuffer, m_currentFrame);
 	if (vkEndCommandBuffer(currentCommandBuffer) != VK_SUCCESS)
 	{
 		throw std::runtime_error("failed to record command buffer!");

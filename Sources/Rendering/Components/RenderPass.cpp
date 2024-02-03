@@ -35,7 +35,7 @@ void RenderPass::CreateEditorRenderPass()
 	attachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
 	attachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 	attachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-	attachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+	attachment.initialLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 	attachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 	VkAttachmentReference colorAttachment;
 	colorAttachment.attachment = 0;
@@ -96,7 +96,7 @@ void RenderPass::CreateGameRenderPass()
 	colorAttachmentResolve.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 	colorAttachmentResolve.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 	colorAttachmentResolve.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-	colorAttachmentResolve.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+	colorAttachmentResolve.finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
 	VkAttachmentReference colorAttachmentResolveRef{};
 	colorAttachmentResolveRef.attachment = 2;

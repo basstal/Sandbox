@@ -30,7 +30,7 @@ ApplicationEditor::ApplicationEditor(const std::unique_ptr<Application>& applica
 	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
 	io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad; // Enable Gamepad Controls
 	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable; // Enable Docking
-	// io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable; // Enable Multi-Viewport / Platform Windows
+	io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable; // Enable Multi-Viewport / Platform Windows
 
 	// Setup Dear ImGui style
 	ImGui::StyleColorsDark();
@@ -54,7 +54,7 @@ ApplicationEditor::ApplicationEditor(const std::unique_ptr<Application>& applica
 	init_info.PipelineCache = VK_NULL_HANDLE; // TODO: PipelineCache
 	init_info.DescriptorPool = application->descriptorResource->vkDescriptorPool;
 	init_info.Subpass = 0;
-	init_info.MinImageCount = IMAGE_COUNT;
+	init_info.MinImageCount = static_cast<uint32_t>(vkImageViews.size());
 	init_info.ImageCount = static_cast<uint32_t>(application->swapchain->vkImages.size());
 	init_info.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
 	init_info.Allocator = nullptr;
@@ -69,20 +69,10 @@ ApplicationEditor::~ApplicationEditor()
 
 void ApplicationEditor::CreateFramebuffer(const std::unique_ptr<Application>& application)
 {
-	// // Create Image
-	// {
-	// 	auto vkExtent2D = application->swapchain->vkExtent2D;
-	// 	std::shared_ptr<Device> device = application->device;
-	// 	for (uint32_t i = 0; i < IMAGE_COUNT; i++)
-	// 	{
-	// 		device->CreateImage(vkExtent2D.width, vkExtent2D.height, 1, VK_SAMPLE_COUNT_1_BIT, Swapchain::COLOR_FORMAT,
-	// 		                    VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-	// 		                    vkImages[i], m_vkDepthImageMemory);
-	// 	}
-	// }
+	uint32_t imageCount = static_cast<uint32_t>(application->swapchain->vkImages.size());
 	// Create The Image Views
 	{
-		vkImageViews.resize(IMAGE_COUNT);
+		vkImageViews.resize(imageCount);
 		VkImageViewCreateInfo info = {};
 		info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
 		info.viewType = VK_IMAGE_VIEW_TYPE_2D;
@@ -93,7 +83,7 @@ void ApplicationEditor::CreateFramebuffer(const std::unique_ptr<Application>& ap
 		info.components.a = VK_COMPONENT_SWIZZLE_A;
 		VkImageSubresourceRange image_range = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1};
 		info.subresourceRange = image_range;
-		for (uint32_t i = 0; i < IMAGE_COUNT; i++)
+		for (uint32_t i = 0; i < imageCount; i++)
 		{
 			info.image = application->swapchain->vkImages[i];
 			if (vkCreateImageView(application->device->vkDevice, &info, nullptr, &vkImageViews[i]) != VK_SUCCESS)
@@ -105,7 +95,7 @@ void ApplicationEditor::CreateFramebuffer(const std::unique_ptr<Application>& ap
 
 	// Create Framebuffer
 	{
-		vkFramebuffers.resize(IMAGE_COUNT);
+		vkFramebuffers.resize(imageCount);
 		VkImageView attachment[1];
 		VkFramebufferCreateInfo info = {};
 		info.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
@@ -115,7 +105,7 @@ void ApplicationEditor::CreateFramebuffer(const std::unique_ptr<Application>& ap
 		info.width = application->swapchain->vkExtent2D.width;
 		info.height = application->swapchain->vkExtent2D.height;
 		info.layers = 1;
-		for (uint32_t i = 0; i < IMAGE_COUNT; i++)
+		for (uint32_t i = 0; i < imageCount; i++)
 		{
 			attachment[0] = vkImageViews[i];
 			if (vkCreateFramebuffer(application->device->vkDevice, &info, nullptr, &vkFramebuffers[i]) != VK_SUCCESS)
@@ -132,6 +122,14 @@ void ApplicationEditor::Cleanup()
 	{
 		return;
 	}
+	CleanupFramebuffers();
+
+	renderPass->Cleanup();
+	m_cleaned = true;
+}
+
+void ApplicationEditor::CleanupFramebuffers()
+{
 	for (auto framebuffer : vkFramebuffers)
 	{
 		vkDestroyFramebuffer(m_device->vkDevice, framebuffer, nullptr);
@@ -140,12 +138,9 @@ void ApplicationEditor::Cleanup()
 	{
 		vkDestroyImageView(m_device->vkDevice, imageView, nullptr);
 	}
-
-	renderPass->Cleanup();
-	m_cleaned = true;
 }
 
-void ApplicationEditor::DrawFrame(Application& application, VkCommandBuffer currentCommandBuffer, uint32_t currentFrame)
+void ApplicationEditor::DrawFrame(Application& application, VkCommandBuffer currentCommandBuffer, uint32_t currentFrame, std::shared_ptr<SyncObjects> syncObjects, uint32_t imageIndex)
 {
 	ImGuiIO& io = ImGui::GetIO();
 
@@ -201,11 +196,20 @@ void ApplicationEditor::DrawFrame(Application& application, VkCommandBuffer curr
 	application.clearColor.a = clear_color.w;
 	if (!main_is_minimized)
 	{
+		VkCommandBufferBeginInfo beginInfo{};
+		beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+		beginInfo.flags = 0; // Optional
+		beginInfo.pInheritanceInfo = nullptr; // Optional
+
+		if (vkBeginCommandBuffer(currentCommandBuffer, &beginInfo) != VK_SUCCESS)
+		{
+			throw std::runtime_error("failed to begin recording command buffer!");
+		}
 		{
 			VkRenderPassBeginInfo info = {};
 			info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
 			info.renderPass = renderPass->vkRenderPass;
-			info.framebuffer = vkFramebuffers[currentFrame];
+			info.framebuffer = vkFramebuffers[imageIndex];
 			info.renderArea.extent = application.swapchain->vkExtent2D;
 			// std::array<VkClearValue, 2> clearValues{};
 			// clearValues[0].color = {{application.clearColor.r, application.clearColor.g, application.clearColor.b, application.clearColor.a}};
@@ -219,6 +223,10 @@ void ApplicationEditor::DrawFrame(Application& application, VkCommandBuffer curr
 		ImGui_ImplVulkan_RenderDrawData(main_draw_data, currentCommandBuffer);
 		// Submit command buffer
 		vkCmdEndRenderPass(currentCommandBuffer);
+		if (vkEndCommandBuffer(currentCommandBuffer) != VK_SUCCESS)
+		{
+			throw std::runtime_error("failed to record command buffer!");
+		}
 	}
 
 	// Update and Render additional Platform Windows
@@ -227,4 +235,30 @@ void ApplicationEditor::DrawFrame(Application& application, VkCommandBuffer curr
 		ImGui::UpdatePlatformWindows();
 		ImGui::RenderPlatformWindowsDefault();
 	}
+
+	// Present Main Platform Window
+	if (!main_is_minimized)
+	{
+		VkSubmitInfo submitInfo{};
+		submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+
+		VkSemaphore waitSemaphores[] = {syncObjects->gameRenderFinishedSemaphores[currentFrame]};
+		VkPipelineStageFlags waitStages[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
+		submitInfo.waitSemaphoreCount = 1;
+		submitInfo.pWaitSemaphores = waitSemaphores;
+		submitInfo.pWaitDstStageMask = waitStages;
+		submitInfo.commandBufferCount = 1;
+		submitInfo.pCommandBuffers = &currentCommandBuffer;
+		VkSemaphore signalSemaphores[] = {syncObjects->renderFinishedSemaphores[currentFrame]};
+		submitInfo.signalSemaphoreCount = 1;
+		submitInfo.pSignalSemaphores = signalSemaphores;
+		if (vkQueueSubmit(m_device->graphicsQueue, 1, &submitInfo, syncObjects->inFlightFences[currentFrame]) != VK_SUCCESS)
+		{
+			throw std::runtime_error("failed to submit editor draw command buffer!");
+		}
+	}
+}
+void ApplicationEditor::CleanupWhenRecreateSwapchain()
+{
+	CleanupFramebuffers();
 }

@@ -10,6 +10,7 @@ SyncObjects::SyncObjects(const std::shared_ptr<Device>& device)
 	m_device = device;
 	imageAvailableSemaphores.resize(device->MAX_FRAMES_IN_FLIGHT);
 	renderFinishedSemaphores.resize(device->MAX_FRAMES_IN_FLIGHT);
+	gameRenderFinishedSemaphores.resize(device->MAX_FRAMES_IN_FLIGHT);
 	inFlightFences.resize(device->MAX_FRAMES_IN_FLIGHT);
 
 	VkSemaphoreCreateInfo semaphoreInfo{};
@@ -22,6 +23,7 @@ SyncObjects::SyncObjects(const std::shared_ptr<Device>& device)
 	{
 		if (vkCreateSemaphore(device->vkDevice, &semaphoreInfo, nullptr, &imageAvailableSemaphores[i]) != VK_SUCCESS ||
 			vkCreateSemaphore(device->vkDevice, &semaphoreInfo, nullptr, &renderFinishedSemaphores[i]) != VK_SUCCESS ||
+			vkCreateSemaphore(device->vkDevice, &semaphoreInfo, nullptr, &gameRenderFinishedSemaphores[i]) != VK_SUCCESS ||
 			vkCreateFence(device->vkDevice, &fenceInfo, nullptr, &inFlightFences[i]) != VK_SUCCESS)
 		{
 			throw std::runtime_error("failed to create synchronization objects for a frame!");
@@ -43,6 +45,7 @@ void SyncObjects::Cleanup()
 	{
 		vkDestroySemaphore(m_device->vkDevice, renderFinishedSemaphores[i], nullptr);
 		vkDestroySemaphore(m_device->vkDevice, imageAvailableSemaphores[i], nullptr);
+		vkDestroySemaphore(m_device->vkDevice, gameRenderFinishedSemaphores[i], nullptr);
 		vkDestroyFence(m_device->vkDevice, inFlightFences[i], nullptr);
 	}
 	m_cleanup = true;

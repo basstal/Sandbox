@@ -13,6 +13,7 @@ private:
 public:
 	std::vector<VkSemaphore> imageAvailableSemaphores;
 	std::vector<VkSemaphore> renderFinishedSemaphores;
+	std::vector<VkSemaphore> gameRenderFinishedSemaphores;
 	std::vector<VkFence> inFlightFences;
 	SyncObjects(const std::shared_ptr<Device>& device);
 	~SyncObjects();

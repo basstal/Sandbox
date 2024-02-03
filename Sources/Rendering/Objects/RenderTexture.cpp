@@ -19,19 +19,20 @@ RenderTexture::RenderTexture(const std::shared_ptr<Device>& device, const std::s
 	                            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 
 	void* data;
+	VkFormat colorFormat = Swapchain::COLOR_FORMAT;
 	vkMapMemory(device->vkDevice, textureStagingBuffer.vkDeviceMemory, 0, imageSize, 0, &data);
 	memcpy(data, image->pixels(), static_cast<size_t>(imageSize));
 	vkUnmapMemory(device->vkDevice, textureStagingBuffer.vkDeviceMemory);
 	m_device->CreateImage(image->width(), image->height(), image->mipLevels(), VK_SAMPLE_COUNT_1_BIT,
-	                      Swapchain::COLOR_FORMAT,
+	                      colorFormat,
 	                      VK_IMAGE_TILING_OPTIMAL,
 	                      VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
 	                      VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, vkImage, vkDeviceMemory);
-	TransitionImageLayout(Swapchain::COLOR_FORMAT, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, image->mipLevels());
+	TransitionImageLayout(colorFormat, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, image->mipLevels());
 	CopyFromBuffer(textureStagingBuffer.vkBuffer, static_cast<uint32_t>(image->width()), static_cast<uint32_t>(image->height()));
-	GenerateMipmaps(Swapchain::COLOR_FORMAT, image->width(), image->height(), image->mipLevels());
+	GenerateMipmaps(colorFormat, image->width(), image->height(), image->mipLevels());
 	// ReSharper disable once CppObjectMemberMightNotBeInitialized
-	vkImageView = device->CreateImageView(vkImage, Swapchain::COLOR_FORMAT, VK_IMAGE_ASPECT_COLOR_BIT, image->mipLevels());
+	vkImageView = device->CreateImageView(vkImage, colorFormat, VK_IMAGE_ASPECT_COLOR_BIT, image->mipLevels());
 	CreateTextureSampler();
 }
 
