@@ -11,8 +11,10 @@ private:
 
 public:
 	bool IsWindow = false;
-	uint32_t Width = 1920;
-	uint32_t Height = 1080;
+	int WindowPositionX = 0;
+	int WindowPositionY = 0;
+	int Width = 1920;
+	int Height = 1080;
 	std::string ApplicationName = "Sandbox";
 	Settings();
 	~Settings();

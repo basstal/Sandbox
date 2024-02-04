@@ -4,6 +4,7 @@
 #include <stdexcept>
 #include <vulkan/vulkan_core.h>
 
+#include "Infrastructures/DataBinding.hpp"
 #include "Rendering/Settings.hpp"
 
 Surface::Surface(const VkInstance& instance, const std::shared_ptr<Settings>& settings)
@@ -24,12 +25,22 @@ Surface::Surface(const VkInstance& instance, const std::shared_ptr<Settings>& se
 	{
 		throw std::runtime_error("failed to create window!");
 	}
+
 	glfwSetWindowUserPointer(glfwWindow, this);
 	glfwSetFramebufferSizeCallback(glfwWindow, FramebufferResizeCallback);
 	if (glfwCreateWindowSurface(instance, glfwWindow, nullptr, &vkSurface) != VK_SUCCESS)
 	{
 		throw std::runtime_error("failed to create window surface!");
 	}
+	auto test1 = DataBinding::Get("Rendering/Settings");
+	std::shared_ptr<TDataBinding<std::shared_ptr<Settings>>> settingsBinding = std::dynamic_pointer_cast<TDataBinding<std::shared_ptr<Settings>>>(DataBinding::Get("Rendering/Settings"));
+	Delegate<std::shared_ptr<Settings>> bindFunction(
+		[this](std::shared_ptr<Settings> settings)
+		{
+			this->ApplySettings(settings);
+		}
+	);
+	settingsBinding->Bind(bindFunction);
 }
 
 Surface::~Surface()
@@ -37,22 +48,51 @@ Surface::~Surface()
 	Cleanup();
 }
 
-bool Surface::GetFrameBufferResized()
-{
-	return m_framebufferResized;
-}
-
-void Surface::SetFrameBufferResized(bool value)
-{
-	m_framebufferResized = value;
-}
-
 void Surface::FramebufferResizeCallback(GLFWwindow* window, int width, int height)
 {
 	const auto surface = static_cast<Surface*>(glfwGetWindowUserPointer(window));
-	surface->m_framebufferResized = true;
-	surface->m_settings->Width = width;
-	surface->m_settings->Height = height;
+	surface->framebufferResized = true;
+}
+
+void Surface::ApplySettings(std::shared_ptr<Settings> settings)
+{
+	if (glfwWindow == nullptr)
+	{
+		return;
+	}
+	auto currentIsWindow = glfwGetWindowMonitor(glfwWindow) == nullptr;
+
+	if (settings->IsWindow != currentIsWindow)
+	{
+		if (settings->IsWindow)
+		{
+			// 当前是全屏模式，切换到窗口模式
+			glfwSetWindowMonitor(glfwWindow, NULL,
+			                     (int)settings->WindowPositionX, (int)settings->WindowPositionY,
+			                     (int)settings->Width, (int)settings->Height, 0);
+		}
+		else
+		{
+			// 获取当前视频模式和主监视器
+			GLFWmonitor* monitor = glfwGetPrimaryMonitor();
+			const GLFWvidmode* mode = glfwGetVideoMode(monitor);
+
+			// 切换到全屏模式
+			glfwSetWindowMonitor(glfwWindow, monitor, 0, 0, mode->width, mode->height, mode->refreshRate);
+		}
+	}
+	if (settings->IsWindow)
+	{
+		int posX, posY, width, height;
+		// 保存当前窗口位置和大小
+		glfwGetWindowPos(glfwWindow, &posX, &posY);
+		glfwGetWindowSize(glfwWindow, &width, &height);
+		if (posX != settings->WindowPositionX || posY != settings->WindowPositionY || width != settings->Width || height != settings->Height)
+		{
+			glfwSetWindowPos(glfwWindow, (int)settings->WindowPositionX, (int)settings->WindowPositionY);
+			glfwSetWindowSize(glfwWindow, (int)settings->Width, (int)settings->Height);
+		}
+	}
 }
 
 void Surface::Cleanup()

@@ -66,7 +66,7 @@ public:
 	void Cleanup();
 	void CreateSwapchain();
 	static uint32_t FindMemoryType(VkPhysicalDevice physicalDevice, uint32_t typeFilter, VkMemoryPropertyFlags properties);
-	void DrawFrame(const std::unique_ptr<ApplicationEditor>& applicationEditor);
-	void RecreateSwapchain(const std::unique_ptr<ApplicationEditor>& editor);
-	void RecordCommandBuffer(VkCommandBuffer currentCommandBuffer, uint32_t imageIndex, const std::unique_ptr<ApplicationEditor>& applicationEditor);
+	void DrawFrame(const std::shared_ptr<ApplicationEditor>& applicationEditor);
+	void RecreateSwapchain(const std::shared_ptr<ApplicationEditor>& editor);
+	void RecordCommandBuffer(VkCommandBuffer currentCommandBuffer, uint32_t imageIndex);
 };

@@ -1,4 +1,6 @@
-Width: 3840
-Height: 2066
+Width: 2609
+Height: 1194
 ApplicationName: Sandbox
-IsWindow: false
+IsWindow: true
+WindowPositionX: 11
+WindowPositionY: 45

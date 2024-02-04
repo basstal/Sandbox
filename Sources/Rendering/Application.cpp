@@ -161,7 +161,7 @@ uint32_t Application::FindMemoryType(VkPhysicalDevice physicalDevice, uint32_t t
 	throw std::runtime_error("failed to find suitable memory type!");
 }
 
-void Application::DrawFrame(const std::unique_ptr<ApplicationEditor>& applicationEditor)
+void Application::DrawFrame(const std::shared_ptr<ApplicationEditor>& applicationEditor)
 {
 	vkWaitForFences(device->vkDevice, 1, &syncObjects->inFlightFences[m_currentFrame], VK_TRUE, UINT64_MAX);
 	uint32_t imageIndex;
@@ -180,7 +180,7 @@ void Application::DrawFrame(const std::unique_ptr<ApplicationEditor>& applicatio
 	VkCommandBuffer currentCommandBuffer = commandResource->vkCommandBuffers[m_currentFrame];
 	vkResetFences(device->vkDevice, 1, &syncObjects->inFlightFences[m_currentFrame]);
 	vkResetCommandBuffer(currentCommandBuffer, 0);
-	RecordCommandBuffer(currentCommandBuffer, imageIndex, applicationEditor);
+	RecordCommandBuffer(currentCommandBuffer, imageIndex);
 	uniformBuffers->UpdateUniformBuffer(m_currentFrame, swapchain->vkExtent2D);
 	VkSubmitInfo submitInfo{};
 	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -240,9 +240,9 @@ void Application::DrawFrame(const std::unique_ptr<ApplicationEditor>& applicatio
 	presentInfo.pImageIndices = &imageIndex;
 	presentInfo.pResults = nullptr; // Optional
 	result = vkQueuePresentKHR(device->presentQueue, &presentInfo);
-	if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || surface->GetFrameBufferResized())
+	if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || surface->framebufferResized)
 	{
-		surface->SetFrameBufferResized(false);
+		surface->framebufferResized = false;
 		RecreateSwapchain(applicationEditor);
 	}
 	else if (result != VK_SUCCESS)
@@ -252,7 +252,7 @@ void Application::DrawFrame(const std::unique_ptr<ApplicationEditor>& applicatio
 	m_currentFrame = (m_currentFrame + 1) % device->MAX_FRAMES_IN_FLIGHT;
 }
 
-void Application::RecreateSwapchain(const std::unique_ptr<ApplicationEditor>& editor)
+void Application::RecreateSwapchain(const std::shared_ptr<ApplicationEditor>& editor)
 {
 	int width = 0, height = 0;
 	glfwGetFramebufferSize(surface->glfwWindow, &width, &height);
@@ -270,7 +270,7 @@ void Application::RecreateSwapchain(const std::unique_ptr<ApplicationEditor>& ed
 	editor->CreateFramebuffer(Instance);
 }
 
-void Application::RecordCommandBuffer(VkCommandBuffer currentCommandBuffer, uint32_t imageIndex, const std::unique_ptr<ApplicationEditor>& applicationEditor)
+void Application::RecordCommandBuffer(VkCommandBuffer currentCommandBuffer, uint32_t imageIndex)
 {
 	VkCommandBufferBeginInfo beginInfo{};
 	beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;

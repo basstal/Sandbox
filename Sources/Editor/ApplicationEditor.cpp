@@ -1,7 +1,9 @@
 #include "ApplicationEditor.hpp"
 
+#include <memory>
 #include <stdexcept>
 
+#include "IEditor.hpp"
 #include "imgui.h"
 #include "backends/imgui_impl_glfw.h"
 #include "backends/imgui_impl_vulkan.h"
@@ -153,27 +155,9 @@ void ApplicationEditor::DrawFrame(Application& application, VkCommandBuffer curr
 		ImGui::ShowDemoWindow(&show_demo_window);
 	}
 
-	// 2. Show a simple window that we create ourselves. We use a Begin/End pair to create a named window.
+	for (auto it = IEditor::registeredEditors.cbegin(); it != IEditor::registeredEditors.cend(); ++it)
 	{
-		static float f = 0.0f;
-		static int counter = 0;
-
-		ImGui::Begin("Hello, world!"); // Create a window called "Hello, world!" and append into it.
-
-		ImGui::Text("This is some useful text."); // Display some text (you can use a format strings too)
-		ImGui::Checkbox("Demo Window", &show_demo_window); // Edit bools storing our window open/close state
-		ImGui::Checkbox("Another Window", &show_another_window);
-
-		ImGui::SliderFloat("float", &f, 0.0f, 1.0f); // Edit 1 float using a slider from 0.0f to 1.0f
-		ImGui::ColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color
-
-		if (ImGui::Button("Button")) // Buttons return true when clicked (most widgets return true when edited/activated)
-			counter++;
-		ImGui::SameLine();
-		ImGui::Text("counter = %d", counter);
-
-		ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
-		ImGui::End();
+		it->get()->DrawFrame();
 	}
 
 	// 3. Show another simple window.
@@ -189,13 +173,13 @@ void ApplicationEditor::DrawFrame(Application& application, VkCommandBuffer curr
 	// Rendering
 	ImGui::Render();
 	ImDrawData* main_draw_data = ImGui::GetDrawData();
-	const bool main_is_minimized = (main_draw_data->DisplaySize.x <= 0.0f || main_draw_data->DisplaySize.y <= 0.0f);
+	// const bool main_is_minimized = (main_draw_data->DisplaySize.x <= 0.0f || main_draw_data->DisplaySize.y <= 0.0f);
 	application.clearColor.r = clear_color.x * clear_color.w;
 	application.clearColor.g = clear_color.y * clear_color.w;
 	application.clearColor.b = clear_color.z * clear_color.w;
 	application.clearColor.a = clear_color.w;
-	if (!main_is_minimized)
-	{
+	// if (!main_is_minimized)
+	// {
 		VkCommandBufferBeginInfo beginInfo{};
 		beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 		beginInfo.flags = 0; // Optional
@@ -227,7 +211,7 @@ void ApplicationEditor::DrawFrame(Application& application, VkCommandBuffer curr
 		{
 			throw std::runtime_error("failed to record command buffer!");
 		}
-	}
+	// }
 
 	// Update and Render additional Platform Windows
 	if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
@@ -237,8 +221,8 @@ void ApplicationEditor::DrawFrame(Application& application, VkCommandBuffer curr
 	}
 
 	// Present Main Platform Window
-	if (!main_is_minimized)
-	{
+	// if (!main_is_minimized)
+	// {
 		VkSubmitInfo submitInfo{};
 		submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 
@@ -256,8 +240,9 @@ void ApplicationEditor::DrawFrame(Application& application, VkCommandBuffer curr
 		{
 			throw std::runtime_error("failed to submit editor draw command buffer!");
 		}
-	}
+	// }
 }
+
 void ApplicationEditor::CleanupWhenRecreateSwapchain()
 {
 	CleanupFramebuffers();

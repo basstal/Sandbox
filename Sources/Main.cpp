@@ -2,8 +2,11 @@
 #include <memory>
 
 #include "Editor/ApplicationEditor.hpp"
+#include "Editor/SettingsEditor.hpp"
+#include "Infrastructures/DataBinding.hpp"
 #include "Rendering/Application.hpp"
 #include "Rendering/Settings.hpp"
+
 int main()
 {
 	// std::string binariesDir = FileSystemBase::getBinariesDir();
@@ -11,8 +14,11 @@ int main()
 	try
 	{
 		auto setting = std::make_shared<Settings>();
+		DataBinding::Create("Rendering/Settings", setting);
+
 		Application::Instance = std::make_unique<Application>(setting);
-		auto applicationEditor = std::make_unique<ApplicationEditor>(Application::Instance);
+		std::shared_ptr<ApplicationEditor> applicationEditor = std::make_shared<ApplicationEditor>(Application::Instance);
+		SettingsEditor::Create(applicationEditor);
 		while (!glfwWindowShouldClose(Application::Instance->surface->glfwWindow))
 		{
 			glfwPollEvents();

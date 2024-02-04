@@ -9,18 +9,17 @@
 class Surface
 {
 private:
-	bool m_framebufferResized = false;
 	static void FramebufferResizeCallback(GLFWwindow* window, int width, int height);
+	void ApplySettings(std::shared_ptr<Settings> settings);
 	VkInstance m_vkInstance;
 	bool m_cleaned = false;
 	std::shared_ptr<Settings> m_settings;
 
 public:
+	bool framebufferResized = false;
 	GLFWwindow* glfwWindow;
 	VkSurfaceKHR vkSurface;
 	Surface(const VkInstance& instance, const std::shared_ptr<Settings>& settings);
 	~Surface();
 	void Cleanup();
-	bool GetFrameBufferResized();
-	void SetFrameBufferResized(bool value);
 };

@@ -2,6 +2,7 @@
 
 #include <fstream>
 
+#include "Infrastructures/DataBinding.hpp"
 #include "Infrastructures/FileSystemBase.hpp"
 
 Settings::Settings()
@@ -14,12 +15,14 @@ Settings::Settings()
 	}
 	try
 	{
-		Width = config["Width"].as<uint32_t>();
-		Height = config["Height"].as<uint32_t>();
+		Width = config["Width"].as<int>();
+		Height = config["Height"].as<int>();
+		WindowPositionX = config["WindowPositionX"].as<int>();
+		WindowPositionY = config["WindowPositionY"].as<int>();
 		ApplicationName = config["ApplicationName"].as<std::string>();
 		IsWindow = config["IsWindow"].as<bool>();
 	}
-	catch (const std::exception&)  // NOLINT(bugprone-empty-catch)
+	catch (const std::exception&) // NOLINT(bugprone-empty-catch)
 	{
 	}
 }
@@ -34,6 +37,8 @@ void Settings::Save()
 	std::ofstream fout(m_renderingSettings);
 	config["Width"] = Width;
 	config["Height"] = Height;
+	config["WindowPositionX"] = WindowPositionX;
+	config["WindowPositionY"] = WindowPositionY;
 	config["ApplicationName"] = ApplicationName;
 	config["IsWindow"] = IsWindow;
 	fout << config;
