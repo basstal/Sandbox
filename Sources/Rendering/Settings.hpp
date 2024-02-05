@@ -15,6 +15,7 @@ public:
 	int WindowPositionY = 0;
 	int Width = 1920;
 	int Height = 1080;
+	bool FillModeNonSolid = false;
 	std::string ApplicationName = "Sandbox";
 	Settings();
 	~Settings();

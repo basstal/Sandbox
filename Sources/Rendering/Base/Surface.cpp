@@ -25,7 +25,7 @@ Surface::Surface(const VkInstance& instance, const std::shared_ptr<Settings>& se
 	{
 		throw std::runtime_error("failed to create window!");
 	}
-
+	glfwSetWindowPos(glfwWindow, (int)settings->WindowPositionX, (int)settings->WindowPositionY);
 	glfwSetWindowUserPointer(glfwWindow, this);
 	glfwSetFramebufferSizeCallback(glfwWindow, FramebufferResizeCallback);
 	if (glfwCreateWindowSurface(instance, glfwWindow, nullptr, &vkSurface) != VK_SUCCESS)

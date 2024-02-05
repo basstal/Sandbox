@@ -84,28 +84,6 @@ Application::Application(const std::shared_ptr<Settings>& settings)
 	}
 	surface = std::make_shared<Surface>(vkInstance, settings);
 	device = std::make_shared<Device>(vkInstance, surface);
-	CreateSwapchain();
-	renderPass = std::make_shared<RenderPass>(device, swapchain, RenderPassType::GAME_RENDER_PASS);
-	descriptorResource = std::make_shared<DescriptorResource>(device);
-	pipeline = std::make_shared<Pipeline>(device, descriptorResource, renderPass);
-	std::filesystem::path binariesDir = FileSystemBase::getBinariesDir();
-	std::vector<char> vertexShader = FileSystemBase::readFile((binariesDir / "Shaders/Test_vert.spv").string());
-	std::vector<char> fragmentShader = FileSystemBase::readFile((binariesDir / "Shaders/Test_frag.spv").string());
-	pipeline->CreatePipeline(vertexShader, fragmentShader);
-	swapchain->CreateFramebuffers(renderPass);
-	commandResource = std::make_shared<CommandResource>(device);
-	std::filesystem::path assetsDir = FileSystemBase::getAssetsDir();
-
-	model = Model::loadModel((assetsDir / "Models/viking_room.obj").string().c_str());
-	image = Image::loadImage((assetsDir / "Textures/viking_room.png").string().c_str());
-	renderTexture = std::make_shared<RenderTexture>(device, image, commandResource);
-	vertexBuffer = std::make_shared<VertexBuffer>(device, model, commandResource);
-	indexBuffer = std::make_shared<IndexBuffer>(device, model, commandResource);
-	uniformBuffers = std::make_shared<UniformBuffers>(device);
-	descriptorResource->CreateDescriptorPool();
-	descriptorResource->CreateDescriptorSets(uniformBuffers, renderTexture);
-	commandResource->CreateCommandBuffers();
-	syncObjects = std::make_shared<SyncObjects>(device);
 }
 
 Application::~Application()
@@ -139,6 +117,41 @@ void Application::Cleanup()
 		m_settings->Save();
 	}
 	m_cleaned = true;
+}
+
+
+void Application::Initialize()
+{
+	LoadAssets();
+	CreateSwapchain();
+	renderPass = std::make_shared<RenderPass>(device, swapchain, RenderPassType::GAME_RENDER_PASS);
+	descriptorResource = std::make_shared<DescriptorResource>(device);
+	pipeline = std::make_shared<Pipeline>(device, descriptorResource, renderPass);
+
+	pipeline->CreatePipeline(vertexShader, fragmentShader);
+	pipeline->CreateFillModeNonSolidPipeline(vertexShader, fragmentShader);
+
+	swapchain->CreateFramebuffers(renderPass);
+	commandResource = std::make_shared<CommandResource>(device);
+
+	renderTexture = std::make_shared<RenderTexture>(device, image, commandResource);
+	vertexBuffer = std::make_shared<VertexBuffer>(device, model, commandResource);
+	indexBuffer = std::make_shared<IndexBuffer>(device, model, commandResource);
+	uniformBuffers = std::make_shared<UniformBuffers>(device);
+	descriptorResource->CreateDescriptorPool();
+	descriptorResource->CreateDescriptorSets(uniformBuffers, renderTexture);
+	commandResource->CreateCommandBuffers();
+	syncObjects = std::make_shared<SyncObjects>(device);
+}
+
+void Application::LoadAssets()
+{
+	std::filesystem::path binariesDir = FileSystemBase::getBinariesDir();
+	vertexShader = FileSystemBase::readFile((binariesDir / "Shaders/Test_vert.spv").string());
+	fragmentShader = FileSystemBase::readFile((binariesDir / "Shaders/Test_frag.spv").string());
+	std::filesystem::path assetsDir = FileSystemBase::getAssetsDir();
+	model = Model::loadModel((assetsDir / "Models/viking_room.obj").string().c_str());
+	image = Image::loadImage((assetsDir / "Textures/viking_room.png").string().c_str());
 }
 
 void Application::CreateSwapchain()

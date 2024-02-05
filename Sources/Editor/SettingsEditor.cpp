@@ -40,13 +40,17 @@ void SettingsEditor::DrawFrame()
 		auto changed = ImGui::Checkbox("IsWindow", &settings->IsWindow);
 		if (settings->IsWindow)
 		{
+			changed = ImGui::DragInt("WindowPositionX", &settings->WindowPositionX) || changed;
+			changed = ImGui::DragInt("WindowPositionY", &settings->WindowPositionY) || changed;
 			changed = ImGui::DragInt("Width", &settings->Width) || changed;
 			changed = ImGui::DragInt("Height", &settings->Height) || changed;
 		}
+		changed = ImGui::Checkbox("FillModeNonSolid", &settings->FillModeNonSolid) || changed;
 		if (changed)
 		{
 			settingsBinding->Trigger();
 		}
+
 
 		ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
 		ImGui::End();

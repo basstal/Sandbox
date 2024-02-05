@@ -2,6 +2,7 @@
 
 #include <stdexcept>
 
+#include "Infrastructures/DataBinding.hpp"
 #include "Rendering/Components/DescriptorResource.hpp"
 #include "Rendering/Components/RenderPass.hpp"
 #include "Rendering/Vertex.hpp"
@@ -13,6 +14,14 @@ Pipeline::Pipeline(const std::shared_ptr<Device>& device, const std::shared_ptr<
 	m_renderPass = renderPass;
 	m_descriptorResource = descriptorResource;
 	CreatePipelineLayout();
+	std::shared_ptr<TDataBinding<std::shared_ptr<Settings>>> settingsBinding = std::dynamic_pointer_cast<TDataBinding<std::shared_ptr<Settings>>>(DataBinding::Get("Rendering/Settings"));
+	Delegate<std::shared_ptr<Settings>> bindFunction(
+		[this](std::shared_ptr<Settings> settings)
+		{
+			this->ApplySettings(settings);
+		}
+	);
+	settingsBinding->Bind(bindFunction);
 }
 
 Pipeline::~Pipeline()
@@ -34,11 +43,35 @@ void Pipeline::CreatePipelineLayout()
 		throw std::runtime_error("failed to create pipeline layout!");
 	}
 }
+
+void Pipeline::ApplySettings(std::shared_ptr<Settings> settings)
+{
+	m_fillModeNonSolid = settings->FillModeNonSolid;
+}
+
 void Pipeline::CreatePipeline(const std::vector<char>& vertexShader, const std::vector<char>& fragmentShader)
 {
-	VkPipeline vkPipeline;
 	VkShaderModule vertShaderModule = CreateShaderModule(vertexShader);
 	VkShaderModule fragShaderModule = CreateShaderModule(fragmentShader);
+	auto vkPipeline = CreatePipeline(vertShaderModule, fragShaderModule, false);
+	vkPipelines.push_back(vkPipeline);
+	vkDestroyShaderModule(m_device->vkDevice, fragShaderModule, nullptr);
+	vkDestroyShaderModule(m_device->vkDevice, vertShaderModule, nullptr);
+}
+
+void Pipeline::CreateFillModeNonSolidPipeline(const std::vector<char>& vertexShader, const std::vector<char>& fragmentShader)
+{
+	VkShaderModule vertShaderModule = CreateShaderModule(vertexShader);
+	VkShaderModule fragShaderModule = CreateShaderModule(fragmentShader);
+	nonSolidPipeline = CreatePipeline(vertShaderModule, fragShaderModule, true);
+	vkDestroyShaderModule(m_device->vkDevice, fragShaderModule, nullptr);
+	vkDestroyShaderModule(m_device->vkDevice, vertShaderModule, nullptr);
+}
+
+VkPipeline Pipeline::CreatePipeline(const VkShaderModule& vertShaderModule, const VkShaderModule& fragShaderModule, bool fillModeNonSolid)
+{
+	VkPipeline vkPipeline;
+
 	VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
 	vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
 	auto bindingDescription = Vertex::getBindingDescription();
@@ -74,7 +107,7 @@ void Pipeline::CreatePipeline(const std::vector<char>& vertexShader, const std::
 	rasterizer.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
 	rasterizer.depthClampEnable = VK_FALSE;
 	rasterizer.rasterizerDiscardEnable = VK_FALSE;
-	rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
+	rasterizer.polygonMode = fillModeNonSolid ? VK_POLYGON_MODE_LINE : VK_POLYGON_MODE_FILL;
 	rasterizer.lineWidth = 1.0f;
 	rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
 	rasterizer.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
@@ -160,9 +193,7 @@ void Pipeline::CreatePipeline(const std::vector<char>& vertexShader, const std::
 	{
 		throw std::runtime_error("failed to create graphics pipeline!");
 	}
-	vkPipelines.push_back(vkPipeline);
-	vkDestroyShaderModule(m_device->vkDevice, fragShaderModule, nullptr);
-	vkDestroyShaderModule(m_device->vkDevice, vertShaderModule, nullptr);
+	return vkPipeline;
 }
 
 void Pipeline::Cleanup()
@@ -180,6 +211,10 @@ void Pipeline::Cleanup()
 
 VkPipeline Pipeline::GraphicsPipeline()
 {
+	if (m_fillModeNonSolid)
+	{
+		return nonSolidPipeline;
+	}
 	return vkPipelines[0];
 }
 

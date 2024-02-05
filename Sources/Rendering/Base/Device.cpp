@@ -102,7 +102,9 @@ int Device::RateDeviceSuitability(const VkPhysicalDevice& device)
 		swapChainAdequate = !swapChainSupport.formats.empty() && !swapChainSupport.presentModes.empty();
 	}
 	// Application can't function without geometry shaders
-	if (!deviceFeatures.geometryShader || !indices.isComplete() || !extensionsSupported || !swapChainAdequate || !deviceFeatures.samplerAnisotropy)
+	// should support polygon mode line
+	bool isSupportFillModeNonSolid = deviceFeatures.fillModeNonSolid && (deviceProperties.limits.lineWidthRange[0] <= 1.0f && deviceProperties.limits.lineWidthRange[1] >= 1.0f);
+	if (!deviceFeatures.geometryShader || !isSupportFillModeNonSolid || !indices.isComplete() || !extensionsSupported || !swapChainAdequate || !deviceFeatures.samplerAnisotropy)
 	{
 		return 0;
 	}

@@ -21,6 +21,7 @@ Settings::Settings()
 		WindowPositionY = config["WindowPositionY"].as<int>();
 		ApplicationName = config["ApplicationName"].as<std::string>();
 		IsWindow = config["IsWindow"].as<bool>();
+		FillModeNonSolid = config["FillModeNonSolid"].as<bool>();
 	}
 	catch (const std::exception&) // NOLINT(bugprone-empty-catch)
 	{
@@ -41,5 +42,6 @@ void Settings::Save()
 	config["WindowPositionY"] = WindowPositionY;
 	config["ApplicationName"] = ApplicationName;
 	config["IsWindow"] = IsWindow;
+	config["FillModeNonSolid"] = FillModeNonSolid;
 	fout << config;
 }

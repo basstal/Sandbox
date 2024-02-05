@@ -53,6 +53,8 @@ public:
 	std::shared_ptr<RenderTexture> renderTexture;
 	std::shared_ptr<Model> model;
 	std::shared_ptr<Image> image;
+	std::vector<char> vertexShader;
+	std::vector<char> fragmentShader;
 	std::shared_ptr<VertexBuffer> vertexBuffer;
 	std::shared_ptr<IndexBuffer> indexBuffer;
 	std::shared_ptr<UniformBuffers> uniformBuffers;
@@ -64,6 +66,8 @@ public:
 	Application(const std::shared_ptr<Settings>& settings);
 	~Application();
 	void Cleanup();
+	void Initialize();
+	void LoadAssets();
 	void CreateSwapchain();
 	static uint32_t FindMemoryType(VkPhysicalDevice physicalDevice, uint32_t typeFilter, VkMemoryPropertyFlags properties);
 	void DrawFrame(const std::shared_ptr<ApplicationEditor>& applicationEditor);
