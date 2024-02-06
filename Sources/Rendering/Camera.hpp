@@ -1,5 +1,6 @@
 #pragma once
 
+#include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 
 struct UniformBufferObject
@@ -63,13 +64,15 @@ public:
 	void CameraPitchRotate(float delta);
 
 	// Processes input received from a mouse input system. Expects the offset value in both the x and y direction.
-	void ProcessMouseMovement(float xoffset, float yoffset, bool constrainPitch = true);
+	void ProcessMouseMovement(float xOffset, float yOffset, bool constrainPitch = true);
 
 
 	// Processes input received from a mouse scroll-wheel event. Only requires input on the vertical wheel-axis
-	void ProcessMouseScroll(float yoffset);
+	void ProcessMouseScroll(float yOffset);
+
+	void UpdatePosition(float deltaTime, GLFWwindow* window);
 
 private:
 	// Calculates the front vector from the Camera's (updated) Euler Angles
-	void updateCameraVectors();
+	void UpdateCameraVectors();
 };

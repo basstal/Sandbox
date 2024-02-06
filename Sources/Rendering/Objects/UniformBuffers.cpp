@@ -1,9 +1,9 @@
 ﻿#include "UniformBuffers.hpp"
 
 #include <glm/ext/matrix_clip_space.hpp>
-#include <glm/ext/matrix_transform.hpp>
 
 #include "Rendering/Camera.hpp"
+#include "Rendering/Model.hpp"
 #include "Rendering/Base/Device.hpp"
 
 
@@ -27,20 +27,16 @@ UniformBuffers::~UniformBuffers()
 	Cleanup();
 }
 
-void UniformBuffers::UpdateUniformBuffer(uint32_t currentImage, VkExtent2D extent2D)
+UniformBufferObject UniformBuffers::UpdateUniformBuffer(uint32_t currentImage, VkExtent2D extent2D, const std::shared_ptr<Camera>& camera, const std::shared_ptr<Model>& model)
 {
 	UniformBufferObject ubo;
-	//static auto startTime = std::chrono::high_resolution_clock::now();
-
-	//auto currentTime = std::chrono::high_resolution_clock::now();
-	//float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
-	//ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-	ubo.model = glm::rotate(glm::mat4(1.0f), glm::radians(0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-	ubo.view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+	ubo.model = model->transform->GetModelMatrix();
+	ubo.view = camera->GetViewMatrix();
 	ubo.proj = glm::perspective(glm::radians(45.0f), (float)extent2D.width / (float)extent2D.height, 0.1f, 10.0f);
-	ubo.proj[1][1] *= -1;
+	// ubo.proj[1][1] *= -1;
 	// NOTE: Using a UBO this way is not the most efficient way to pass frequently changing values to the shader. A more efficient way to pass a small buffer of data to shaders are push constants.
 	memcpy(uniformBuffersMapped[currentImage], &ubo, sizeof(ubo));
+	return ubo;
 }
 
 void UniformBuffers::Cleanup()

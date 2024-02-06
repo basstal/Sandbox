@@ -1,8 +1,10 @@
 ﻿#include "Pipeline.hpp"
 
+#include <filesystem>
 #include <stdexcept>
 
 #include "Infrastructures/DataBinding.hpp"
+#include "Infrastructures/FileSystemBase.hpp"
 #include "Rendering/Components/DescriptorResource.hpp"
 #include "Rendering/Components/RenderPass.hpp"
 #include "Rendering/Vertex.hpp"
@@ -59,10 +61,13 @@ void Pipeline::CreatePipeline(const std::vector<char>& vertexShader, const std::
 	vkDestroyShaderModule(m_device->vkDevice, vertShaderModule, nullptr);
 }
 
-void Pipeline::CreateFillModeNonSolidPipeline(const std::vector<char>& vertexShader, const std::vector<char>& fragmentShader)
+void Pipeline::CreateFillModeNonSolidPipeline()
 {
-	VkShaderModule vertShaderModule = CreateShaderModule(vertexShader);
-	VkShaderModule fragShaderModule = CreateShaderModule(fragmentShader);
+	std::filesystem::path binariesDir = FileSystemBase::getBinariesDir();
+	auto nonSolidVertex = FileSystemBase::readFile((binariesDir / "Shaders/FillModeNonSolid_vert.spv").string());
+	auto nonSolidFrag = FileSystemBase::readFile((binariesDir / "Shaders/FillModeNonSolid_frag.spv").string());
+	VkShaderModule vertShaderModule = CreateShaderModule(nonSolidVertex);
+	VkShaderModule fragShaderModule = CreateShaderModule(nonSolidFrag);
 	nonSolidPipeline = CreatePipeline(vertShaderModule, fragShaderModule, true);
 	vkDestroyShaderModule(m_device->vkDevice, fragShaderModule, nullptr);
 	vkDestroyShaderModule(m_device->vkDevice, vertShaderModule, nullptr);

@@ -407,8 +407,11 @@ public class Project
         {
             ParsedFile!
         };
+        // 添加着色器源码
+        rawFiles.AddRange(ProjectDirectory.GetFiles("*.frag"));
+        rawFiles.AddRange(ProjectDirectory.GetFiles("*.vert"));
         File.WriteAllText(postBuildCommandsPath, postBuildCommands);
-        var Constanst = new
+        var constanst = new
         {
             Platform = "x64",
             BuildTypeMapping = new Dictionary<BuildType, string>()
@@ -439,7 +442,7 @@ public class Project
             OutputDir = outputDir,
             ReferenceProjects = referenceProjects,
             RawFiles = rawFiles,
-            Constants = Constanst,
+            Constants = constanst,
         }, member => member.Name);
         File.WriteAllText(GeneratedProjectPath!.FullName, primaryProjectFile);
     }

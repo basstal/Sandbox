@@ -97,6 +97,7 @@ void Application::Cleanup()
 	{
 		return;
 	}
+	// TODO: 如果没有创建就不需要清理
 	swapchain->Cleanup();
 
 	renderTexture->Cleanup();
@@ -129,7 +130,7 @@ void Application::Initialize()
 	pipeline = std::make_shared<Pipeline>(device, descriptorResource, renderPass);
 
 	pipeline->CreatePipeline(vertexShader, fragmentShader);
-	pipeline->CreateFillModeNonSolidPipeline(vertexShader, fragmentShader);
+	pipeline->CreateFillModeNonSolidPipeline();
 
 	swapchain->CreateFramebuffers(renderPass);
 	commandResource = std::make_shared<CommandResource>(device);
@@ -142,6 +143,8 @@ void Application::Initialize()
 	descriptorResource->CreateDescriptorSets(uniformBuffers, renderTexture);
 	commandResource->CreateCommandBuffers();
 	syncObjects = std::make_shared<SyncObjects>(device);
+	mainCamera = std::make_shared<Camera>(glm::vec3(.0f, -1.f, .0f), glm::vec3(.0f, .0f, 1.0f), -90.0f, 0.0f);
+	timer = std::make_shared<Timer>();
 }
 
 void Application::LoadAssets()
@@ -194,7 +197,9 @@ void Application::DrawFrame(const std::shared_ptr<ApplicationEditor>& applicatio
 	vkResetFences(device->vkDevice, 1, &syncObjects->inFlightFences[m_currentFrame]);
 	vkResetCommandBuffer(currentCommandBuffer, 0);
 	RecordCommandBuffer(currentCommandBuffer, imageIndex);
-	uniformBuffers->UpdateUniformBuffer(m_currentFrame, swapchain->vkExtent2D);
+	auto deltaTime = timer->GetDeltaTime();
+	mainCamera->UpdatePosition(deltaTime, surface->glfwWindow);
+	debugUBO = uniformBuffers->UpdateUniformBuffer(m_currentFrame, swapchain->vkExtent2D, mainCamera, model);
 	VkSubmitInfo submitInfo{};
 	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 
@@ -214,29 +219,6 @@ void Application::DrawFrame(const std::shared_ptr<ApplicationEditor>& applicatio
 	}
 	vkWaitForFences(device->vkDevice, 1, &syncObjects->inFlightFences[m_currentFrame], VK_TRUE, UINT64_MAX);
 	vkResetFences(device->vkDevice, 1, &syncObjects->inFlightFences[m_currentFrame]);
-
-	// VkImageMemoryBarrier imageMemoryBarrier = {};
-	// imageMemoryBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-	// imageMemoryBarrier.oldLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR; // 当前布局
-	// imageMemoryBarrier.newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL; // 目标布局
-	// imageMemoryBarrier.srcAccessMask = VK_ACCESS_MEMORY_READ_BIT; // 在转换之前必须完成的操作
-	// imageMemoryBarrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT; // 在转换之后必须完成的操作
-	// imageMemoryBarrier.image = swapchain->vkImages[m_currentFrame]; // 需要转换布局的图像
-	// imageMemoryBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT; // 指定影响的图像方面
-	// imageMemoryBarrier.subresourceRange.baseMipLevel = 0; // 起始mip级别
-	// imageMemoryBarrier.subresourceRange.levelCount = 1; // mip级别的数量
-	// imageMemoryBarrier.subresourceRange.baseArrayLayer = 0; // 起始数组层
-	// imageMemoryBarrier.subresourceRange.layerCount = 1; // 数组层的数量
-	//
-	// vkCmdPipelineBarrier(
-	// 	currentCommandBuffer,
-	// 	VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, // 生产者阶段
-	// 	VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, // 消费者阶段
-	// 	0, // 标志
-	// 	0, nullptr,
-	// 	0, nullptr,
-	// 	1, &imageMemoryBarrier); // 图像内存屏障
-
 
 	applicationEditor->DrawFrame(*this, currentCommandBuffer, m_currentFrame, syncObjects, imageIndex);
 

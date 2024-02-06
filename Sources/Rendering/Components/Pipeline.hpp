@@ -1,5 +1,7 @@
 ﻿#pragma once
 
+#include <filesystem>
+
 #include "Rendering/Components/DescriptorResource.hpp"
 #include "Rendering/Components/RenderPass.hpp"
 #include "Rendering/Base/Device.hpp"
@@ -24,7 +26,7 @@ public:
 	void CreatePipelineLayout();
 	void ApplySettings(std::shared_ptr<Settings> settings);
 	void CreatePipeline(const std::vector<char>& vertexShader, const std::vector<char>& fragmentShader);
-	void CreateFillModeNonSolidPipeline(const std::vector<char>& vertexShader, const std::vector<char>& fragmentShader);
+	void CreateFillModeNonSolidPipeline();
 	VkPipeline CreatePipeline(const VkShaderModule& vertShaderModule, const VkShaderModule& fragShaderModule, bool fillModeNonSolid);
 	void Cleanup();
 };

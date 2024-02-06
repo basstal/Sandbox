@@ -3,6 +3,7 @@
 #include <vector>
 #include <vulkan/vulkan_core.h>
 
+#include "Camera.hpp"
 #include "Model.hpp"
 #include "Settings.hpp"
 #include "Components/RenderPass.hpp"
@@ -12,6 +13,7 @@
 #include "Components/Pipeline.hpp"
 #include "Components\DescriptorResource.hpp"
 #include "Components/Swapchain.hpp"
+#include "Infrastructures/Timer.hpp"
 
 #include "Objects/IndexBuffer.hpp"
 #include "Objects/RenderTexture.hpp"
@@ -60,8 +62,11 @@ public:
 	std::shared_ptr<UniformBuffers> uniformBuffers;
 	std::shared_ptr<SyncObjects> syncObjects;
 
-	glm::vec4 clearColor = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+	std::shared_ptr<Camera> mainCamera;
+	std::shared_ptr<Timer> timer;
 
+	glm::vec4 clearColor = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+	UniformBufferObject debugUBO;
 	static std::unique_ptr<Application> Instance;
 	Application(const std::shared_ptr<Settings>& settings);
 	~Application();

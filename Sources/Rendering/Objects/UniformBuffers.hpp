@@ -1,4 +1,8 @@
 ﻿#pragma once
+#include <memory>
+
+#include "Rendering/Camera.hpp"
+#include "Rendering/Model.hpp"
 #include "Rendering/Base/Device.hpp"
 #include "Rendering/Components/Buffer.hpp"
 
@@ -12,6 +16,6 @@ public:
 	std::vector<void*> uniformBuffersMapped;
 	UniformBuffers(const std::shared_ptr<Device>& device);
 	~UniformBuffers();
-	void UpdateUniformBuffer(uint32_t currentImage, VkExtent2D extent2D);
+	UniformBufferObject UpdateUniformBuffer(uint32_t currentImage, VkExtent2D extent2D, const std::shared_ptr<Camera>& camera, const std::shared_ptr<Model>& model);
 	void Cleanup();
 };
