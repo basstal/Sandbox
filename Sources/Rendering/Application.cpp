@@ -13,6 +13,7 @@
 #include "Base/Device.hpp"
 #include "Components/CommandResource.hpp"
 #include "Editor/ApplicationEditor.hpp"
+#include "Infrastructures/DataBinding.hpp"
 #include "Objects/RenderTexture.hpp"
 
 
@@ -143,7 +144,8 @@ void Application::Initialize()
 	descriptorResource->CreateDescriptorSets(uniformBuffers, renderTexture);
 	commandResource->CreateCommandBuffers();
 	syncObjects = std::make_shared<SyncObjects>(device);
-	mainCamera = std::make_shared<Camera>(glm::vec3(.0f, -1.f, .0f), glm::vec3(.0f, .0f, 1.0f), -90.0f, 0.0f);
+	editorCamera = std::make_shared<Camera>(m_settings->EditorCameraPos, m_settings->EditorCameraUp, m_settings->EditorCameraYaw, m_settings->EditorCameraPitch);
+	DataBinding::Create("Rendering/EditorCamera", editorCamera);
 	timer = std::make_shared<Timer>();
 }
 
@@ -187,7 +189,7 @@ void Application::DrawFrame(const std::shared_ptr<ApplicationEditor>& applicatio
 		RecreateSwapchain(applicationEditor);
 		return;
 	}
-	else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR)
+	if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR)
 	{
 		throw std::runtime_error("failed to acquire swap chain image!");
 	}
@@ -198,8 +200,9 @@ void Application::DrawFrame(const std::shared_ptr<ApplicationEditor>& applicatio
 	vkResetCommandBuffer(currentCommandBuffer, 0);
 	RecordCommandBuffer(currentCommandBuffer, imageIndex);
 	auto deltaTime = timer->GetDeltaTime();
-	mainCamera->UpdatePosition(deltaTime, surface->glfwWindow);
-	debugUBO = uniformBuffers->UpdateUniformBuffer(m_currentFrame, swapchain->vkExtent2D, mainCamera, model);
+	editorCamera->UpdatePosition(deltaTime, surface->glfwWindow);
+	m_settings->UpdateEditorCamera(editorCamera);
+	debugUBO = uniformBuffers->UpdateUniformBuffer(m_currentFrame, swapchain->vkExtent2D, editorCamera, model);
 	VkSubmitInfo submitInfo{};
 	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 

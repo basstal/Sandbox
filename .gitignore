@@ -464,3 +464,4 @@ PostBuildCommands.ps1
 Sandbox.sln
 *.vcxproj
 imgui.ini
+/Assets/Settings

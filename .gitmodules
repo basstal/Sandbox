@@ -11,3 +11,6 @@
 [submodule "Plugins/yaml-cpp-0.8.0/yaml-cpp"]
 	path = Plugins/yaml-cpp-0.8.0/yaml-cpp
 	url = https://github.com/jbeder/yaml-cpp
+[submodule "Plugins/imguizmo/ImGuizmo"]
+	path = Plugins/imguizmo/ImGuizmo
+	url = https://github.com/CedricGuillemet/ImGuizmo

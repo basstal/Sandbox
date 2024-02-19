@@ -1,6 +1,8 @@
 #pragma once
-#include <cstdint>
+#include <memory>
 #include <string>
+#include <glm/vec3.hpp>
+#include "Camera.hpp"
 #include "yaml-cpp/yaml.h"
 
 class Settings
@@ -16,8 +18,13 @@ public:
 	int Width = 1920;
 	int Height = 1080;
 	bool FillModeNonSolid = false;
+	glm::vec3 EditorCameraPos = glm::vec3(.0f, -1.f, .0f);
+	glm::vec3 EditorCameraUp = glm::vec3(.0f, .0f, 1.0f);
+	float EditorCameraYaw = -90.0f;
+	float EditorCameraPitch = 0.0f;
 	std::string ApplicationName = "Sandbox";
 	Settings();
 	~Settings();
 	void Save();
+	void UpdateEditorCamera(const std::shared_ptr<Camera>& camera);
 };

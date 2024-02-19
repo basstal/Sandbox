@@ -2,7 +2,7 @@
 
 std::shared_ptr<ValueEditor> ValueEditor::m_instance = nullptr;
 
-void ValueEditor::DisplayMatrixInImGui(const glm::mat4& mat, const std::string& matrixName)
+void ValueEditor::DisplayMatrixInImGui(glm::mat4& mat, const std::string& matrixName)
 {
 	float imguiMat[4][4];
 	ConvertGlmMat4ToImGui(mat, imguiMat);
@@ -13,6 +13,8 @@ void ValueEditor::DisplayMatrixInImGui(const glm::mat4& mat, const std::string& 
 	ImGui::InputFloat4("Row 2", imguiMat[1]);
 	ImGui::InputFloat4("Row 3", imguiMat[2]);
 	ImGui::InputFloat4("Row 4", imguiMat[3]);
+	// TODO:解决 debugUBO 仅显示用不能编辑问题
+	// ConvertImGuiToGlmMat4(imguiMat, mat);
 }
 
 void ValueEditor::DrawFrame()

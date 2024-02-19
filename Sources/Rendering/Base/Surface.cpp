@@ -28,11 +28,31 @@ Surface::Surface(const VkInstance& instance, const std::shared_ptr<Settings>& se
 	glfwSetWindowPos(glfwWindow, (int)settings->WindowPositionX, (int)settings->WindowPositionY);
 	glfwSetWindowUserPointer(glfwWindow, this);
 	glfwSetFramebufferSizeCallback(glfwWindow, FramebufferResizeCallback);
+	glfwSetWindowPosCallback(glfwWindow, [](GLFWwindow* window, int x, int y)
+	{
+		auto currentIsWindow = glfwGetWindowMonitor(window) == nullptr;
+		if (currentIsWindow)
+		{
+			auto surface = static_cast<Surface*>(glfwGetWindowUserPointer(window));
+			surface->m_settings->WindowPositionX = x;
+			surface->m_settings->WindowPositionY = y;
+		}
+	});
+	glfwSetWindowSizeCallback(glfwWindow, [](GLFWwindow* window, int width, int height)
+	{
+		auto surface = static_cast<Surface*>(glfwGetWindowUserPointer(window));
+		auto currentIsWindow = glfwGetWindowMonitor(window) == nullptr;
+		if (currentIsWindow)
+		{
+			surface->m_settings->Width = width;
+			surface->m_settings->Height = height;
+		}
+	});
 	if (glfwCreateWindowSurface(instance, glfwWindow, nullptr, &vkSurface) != VK_SUCCESS)
 	{
 		throw std::runtime_error("failed to create window surface!");
 	}
-	auto test1 = DataBinding::Get("Rendering/Settings");
+	// auto test1 = DataBinding::Get("Rendering/Settings");
 	std::shared_ptr<TDataBinding<std::shared_ptr<Settings>>> settingsBinding = std::dynamic_pointer_cast<TDataBinding<std::shared_ptr<Settings>>>(DataBinding::Get("Rendering/Settings"));
 	Delegate<std::shared_ptr<Settings>> bindFunction(
 		[this](std::shared_ptr<Settings> settings)

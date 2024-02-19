@@ -7,9 +7,47 @@
 #include "imgui.h"
 #include "backends/imgui_impl_glfw.h"
 #include "backends/imgui_impl_vulkan.h"
+#include "Infrastructures/DataBinding.hpp"
 #include "Rendering/Application.hpp"
 
-static void check_vk_result(VkResult err)
+static bool cursorOff = false;
+static bool pressed = false;
+static bool moveMouse = true;
+static float lastX = 0.0f;
+static float lastY = 0.0f;
+
+static void SwitchCursor(Application& application)
+{
+	GLFWwindow* window = application.surface->glfwWindow;
+	if (!cursorOff)
+	{
+		glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+		glfwSetCursorPosCallback(window, [](GLFWwindow* window, double xPos, double yPos)
+		{
+			std::shared_ptr<TDataBinding<std::shared_ptr<Camera>>> editorCameraBinding = std::dynamic_pointer_cast<TDataBinding<std::shared_ptr<Camera>>>(DataBinding::Get("Rendering/EditorCamera"));
+			if (moveMouse)
+			{
+				lastX = (float)xPos;
+				lastY = (float)yPos;
+				moveMouse = false;
+			}
+
+			float offsetX = (float)xPos - lastX;
+			float offsetY = lastY - (float)yPos;
+			lastX = (float)xPos;
+			lastY = (float)yPos;
+			editorCameraBinding->GetData()->ProcessMouseMovement(offsetX, offsetY);
+		});
+	}
+	else
+	{
+		glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+		glfwSetCursorPosCallback(window, nullptr);
+	}
+	cursorOff = !cursorOff;
+}
+
+static void CheckVkResult(VkResult err)
 {
 	if (err == 0)
 		return;
@@ -60,8 +98,9 @@ ApplicationEditor::ApplicationEditor(const std::unique_ptr<Application>& applica
 	init_info.ImageCount = static_cast<uint32_t>(application->swapchain->vkImages.size());
 	init_info.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
 	init_info.Allocator = nullptr;
-	init_info.CheckVkResultFn = check_vk_result;
-	ImGui_ImplVulkan_Init(&init_info, renderPass->vkRenderPass);
+	init_info.CheckVkResultFn = CheckVkResult;
+	init_info.RenderPass = renderPass->vkRenderPass;
+	ImGui_ImplVulkan_Init(&init_info);
 }
 
 ApplicationEditor::~ApplicationEditor()
@@ -180,37 +219,37 @@ void ApplicationEditor::DrawFrame(Application& application, VkCommandBuffer curr
 	application.clearColor.a = clear_color.w;
 	// if (!main_is_minimized)
 	// {
-		VkCommandBufferBeginInfo beginInfo{};
-		beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-		beginInfo.flags = 0; // Optional
-		beginInfo.pInheritanceInfo = nullptr; // Optional
+	VkCommandBufferBeginInfo beginInfo{};
+	beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+	beginInfo.flags = 0; // Optional
+	beginInfo.pInheritanceInfo = nullptr; // Optional
 
-		if (vkBeginCommandBuffer(currentCommandBuffer, &beginInfo) != VK_SUCCESS)
-		{
-			throw std::runtime_error("failed to begin recording command buffer!");
-		}
-		{
-			VkRenderPassBeginInfo info = {};
-			info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-			info.renderPass = renderPass->vkRenderPass;
-			info.framebuffer = vkFramebuffers[imageIndex];
-			info.renderArea.extent = application.swapchain->vkExtent2D;
-			// std::array<VkClearValue, 2> clearValues{};
-			// clearValues[0].color = {{application.clearColor.r, application.clearColor.g, application.clearColor.b, application.clearColor.a}};
-			// clearValues[1].depthStencil = {1.0f, 0};
+	if (vkBeginCommandBuffer(currentCommandBuffer, &beginInfo) != VK_SUCCESS)
+	{
+		throw std::runtime_error("failed to begin recording command buffer!");
+	}
+	{
+		VkRenderPassBeginInfo info = {};
+		info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+		info.renderPass = renderPass->vkRenderPass;
+		info.framebuffer = vkFramebuffers[imageIndex];
+		info.renderArea.extent = application.swapchain->vkExtent2D;
+		// std::array<VkClearValue, 2> clearValues{};
+		// clearValues[0].color = {{application.clearColor.r, application.clearColor.g, application.clearColor.b, application.clearColor.a}};
+		// clearValues[1].depthStencil = {1.0f, 0};
 
-			// info.clearValueCount = static_cast<uint32_t>(clearValues.size());
-			// info.pClearValues = clearValues.data();
-			vkCmdBeginRenderPass(currentCommandBuffer, &info, VK_SUBPASS_CONTENTS_INLINE);
-		}
-		// Record dear imgui primitives into command buffer
-		ImGui_ImplVulkan_RenderDrawData(main_draw_data, currentCommandBuffer);
-		// Submit command buffer
-		vkCmdEndRenderPass(currentCommandBuffer);
-		if (vkEndCommandBuffer(currentCommandBuffer) != VK_SUCCESS)
-		{
-			throw std::runtime_error("failed to record command buffer!");
-		}
+		// info.clearValueCount = static_cast<uint32_t>(clearValues.size());
+		// info.pClearValues = clearValues.data();
+		vkCmdBeginRenderPass(currentCommandBuffer, &info, VK_SUBPASS_CONTENTS_INLINE);
+	}
+	// Record dear imgui primitives into command buffer
+	ImGui_ImplVulkan_RenderDrawData(main_draw_data, currentCommandBuffer);
+	// Submit command buffer
+	vkCmdEndRenderPass(currentCommandBuffer);
+	if (vkEndCommandBuffer(currentCommandBuffer) != VK_SUCCESS)
+	{
+		throw std::runtime_error("failed to record command buffer!");
+	}
 	// }
 
 	// Update and Render additional Platform Windows
@@ -223,24 +262,33 @@ void ApplicationEditor::DrawFrame(Application& application, VkCommandBuffer curr
 	// Present Main Platform Window
 	// if (!main_is_minimized)
 	// {
-		VkSubmitInfo submitInfo{};
-		submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+	VkSubmitInfo submitInfo{};
+	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 
-		VkSemaphore waitSemaphores[] = {syncObjects->gameRenderFinishedSemaphores[currentFrame]};
-		VkPipelineStageFlags waitStages[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
-		submitInfo.waitSemaphoreCount = 1;
-		submitInfo.pWaitSemaphores = waitSemaphores;
-		submitInfo.pWaitDstStageMask = waitStages;
-		submitInfo.commandBufferCount = 1;
-		submitInfo.pCommandBuffers = &currentCommandBuffer;
-		VkSemaphore signalSemaphores[] = {syncObjects->renderFinishedSemaphores[currentFrame]};
-		submitInfo.signalSemaphoreCount = 1;
-		submitInfo.pSignalSemaphores = signalSemaphores;
-		if (vkQueueSubmit(m_device->graphicsQueue, 1, &submitInfo, syncObjects->inFlightFences[currentFrame]) != VK_SUCCESS)
-		{
-			throw std::runtime_error("failed to submit editor draw command buffer!");
-		}
+	VkSemaphore waitSemaphores[] = {syncObjects->gameRenderFinishedSemaphores[currentFrame]};
+	VkPipelineStageFlags waitStages[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
+	submitInfo.waitSemaphoreCount = 1;
+	submitInfo.pWaitSemaphores = waitSemaphores;
+	submitInfo.pWaitDstStageMask = waitStages;
+	submitInfo.commandBufferCount = 1;
+	submitInfo.pCommandBuffers = &currentCommandBuffer;
+	VkSemaphore signalSemaphores[] = {syncObjects->renderFinishedSemaphores[currentFrame]};
+	submitInfo.signalSemaphoreCount = 1;
+	submitInfo.pSignalSemaphores = signalSemaphores;
+	if (vkQueueSubmit(m_device->graphicsQueue, 1, &submitInfo, syncObjects->inFlightFences[currentFrame]) != VK_SUCCESS)
+	{
+		throw std::runtime_error("failed to submit editor draw command buffer!");
+	}
 	// }
+	if (glfwGetKey(application.surface->glfwWindow, GLFW_KEY_E) == GLFW_PRESS)
+	{
+		pressed = true;
+	}
+	if (glfwGetKey(application.surface->glfwWindow, GLFW_KEY_E) == GLFW_RELEASE && pressed)
+	{
+		pressed = false;
+		SwitchCursor(application);
+	}
 }
 
 void ApplicationEditor::CleanupWhenRecreateSwapchain()

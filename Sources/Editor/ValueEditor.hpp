@@ -20,8 +20,19 @@ private:
 		}
 	}
 
+	void ConvertImGuiToGlmMat4(const float in[4][4], glm::mat4& out)
+	{
+		for (int row = 0; row < 4; ++row)
+		{
+			for (int col = 0; col < 4; ++col)
+			{
+				out[col][row] = in[row][col]; // glm是列主序，而ImGui通常是行主序
+			}
+		}
+	}
+
 	// 使用示例
-	void DisplayMatrixInImGui(const glm::mat4& mat, const std::string& matrixName);
+	void DisplayMatrixInImGui(glm::mat4& mat, const std::string& matrixName);
 
 	std::shared_ptr<ApplicationEditor> m_applicationEditor;
 

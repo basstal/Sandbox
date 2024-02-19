@@ -33,7 +33,7 @@ UniformBufferObject UniformBuffers::UpdateUniformBuffer(uint32_t currentImage, V
 	ubo.model = model->transform->GetModelMatrix();
 	ubo.view = camera->GetViewMatrix();
 	ubo.proj = glm::perspective(glm::radians(45.0f), (float)extent2D.width / (float)extent2D.height, 0.1f, 10.0f);
-	// ubo.proj[1][1] *= -1;
+	ubo.proj[1][1] *= -1;
 	// NOTE: Using a UBO this way is not the most efficient way to pass frequently changing values to the shader. A more efficient way to pass a small buffer of data to shaders are push constants.
 	memcpy(uniformBuffersMapped[currentImage], &ubo, sizeof(ubo));
 	return ubo;

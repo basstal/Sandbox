@@ -1,0 +1,21 @@
+type: Cpp
+compile_environment:
+  build_type: Static
+  definitions:
+  include_paths:
+    - ImGuizmo/ImCurveEdit.h
+    - ImGuizmo/ImGradient.h
+    - ImGuizmo/ImGuizmo.h
+    - ImGuizmo/ImSequencer.h
+    - ImGuizmo/ImZoomSlider.h
+  additional_include_paths:
+    - ImGuizmo
+  cpp_version: Default
+  dependencies:
+    - imgui
+  source_paths:
+    - ImGuizmo/ImGuizmo.cpp
+    - ImGuizmo/ImCurveEdit.cpp
+    - ImGuizmo/ImGradient.cpp
+    - ImGuizmo/ImSequencer.cpp
+    - ImGuizmo/ImZoomSlider.cpp

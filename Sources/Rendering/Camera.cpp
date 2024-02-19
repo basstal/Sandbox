@@ -93,31 +93,22 @@ void Camera::UpdatePosition(float deltaTime, GLFWwindow* window)
 	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
 		Position -= deltaSpeed * Front;
 	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-		Position -= glm::normalize(glm::cross(Front, WorldUp)) * deltaSpeed;
+		Position -= deltaSpeed * Right;
 	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-		Position += glm::normalize(glm::cross(Front, WorldUp)) * deltaSpeed;
-	// if (glfwGetKey(window, GLFW_KEY_P) == GLFW_PRESS)
-	// {
-	// 	bPressed = true;
-	// }
-	// if (glfwGetKey(window, GLFW_KEY_P) == GLFW_RELEASE && bPressed)
-	// {
-	// 	bPressed = false;
-	// 	switch_cursor(window);
-	// }
+		Position += deltaSpeed * Right;
 }
+
 
 void Camera::UpdateCameraVectors()
 {
-	// TODO: use rotation to determine the front vector
 	// Calculate the new Front vector
-	// glm::vec3 front;
-	// front.x = cos(glm::radians(Yaw)) * cos(glm::radians(Pitch));
-	// front.y = sin(glm::radians(Pitch));
-	// front.z = sin(glm::radians(Yaw)) * cos(glm::radians(Pitch));
-	// Front = glm::normalize(front);
-	// Also re-calculate the Right and Up vector
-	Right = glm::normalize(glm::cross(Front, WorldUp));
-	// Normalize the vectors, because their length gets closer to 0 the more you look up or down which results in slower movement.
-	Up = glm::normalize(glm::cross(Right, Front));
+	glm::vec3 front;
+	front.x = sin(glm::radians(Yaw)) * cos(glm::radians(Pitch));
+	front.y = cos(glm::radians(Yaw)) * cos(glm::radians(Pitch));
+	front.z = sin(glm::radians(Pitch));
+	Front = glm::normalize(front);
+
+	// Assuming WorldUp is glm::vec3(0, 0, 1) since Z is up
+	Right = glm::normalize(glm::cross(Front, WorldUp)); // Recalculate the Right vector
+	Up = glm::normalize(glm::cross(Right, Front)); // Recalculate the Up vector, it should be noted that cross product order is changed to maintain the right-hand rule
 }
