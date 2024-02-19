@@ -16,6 +16,7 @@ public:
 	std::shared_ptr<RenderPass> renderPass;
 	std::vector<VkImageView> vkImageViews;
 	std::vector<VkFramebuffer> vkFramebuffers;
+	std::shared_ptr<Camera> editorCamera;
 
 	ApplicationEditor(const std::unique_ptr<Application>& application);
 	~ApplicationEditor();

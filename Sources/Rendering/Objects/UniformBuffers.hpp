@@ -16,6 +16,6 @@ public:
 	std::vector<void*> uniformBuffersMapped;
 	UniformBuffers(const std::shared_ptr<Device>& device);
 	~UniformBuffers();
-	UniformBufferObject UpdateUniformBuffer(uint32_t currentImage, VkExtent2D extent2D, const std::shared_ptr<Camera>& camera, const std::shared_ptr<Model>& model);
+	UniformBufferObject UpdateUniformBuffer(uint32_t currentImage, const std::shared_ptr<Camera>& camera, const std::shared_ptr<Model>& model, const glm::mat4& projection);
 	void Cleanup();
 };

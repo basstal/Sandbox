@@ -2,6 +2,7 @@
 #include <memory>
 
 #include "Editor/ApplicationEditor.hpp"
+#include "Editor/GizmoEditor.hpp"
 #include "Editor/SettingsEditor.hpp"
 #include "Editor/ValueEditor.hpp"
 #include "Infrastructures/DataBinding.hpp"
@@ -22,6 +23,7 @@ int main()
 		std::shared_ptr<ApplicationEditor> applicationEditor = std::make_shared<ApplicationEditor>(Application::Instance);
 		SettingsEditor::Create(applicationEditor);
 		ValueEditor::Create(applicationEditor);
+		GizmoEditor::Create(applicationEditor);
 		while (!glfwWindowShouldClose(Application::Instance->surface->glfwWindow))
 		{
 			glfwPollEvents();

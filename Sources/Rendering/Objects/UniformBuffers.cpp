@@ -1,7 +1,5 @@
 ﻿#include "UniformBuffers.hpp"
 
-#include <glm/ext/matrix_clip_space.hpp>
-
 #include "Rendering/Camera.hpp"
 #include "Rendering/Model.hpp"
 #include "Rendering/Base/Device.hpp"
@@ -27,12 +25,13 @@ UniformBuffers::~UniformBuffers()
 	Cleanup();
 }
 
-UniformBufferObject UniformBuffers::UpdateUniformBuffer(uint32_t currentImage, VkExtent2D extent2D, const std::shared_ptr<Camera>& camera, const std::shared_ptr<Model>& model)
+UniformBufferObject UniformBuffers::UpdateUniformBuffer(uint32_t currentImage, const std::shared_ptr<Camera>& camera, const std::shared_ptr<Model>& model,
+                                                        const glm::mat4& projection)
 {
 	UniformBufferObject ubo;
 	ubo.model = model->transform->GetModelMatrix();
 	ubo.view = camera->GetViewMatrix();
-	ubo.proj = glm::perspective(glm::radians(45.0f), (float)extent2D.width / (float)extent2D.height, 0.1f, 10.0f);
+	ubo.proj = projection;
 	ubo.proj[1][1] *= -1;
 	// NOTE: Using a UBO this way is not the most efficient way to pass frequently changing values to the shader. A more efficient way to pass a small buffer of data to shaders are push constants.
 	memcpy(uniformBuffersMapped[currentImage], &ubo, sizeof(ubo));

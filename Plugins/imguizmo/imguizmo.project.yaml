@@ -8,6 +8,7 @@ compile_environment:
     - ImGuizmo/ImGuizmo.h
     - ImGuizmo/ImSequencer.h
     - ImGuizmo/ImZoomSlider.h
+    - ImGuizmo/GraphEditor.h
   additional_include_paths:
     - ImGuizmo
   cpp_version: Default
@@ -18,4 +19,4 @@ compile_environment:
     - ImGuizmo/ImCurveEdit.cpp
     - ImGuizmo/ImGradient.cpp
     - ImGuizmo/ImSequencer.cpp
-    - ImGuizmo/ImZoomSlider.cpp
+    - ImGuizmo/GraphEditor.cpp

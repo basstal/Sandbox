@@ -26,8 +26,8 @@ Settings::Settings()
 		FillModeNonSolid = config["FillModeNonSolid"].as<bool>();
 		EditorCameraPos = config["EditorCameraPos"].as<glm::vec3>();
 		EditorCameraUp = config["EditorCameraUp"].as<glm::vec3>();
-		EditorCameraYaw = config["EditorCameraYaw"].as<float>();
-		EditorCameraPitch = config["EditorCameraPitch"].as<float>();
+		EditorCameraRotationX = config["EditorCameraYaw"].as<float>();
+		EditorCameraRotationZ = config["EditorCameraPitch"].as<float>();
 	}
 	catch (const std::exception&) // NOLINT(bugprone-empty-catch)
 	{
@@ -51,8 +51,8 @@ void Settings::Save()
 	config["FillModeNonSolid"] = FillModeNonSolid;
 	config["EditorCameraPos"] = EditorCameraPos;
 	config["EditorCameraUp"] = EditorCameraUp;
-	config["EditorCameraYaw"] = EditorCameraYaw;
-	config["EditorCameraPitch"] = EditorCameraPitch;
+	config["EditorCameraYaw"] = EditorCameraRotationX;
+	config["EditorCameraPitch"] = EditorCameraRotationZ;
 	fout << config;
 }
 
@@ -60,6 +60,6 @@ void Settings::UpdateEditorCamera(const std::shared_ptr<Camera>& camera)
 {
 	EditorCameraPos = camera->Position;
 	EditorCameraUp = camera->Up;
-	EditorCameraYaw = camera->Yaw;
-	EditorCameraPitch = camera->Pitch;
+	EditorCameraRotationX = camera->RotationX;
+	EditorCameraRotationZ = camera->RotationZ;
 }

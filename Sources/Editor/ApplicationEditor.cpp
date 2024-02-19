@@ -41,8 +41,10 @@ static void SwitchCursor(Application& application)
 	}
 	else
 	{
+		
 		glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 		glfwSetCursorPosCallback(window, nullptr);
+		moveMouse = true;
 	}
 	cursorOff = !cursorOff;
 }
@@ -101,6 +103,7 @@ ApplicationEditor::ApplicationEditor(const std::unique_ptr<Application>& applica
 	init_info.CheckVkResultFn = CheckVkResult;
 	init_info.RenderPass = renderPass->vkRenderPass;
 	ImGui_ImplVulkan_Init(&init_info);
+	editorCamera = application->editorCamera;
 }
 
 ApplicationEditor::~ApplicationEditor()

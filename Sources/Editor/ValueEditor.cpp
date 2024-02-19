@@ -25,6 +25,10 @@ void ValueEditor::DrawFrame()
 	DisplayMatrixInImGui(Application::Instance->debugUBO.view, "view");
 	DisplayMatrixInImGui(Application::Instance->debugUBO.proj, "proj");
 
+	if (ImGui::Button("Reset"))
+	{
+		m_applicationEditor->editorCamera->Reset();
+	}
 	ImGui::End();
 }
 

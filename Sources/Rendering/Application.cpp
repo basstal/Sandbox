@@ -4,6 +4,7 @@
 #include <memory>
 #include <stdexcept>
 #include <GLFW/glfw3.h>
+#include <glm/ext/matrix_clip_space.hpp>
 #include <vulkan/vulkan_core.h>
 
 #include "Image.hpp"
@@ -144,9 +145,10 @@ void Application::Initialize()
 	descriptorResource->CreateDescriptorSets(uniformBuffers, renderTexture);
 	commandResource->CreateCommandBuffers();
 	syncObjects = std::make_shared<SyncObjects>(device);
-	editorCamera = std::make_shared<Camera>(m_settings->EditorCameraPos, m_settings->EditorCameraUp, m_settings->EditorCameraYaw, m_settings->EditorCameraPitch);
+	editorCamera = std::make_shared<Camera>(m_settings->EditorCameraPos, m_settings->EditorCameraUp, m_settings->EditorCameraRotationX, m_settings->EditorCameraRotationZ);
 	DataBinding::Create("Rendering/EditorCamera", editorCamera);
 	timer = std::make_shared<Timer>();
+	projection = glm::perspective(glm::radians(45.0f), (float)swapchain->vkExtent2D.width / (float)swapchain->vkExtent2D.height, 0.1f, 10.0f);
 }
 
 void Application::LoadAssets()
@@ -155,8 +157,8 @@ void Application::LoadAssets()
 	vertexShader = FileSystemBase::readFile((binariesDir / "Shaders/Test_vert.spv").string());
 	fragmentShader = FileSystemBase::readFile((binariesDir / "Shaders/Test_frag.spv").string());
 	std::filesystem::path assetsDir = FileSystemBase::getAssetsDir();
-	model = Model::loadModel((assetsDir / "Models/viking_room.obj").string().c_str());
-	image = Image::loadImage((assetsDir / "Textures/viking_room.png").string().c_str());
+	model = Model::loadModel((assetsDir / "Models/MonkeyHead.obj").string().c_str());
+	image = Image::loadImage((assetsDir / "Textures/Test.jpeg").string().c_str());
 }
 
 void Application::CreateSwapchain()
@@ -202,7 +204,7 @@ void Application::DrawFrame(const std::shared_ptr<ApplicationEditor>& applicatio
 	auto deltaTime = timer->GetDeltaTime();
 	editorCamera->UpdatePosition(deltaTime, surface->glfwWindow);
 	m_settings->UpdateEditorCamera(editorCamera);
-	debugUBO = uniformBuffers->UpdateUniformBuffer(m_currentFrame, swapchain->vkExtent2D, editorCamera, model);
+	debugUBO = uniformBuffers->UpdateUniformBuffer(m_currentFrame, editorCamera, model, projection);
 	VkSubmitInfo submitInfo{};
 	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 

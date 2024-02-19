@@ -3,23 +3,23 @@
 #include <GLFW/glfw3.h>
 #include <glm/ext/matrix_transform.hpp>
 
-Camera::Camera(glm::vec3 position = glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f), float yaw = YAW, float pitch = PITCH) :
-	Front(glm::vec3(0.0f, 1.0f, 0.0f)), MovementSpeed(SPEED), MouseSensitivity(SENSITIVITY), Zoom(ZOOM)
+Camera::Camera(glm::vec3 position = glm::vec3(0.0f), glm::vec3 up = DEFAULT_UP, float rotationX = DEFAULT_ROTATION_X, float rotationZ = DEFAULT_ROTATION_Z) :
+	Front(DEFAULT_FRONT), MovementSpeed(SPEED), MouseSensitivity(SENSITIVITY), Zoom(ZOOM)
 {
 	Position = position;
 	WorldUp = up;
-	Yaw = yaw;
-	Pitch = pitch;
+	RotationX = rotationX;
+	RotationZ = rotationZ;
 	UpdateCameraVectors();
 }
 
-Camera::Camera(float posX, float posY, float posZ, float upX, float upY, float upZ, float yaw, float pitch) :
-	Front(glm::vec3(0.0f, 1.0f, 0.0f)), MovementSpeed(SPEED), MouseSensitivity(SENSITIVITY), Zoom(ZOOM)
+Camera::Camera(float posX, float posY, float posZ, float upX, float upY, float upZ, float rotationX, float rotationZ) :
+	Front(DEFAULT_FRONT), MovementSpeed(SPEED), MouseSensitivity(SENSITIVITY), Zoom(ZOOM)
 {
 	Position = glm::vec3(posX, posY, posZ);
 	WorldUp = glm::vec3(upX, upY, upZ);
-	Yaw = yaw;
-	Pitch = pitch;
+	RotationX = rotationX;
+	RotationZ = rotationZ;
 	UpdateCameraVectors();
 }
 
@@ -43,13 +43,13 @@ void Camera::ProcessKeyboard(Camera_Movement direction, float deltaTime)
 
 void Camera::CameraYawRotate(float delta)
 {
-	Yaw += delta;
+	RotationX += delta;
 	UpdateCameraVectors();
 }
 
 void Camera::CameraPitchRotate(float delta)
 {
-	Pitch += delta;
+	RotationZ += delta;
 	UpdateCameraVectors();
 }
 
@@ -58,16 +58,16 @@ void Camera::ProcessMouseMovement(float xOffset, float yOffset, bool constrainPi
 	xOffset *= MouseSensitivity;
 	yOffset *= MouseSensitivity;
 
-	Yaw += xOffset;
-	Pitch += yOffset;
+	RotationX += yOffset;
+	RotationZ += xOffset;
 
 	// Make sure that when pitch is out of bounds, screen doesn't get flipped
 	if (constrainPitch)
 	{
-		if (Pitch > 89.0f)
-			Pitch = 89.0f;
-		if (Pitch < -89.0f)
-			Pitch = -89.0f;
+		if (RotationX > 89.0f)
+			RotationX = 89.0f;
+		if (RotationX < -89.0f)
+			RotationX = -89.0f;
 	}
 
 	// Update Front, Right and Up Vectors using the updated Euler angles
@@ -97,15 +97,22 @@ void Camera::UpdatePosition(float deltaTime, GLFWwindow* window)
 	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
 		Position += deltaSpeed * Right;
 }
+void Camera::Reset()
+{
+	Position = glm::vec3(0.0f);
+	RotationX = DEFAULT_ROTATION_X;
+	RotationZ = DEFAULT_ROTATION_Z;
+	UpdateCameraVectors();
+}
 
 
 void Camera::UpdateCameraVectors()
 {
 	// Calculate the new Front vector
 	glm::vec3 front;
-	front.x = sin(glm::radians(Yaw)) * cos(glm::radians(Pitch));
-	front.y = cos(glm::radians(Yaw)) * cos(glm::radians(Pitch));
-	front.z = sin(glm::radians(Pitch));
+	front.x = sin(glm::radians(RotationZ)) * cos(glm::radians(RotationX));
+	front.y = cos(glm::radians(RotationZ)) * cos(glm::radians(RotationX));
+	front.z = sin(glm::radians(RotationX));
 	Front = glm::normalize(front);
 
 	// Assuming WorldUp is glm::vec3(0, 0, 1) since Z is up

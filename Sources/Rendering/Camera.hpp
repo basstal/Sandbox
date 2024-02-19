@@ -20,8 +20,10 @@ enum Camera_Movement
 };
 
 // Default camera values
-const float YAW = -90.0f;
-const float PITCH = 0.0f;
+const float DEFAULT_ROTATION_X = 0.0f;
+const float DEFAULT_ROTATION_Z = 0.0f;
+const glm::vec3 DEFAULT_FRONT = glm::vec3(0.0f, 1.0f, 0.0f);
+const glm::vec3 DEFAULT_UP = glm::vec3(0.0f, 0.0f, 1.0f);
 const float SPEED = 2.5f;
 const float SENSITIVITY = 0.05f;
 const float ZOOM = 45.0f;
@@ -36,8 +38,8 @@ public:
 	glm::vec3 Right;
 	glm::vec3 WorldUp;
 	// Euler Angles
-	float Yaw;
-	float Pitch;
+	float RotationX;
+	float RotationZ;
 	// Camera options
 	float MovementSpeed;
 	float MouseSensitivity;
@@ -45,10 +47,10 @@ public:
 
 
 	// Constructor with vectors
-	Camera(glm::vec3 position, glm::vec3 up, float yaw, float pitch);
+	Camera(glm::vec3 position, glm::vec3 up, float rotationX, float rotationZ);
 
 	// Constructor with scalar values
-	Camera(float posX, float posY, float posZ, float upX, float upY, float upZ, float yaw, float pitch);
+	Camera(float posX, float posY, float posZ, float upX, float upY, float upZ, float rotationX, float rotationZ);
 
 
 	// Returns the view matrix calculated using Euler Angles and the LookAt Matrix
@@ -71,6 +73,8 @@ public:
 	void ProcessMouseScroll(float yOffset);
 
 	void UpdatePosition(float deltaTime, GLFWwindow* window);
+
+	void Reset();
 
 private:
 	// Calculates the front vector from the Camera's (updated) Euler Angles
