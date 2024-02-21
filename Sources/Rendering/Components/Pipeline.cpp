@@ -48,7 +48,7 @@ void Pipeline::CreatePipelineLayout()
 
 void Pipeline::ApplySettings(std::shared_ptr<Settings> settings)
 {
-	m_fillModeNonSolid = settings->FillModeNonSolid;
+	m_fillModeNonSolid = settings->ViewMode == Wireframe;
 }
 
 void Pipeline::CreatePipeline(const std::vector<char>& vertexShader, const std::vector<char>& fragmentShader)

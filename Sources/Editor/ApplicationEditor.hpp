@@ -17,6 +17,7 @@ public:
 	std::vector<VkImageView> vkImageViews;
 	std::vector<VkFramebuffer> vkFramebuffers;
 	std::shared_ptr<Camera> editorCamera;
+	std::shared_ptr<Settings> settings;
 
 	ApplicationEditor(const std::unique_ptr<Application>& application);
 	~ApplicationEditor();

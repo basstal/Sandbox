@@ -45,7 +45,7 @@ void SettingsEditor::DrawFrame()
 			changed = ImGui::DragInt("Width", &settings->Width) || changed;
 			changed = ImGui::DragInt("Height", &settings->Height) || changed;
 		}
-		changed = ImGui::Checkbox("FillModeNonSolid", &settings->FillModeNonSolid) || changed;
+		// changed = ImGui::Checkbox("FillModeNonSolid", &settings->FillModeNonSolid) || changed;
 		if (changed)
 		{
 			settingsBinding->Trigger();

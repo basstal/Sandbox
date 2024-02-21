@@ -23,10 +23,11 @@ Settings::Settings()
 		WindowPositionY = config["WindowPositionY"].as<int>();
 		ApplicationName = config["ApplicationName"].as<std::string>();
 		IsWindow = config["IsWindow"].as<bool>();
-		FillModeNonSolid = config["FillModeNonSolid"].as<bool>();
+		// FillModeNonSolid = config["FillModeNonSolid"].as<bool>();
 		EditorCameraPos = config["EditorCameraPos"].as<glm::vec3>();
 		EditorCameraRotationX = config["EditorCameraYaw"].as<float>();
 		EditorCameraRotationZ = config["EditorCameraPitch"].as<float>();
+		ViewMode = static_cast<EViewMode>(config["ViewMode"].as<int>());
 	}
 	catch (const std::exception&) // NOLINT(bugprone-empty-catch)
 	{
@@ -47,10 +48,11 @@ void Settings::Save()
 	config["WindowPositionY"] = WindowPositionY;
 	config["ApplicationName"] = ApplicationName;
 	config["IsWindow"] = IsWindow;
-	config["FillModeNonSolid"] = FillModeNonSolid;
+	// config["FillModeNonSolid"] = FillModeNonSolid;
 	config["EditorCameraPos"] = EditorCameraPos;
 	config["EditorCameraYaw"] = EditorCameraRotationX;
 	config["EditorCameraPitch"] = EditorCameraRotationZ;
+	config["ViewMode"] = static_cast<int>(ViewMode);
 	fout << config;
 }
 

@@ -148,7 +148,7 @@ void Application::Initialize()
 	editorCamera = std::make_shared<Camera>(settings->EditorCameraPos, DEFAULT_UP, settings->EditorCameraRotationX, settings->EditorCameraRotationZ);
 	DataBinding::Create("Rendering/EditorCamera", editorCamera);
 	timer = std::make_shared<Timer>();
-	projection = glm::perspective(glm::radians(45.0f), (float)swapchain->vkExtent2D.width / (float)swapchain->vkExtent2D.height, 0.1f, 10.0f);
+	projection = glm::perspective(glm::radians(45.0f), (float)swapchain->vkExtent2D.width / (float)swapchain->vkExtent2D.height, 0.1f, 100.f);
 }
 
 void Application::LoadAssets()

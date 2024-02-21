@@ -3,6 +3,7 @@
 
 #include "Editor/ApplicationEditor.hpp"
 #include "Editor/GizmoEditor.hpp"
+#include "Editor/OverlayEditor.hpp"
 #include "Editor/SettingsEditor.hpp"
 #include "Editor/ValueEditor.hpp"
 #include "Infrastructures/DataBinding.hpp"
@@ -24,6 +25,7 @@ int main()
 		SettingsEditor::Create(applicationEditor);
 		ValueEditor::Create(applicationEditor);
 		GizmoEditor::Create(applicationEditor);
+		OverlayEditor::Create(applicationEditor);
 		while (!glfwWindowShouldClose(Application::Instance->surface->glfwWindow))
 		{
 			glfwPollEvents();

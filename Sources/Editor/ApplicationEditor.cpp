@@ -107,6 +107,7 @@ ApplicationEditor::ApplicationEditor(const std::unique_ptr<Application>& applica
 	init_info.RenderPass = renderPass->vkRenderPass;
 	ImGui_ImplVulkan_Init(&init_info);
 	editorCamera = application->editorCamera;
+	settings = application->settings;
 }
 
 ApplicationEditor::~ApplicationEditor()
