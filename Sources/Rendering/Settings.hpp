@@ -19,7 +19,6 @@ public:
 	int Height = 1080;
 	bool FillModeNonSolid = false;
 	glm::vec3 EditorCameraPos = glm::vec3(0.0f);
-	glm::vec3 EditorCameraUp = DEFAULT_UP;
 	float EditorCameraRotationX = DEFAULT_ROTATION_X;
 	float EditorCameraRotationZ = DEFAULT_ROTATION_Z;
 	std::string ApplicationName = "Sandbox";

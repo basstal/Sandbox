@@ -15,6 +15,7 @@ static bool pressed = false;
 static bool moveMouse = true;
 static float lastX = 0.0f;
 static float lastY = 0.0f;
+static GLFWcursorposfun lastCallback = nullptr;
 
 static void SwitchCursor(Application& application)
 {
@@ -22,7 +23,7 @@ static void SwitchCursor(Application& application)
 	if (!cursorOff)
 	{
 		glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-		glfwSetCursorPosCallback(window, [](GLFWwindow* window, double xPos, double yPos)
+		lastCallback = glfwSetCursorPosCallback(window, [](GLFWwindow* window, double xPos, double yPos)
 		{
 			std::shared_ptr<TDataBinding<std::shared_ptr<Camera>>> editorCameraBinding = std::dynamic_pointer_cast<TDataBinding<std::shared_ptr<Camera>>>(DataBinding::Get("Rendering/EditorCamera"));
 			if (moveMouse)
@@ -41,9 +42,8 @@ static void SwitchCursor(Application& application)
 	}
 	else
 	{
-		
 		glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-		glfwSetCursorPosCallback(window, nullptr);
+		glfwSetCursorPosCallback(window, lastCallback);
 		moveMouse = true;
 	}
 	cursorOff = !cursorOff;
@@ -287,6 +287,7 @@ void ApplicationEditor::DrawFrame(Application& application, VkCommandBuffer curr
 	{
 		pressed = true;
 	}
+	
 	if (glfwGetKey(application.surface->glfwWindow, GLFW_KEY_E) == GLFW_RELEASE && pressed)
 	{
 		pressed = false;

@@ -1,5 +1,5 @@
 #include "Settings.hpp"
-#include "Supports/YamlWithGlm.hpp"
+#include "..\Supports\YamlGlmConverter.hpp"
 
 #include <fstream>
 #include <glm/vec3.hpp>
@@ -25,7 +25,6 @@ Settings::Settings()
 		IsWindow = config["IsWindow"].as<bool>();
 		FillModeNonSolid = config["FillModeNonSolid"].as<bool>();
 		EditorCameraPos = config["EditorCameraPos"].as<glm::vec3>();
-		EditorCameraUp = config["EditorCameraUp"].as<glm::vec3>();
 		EditorCameraRotationX = config["EditorCameraYaw"].as<float>();
 		EditorCameraRotationZ = config["EditorCameraPitch"].as<float>();
 	}
@@ -50,7 +49,6 @@ void Settings::Save()
 	config["IsWindow"] = IsWindow;
 	config["FillModeNonSolid"] = FillModeNonSolid;
 	config["EditorCameraPos"] = EditorCameraPos;
-	config["EditorCameraUp"] = EditorCameraUp;
 	config["EditorCameraYaw"] = EditorCameraRotationX;
 	config["EditorCameraPitch"] = EditorCameraRotationZ;
 	fout << config;
@@ -59,7 +57,6 @@ void Settings::Save()
 void Settings::UpdateEditorCamera(const std::shared_ptr<Camera>& camera)
 {
 	EditorCameraPos = camera->Position;
-	EditorCameraUp = camera->Up;
 	EditorCameraRotationX = camera->RotationX;
 	EditorCameraRotationZ = camera->RotationZ;
 }
