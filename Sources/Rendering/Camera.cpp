@@ -96,6 +96,8 @@ void Camera::UpdatePosition(float deltaTime, GLFWwindow* window)
 		Position -= deltaSpeed * Right;
 	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
 		Position += deltaSpeed * Right;
+	if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
+		Position += deltaSpeed * WorldUp;
 }
 void Camera::Reset()
 {

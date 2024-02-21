@@ -39,7 +39,6 @@ private:
 	void CheckExtensionsSupport(uint32_t glfwExtensionCount, const char** glfwExtensions);
 	uint32_t m_currentFrame = 0;
 	bool m_cleaned = false;
-	std::shared_ptr<Settings> m_settings;
 
 public:
 	VkInstance vkInstance;
@@ -62,6 +61,7 @@ public:
 	std::shared_ptr<UniformBuffers> uniformBuffers;
 	std::shared_ptr<SyncObjects> syncObjects;
 
+	std::shared_ptr<Settings> settings;
 	std::shared_ptr<Camera> editorCamera;
 	std::shared_ptr<Timer> timer;
 

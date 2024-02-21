@@ -11,14 +11,17 @@
 #include "Rendering/Application.hpp"
 
 static bool cursorOff = false;
-static bool pressed = false;
 static bool moveMouse = true;
 static float lastX = 0.0f;
 static float lastY = 0.0f;
 static GLFWcursorposfun lastCallback = nullptr;
 
-static void SwitchCursor(Application& application)
+static void SwitchCursor(Application& application, bool onEditorCamera)
 {
+	if (onEditorCamera == cursorOff)
+	{
+		return;
+	}
 	GLFWwindow* window = application.surface->glfwWindow;
 	if (!cursorOff)
 	{
@@ -283,16 +286,15 @@ void ApplicationEditor::DrawFrame(Application& application, VkCommandBuffer curr
 		throw std::runtime_error("failed to submit editor draw command buffer!");
 	}
 	// }
-	if (glfwGetKey(application.surface->glfwWindow, GLFW_KEY_E) == GLFW_PRESS)
+
+	bool isRightButtonPressed = glfwGetMouseButton(application.surface->glfwWindow, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS;
+	if (isRightButtonPressed)
 	{
-		pressed = true;
+		auto deltaTime = application.timer->GetDeltaTime();
+		editorCamera->UpdatePosition(deltaTime, application.surface->glfwWindow);
+		application.settings->UpdateEditorCamera(editorCamera);
 	}
-	
-	if (glfwGetKey(application.surface->glfwWindow, GLFW_KEY_E) == GLFW_RELEASE && pressed)
-	{
-		pressed = false;
-		SwitchCursor(application);
-	}
+	SwitchCursor(application, isRightButtonPressed);
 }
 
 void ApplicationEditor::CleanupWhenRecreateSwapchain()

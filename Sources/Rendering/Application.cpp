@@ -57,14 +57,14 @@ void Application::CheckExtensionsSupport(uint32_t glfwExtensionCount, const char
 	}
 }
 
-Application::Application(const std::shared_ptr<Settings>& settings)
+Application::Application(const std::shared_ptr<Settings>& inSettings)
 {
-	m_settings = settings;
+	settings = inSettings;
 	glfwInit();
 
 	VkApplicationInfo appInfo{};
 	appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-	appInfo.pApplicationName = m_settings->ApplicationName.c_str();
+	appInfo.pApplicationName = settings->ApplicationName.c_str();
 	appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
 	appInfo.pEngineName = "No Engine";
 	appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
@@ -115,9 +115,9 @@ void Application::Cleanup()
 	surface->Cleanup();
 	vkDestroyInstance(vkInstance, nullptr);
 	glfwTerminate();
-	if (m_settings != nullptr)
+	if (settings != nullptr)
 	{
-		m_settings->Save();
+		settings->Save();
 	}
 	m_cleaned = true;
 }
@@ -145,7 +145,7 @@ void Application::Initialize()
 	descriptorResource->CreateDescriptorSets(uniformBuffers, renderTexture);
 	commandResource->CreateCommandBuffers();
 	syncObjects = std::make_shared<SyncObjects>(device);
-	editorCamera = std::make_shared<Camera>(m_settings->EditorCameraPos, DEFAULT_UP, m_settings->EditorCameraRotationX, m_settings->EditorCameraRotationZ);
+	editorCamera = std::make_shared<Camera>(settings->EditorCameraPos, DEFAULT_UP, settings->EditorCameraRotationX, settings->EditorCameraRotationZ);
 	DataBinding::Create("Rendering/EditorCamera", editorCamera);
 	timer = std::make_shared<Timer>();
 	projection = glm::perspective(glm::radians(45.0f), (float)swapchain->vkExtent2D.width / (float)swapchain->vkExtent2D.height, 0.1f, 10.0f);
@@ -201,9 +201,7 @@ void Application::DrawFrame(const std::shared_ptr<ApplicationEditor>& applicatio
 	vkResetFences(device->vkDevice, 1, &syncObjects->inFlightFences[m_currentFrame]);
 	vkResetCommandBuffer(currentCommandBuffer, 0);
 	RecordCommandBuffer(currentCommandBuffer, imageIndex);
-	auto deltaTime = timer->GetDeltaTime();
-	editorCamera->UpdatePosition(deltaTime, surface->glfwWindow);
-	m_settings->UpdateEditorCamera(editorCamera);
+	
 	debugUBO = uniformBuffers->UpdateUniformBuffer(m_currentFrame, editorCamera, model, projection);
 	VkSubmitInfo submitInfo{};
 	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
