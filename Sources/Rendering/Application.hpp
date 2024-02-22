@@ -13,6 +13,7 @@
 #include "Components/Pipeline.hpp"
 #include "Components\DescriptorResource.hpp"
 #include "Components/Swapchain.hpp"
+#include "GameCore/GameObject.hpp"
 #include "Infrastructures/Timer.hpp"
 
 #include "Objects/IndexBuffer.hpp"
@@ -52,7 +53,7 @@ public:
 
 	// specific to usage
 	std::shared_ptr<RenderTexture> renderTexture;
-	std::shared_ptr<Model> model;
+	std::shared_ptr<GameObject> modelGameObject;
 	std::shared_ptr<Image> image;
 	std::vector<char> vertexShader;
 	std::vector<char> fragmentShader;
@@ -78,5 +79,5 @@ public:
 	static uint32_t FindMemoryType(VkPhysicalDevice physicalDevice, uint32_t typeFilter, VkMemoryPropertyFlags properties);
 	void DrawFrame(const std::shared_ptr<ApplicationEditor>& applicationEditor);
 	void RecreateSwapchain(const std::shared_ptr<ApplicationEditor>& editor);
-	void RecordCommandBuffer(VkCommandBuffer currentCommandBuffer, uint32_t imageIndex);
+	void RecordCommandBuffer(VkCommandBuffer currentCommandBuffer, uint32_t imageIndex, const std::shared_ptr<ApplicationEditor>& applicationEditor);
 };

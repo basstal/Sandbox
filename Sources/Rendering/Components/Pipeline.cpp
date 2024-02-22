@@ -75,8 +75,6 @@ void Pipeline::CreateFillModeNonSolidPipeline()
 
 VkPipeline Pipeline::CreatePipeline(const VkShaderModule& vertShaderModule, const VkShaderModule& fragShaderModule, bool fillModeNonSolid)
 {
-	VkPipeline vkPipeline;
-
 	VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
 	vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
 	auto bindingDescription = Vertex::getBindingDescription();
@@ -92,6 +90,30 @@ VkPipeline Pipeline::CreatePipeline(const VkShaderModule& vertShaderModule, cons
 	inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
 	inputAssembly.primitiveRestartEnable = VK_FALSE;
 
+
+	return CreatePipeline(vertShaderModule, fragShaderModule, fillModeNonSolid, vertexInputInfo, inputAssembly);
+}
+
+VkPipeline Pipeline::CreatePipeline(const VkShaderModule& vertShaderModule, const VkShaderModule& fragShaderModule, bool fillModeNonSolid, const VkPipelineVertexInputStateCreateInfo& vertexInputInfo,
+                                    const VkPipelineInputAssemblyStateCreateInfo& inputAssembly)
+{
+	VkPipelineDepthStencilStateCreateInfo depthStencil{};
+	depthStencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+	depthStencil.depthTestEnable = VK_TRUE;
+	depthStencil.depthWriteEnable = VK_TRUE;
+	depthStencil.depthCompareOp = VK_COMPARE_OP_LESS;
+	depthStencil.depthBoundsTestEnable = VK_FALSE;
+	depthStencil.minDepthBounds = 0.0f; // Optional
+	depthStencil.maxDepthBounds = 1.0f; // Optional
+	depthStencil.stencilTestEnable = VK_FALSE;
+	depthStencil.front = {}; // Optional
+	depthStencil.back = {}; // Optional
+	return CreatePipeline(vertShaderModule, fragShaderModule, fillModeNonSolid, vertexInputInfo, inputAssembly, depthStencil);
+}
+VkPipeline Pipeline::CreatePipeline(const VkShaderModule& vertShaderModule, const VkShaderModule& fragShaderModule, bool fillModeNonSolid, const VkPipelineVertexInputStateCreateInfo& vertexInputInfo,
+                                    const VkPipelineInputAssemblyStateCreateInfo& inputAssembly, const VkPipelineDepthStencilStateCreateInfo& depthStencil)
+{
+	VkPipeline vkPipeline;
 	// use viewport and scissor dynamically
 	std::vector<VkDynamicState> dynamicStates = {
 		VK_DYNAMIC_STATE_VIEWPORT,
@@ -182,17 +204,6 @@ VkPipeline Pipeline::CreatePipeline(const VkShaderModule& vertShaderModule, cons
 	pipelineInfo.basePipelineHandle = VK_NULL_HANDLE; // Optional
 	pipelineInfo.basePipelineIndex = -1; // Optional
 
-	VkPipelineDepthStencilStateCreateInfo depthStencil{};
-	depthStencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
-	depthStencil.depthTestEnable = VK_TRUE;
-	depthStencil.depthWriteEnable = VK_TRUE;
-	depthStencil.depthCompareOp = VK_COMPARE_OP_LESS;
-	depthStencil.depthBoundsTestEnable = VK_FALSE;
-	depthStencil.minDepthBounds = 0.0f; // Optional
-	depthStencil.maxDepthBounds = 1.0f; // Optional
-	depthStencil.stencilTestEnable = VK_FALSE;
-	depthStencil.front = {}; // Optional
-	depthStencil.back = {}; // Optional
 	pipelineInfo.pDepthStencilState = &depthStencil;
 	if (vkCreateGraphicsPipelines(m_device->vkDevice, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &vkPipeline) != VK_SUCCESS)
 	{

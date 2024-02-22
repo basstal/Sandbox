@@ -1,4 +1,6 @@
 #pragma once
+#include <glm/fwd.hpp>
+
 #include "ApplicationEditor.hpp"
 #include "IEditor.hpp"
 

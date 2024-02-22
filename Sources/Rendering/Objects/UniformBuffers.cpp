@@ -25,11 +25,11 @@ UniformBuffers::~UniformBuffers()
 	Cleanup();
 }
 
-UniformBufferObject UniformBuffers::UpdateUniformBuffer(uint32_t currentImage, const std::shared_ptr<Camera>& camera, const std::shared_ptr<Model>& model,
+UniformBufferObject UniformBuffers::UpdateUniformBuffer(uint32_t currentImage, const std::shared_ptr<Camera>& camera, const glm::mat4& model,
                                                         const glm::mat4& projection)
 {
 	UniformBufferObject ubo;
-	ubo.model = model->transform->GetModelMatrix();
+	ubo.model = model;
 	ubo.view = camera->GetViewMatrix();
 	ubo.proj = projection;
 	ubo.proj[1][1] *= -1;

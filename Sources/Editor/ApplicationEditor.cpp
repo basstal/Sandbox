@@ -2,11 +2,12 @@
 
 #include <memory>
 #include <stdexcept>
-
 #include "IEditor.hpp"
 #include "imgui.h"
 #include "backends/imgui_impl_glfw.h"
 #include "backends/imgui_impl_vulkan.h"
+#include "Grid.hpp"
+#include "Gizmos/TransformGizmo.hpp"
 #include "Infrastructures/DataBinding.hpp"
 #include "Rendering/Application.hpp"
 
@@ -108,6 +109,8 @@ ApplicationEditor::ApplicationEditor(const std::unique_ptr<Application>& applica
 	ImGui_ImplVulkan_Init(&init_info);
 	editorCamera = application->editorCamera;
 	settings = application->settings;
+	grid = std::make_shared<Grid>(m_device, application->commandResource, application->pipeline);
+	transformGizmo = std::make_shared<TransformGizmo>(application->modelGameObject, m_device, application->commandResource, application->pipeline, application->descriptorResource);
 }
 
 ApplicationEditor::~ApplicationEditor()
@@ -170,6 +173,8 @@ void ApplicationEditor::Cleanup()
 	{
 		return;
 	}
+	transformGizmo->Cleanup();
+	grid->Cleanup();
 	CleanupFramebuffers();
 
 	renderPass->Cleanup();
@@ -188,11 +193,22 @@ void ApplicationEditor::CleanupFramebuffers()
 	}
 }
 
+// void ApplicationEditor::NewFrame()
+// {
+// 	// Start the Dear ImGui frame
+// 	ImGui_ImplVulkan_NewFrame();
+// 	ImGui_ImplGlfw_NewFrame();
+// 	ImGui::NewFrame();
+// }
+// void ApplicationEditor::DrawGizmos()
+// {
+// 	gizmoEditor->DrawFrame();
+// }
+
 void ApplicationEditor::DrawFrame(Application& application, VkCommandBuffer currentCommandBuffer, uint32_t currentFrame, std::shared_ptr<SyncObjects> syncObjects, uint32_t imageIndex)
 {
 	ImGuiIO& io = ImGui::GetIO();
 
-	// Start the Dear ImGui frame
 	ImGui_ImplVulkan_NewFrame();
 	ImGui_ImplGlfw_NewFrame();
 	ImGui::NewFrame();

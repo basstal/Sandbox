@@ -138,8 +138,8 @@ void Application::Initialize()
 	commandResource = std::make_shared<CommandResource>(device);
 
 	renderTexture = std::make_shared<RenderTexture>(device, image, commandResource);
-	vertexBuffer = std::make_shared<VertexBuffer>(device, model, commandResource);
-	indexBuffer = std::make_shared<IndexBuffer>(device, model, commandResource);
+	vertexBuffer = std::make_shared<VertexBuffer>(device, modelGameObject->model, commandResource);
+	indexBuffer = std::make_shared<IndexBuffer>(device, modelGameObject->model, commandResource);
 	uniformBuffers = std::make_shared<UniformBuffers>(device);
 	descriptorResource->CreateDescriptorPool();
 	descriptorResource->CreateDescriptorSets(uniformBuffers, renderTexture);
@@ -157,7 +157,8 @@ void Application::LoadAssets()
 	vertexShader = FileSystemBase::readFile((binariesDir / "Shaders/Test_vert.spv").string());
 	fragmentShader = FileSystemBase::readFile((binariesDir / "Shaders/Test_frag.spv").string());
 	std::filesystem::path assetsDir = FileSystemBase::getAssetsDir();
-	model = Model::loadModel((assetsDir / "Models/viking_room.obj").string().c_str());
+	modelGameObject = std::make_shared<GameObject>();
+	modelGameObject->model = Model::loadModel((assetsDir / "Models/viking_room.obj").string().c_str());
 	image = Image::loadImage((assetsDir / "Textures/viking_room.png").string().c_str());
 }
 
@@ -200,12 +201,12 @@ void Application::DrawFrame(const std::shared_ptr<ApplicationEditor>& applicatio
 	VkCommandBuffer currentCommandBuffer = commandResource->vkCommandBuffers[m_currentFrame];
 	vkResetFences(device->vkDevice, 1, &syncObjects->inFlightFences[m_currentFrame]);
 	vkResetCommandBuffer(currentCommandBuffer, 0);
-	RecordCommandBuffer(currentCommandBuffer, imageIndex);
-	
-	debugUBO = uniformBuffers->UpdateUniformBuffer(m_currentFrame, editorCamera, model, projection);
+	RecordCommandBuffer(currentCommandBuffer, imageIndex, applicationEditor);
+	auto modelMatrix = modelGameObject->transform->GetModelMatrix();
+	debugUBO = uniformBuffers->UpdateUniformBuffer(m_currentFrame, editorCamera, modelMatrix, projection);
+
 	VkSubmitInfo submitInfo{};
 	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-
 	VkSemaphore waitSemaphores[] = {syncObjects->imageAvailableSemaphores[m_currentFrame]};
 	VkPipelineStageFlags waitStages[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
 	submitInfo.waitSemaphoreCount = 1;
@@ -268,7 +269,7 @@ void Application::RecreateSwapchain(const std::shared_ptr<ApplicationEditor>& ed
 	editor->CreateFramebuffer(Instance);
 }
 
-void Application::RecordCommandBuffer(VkCommandBuffer currentCommandBuffer, uint32_t imageIndex)
+void Application::RecordCommandBuffer(VkCommandBuffer currentCommandBuffer, uint32_t imageIndex, const std::shared_ptr<ApplicationEditor>& applicationEditor)
 {
 	VkCommandBufferBeginInfo beginInfo{};
 	beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -293,8 +294,6 @@ void Application::RecordCommandBuffer(VkCommandBuffer currentCommandBuffer, uint
 	renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
 	renderPassInfo.pClearValues = clearValues.data();
 	vkCmdBeginRenderPass(currentCommandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
-	vkCmdBindPipeline(currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->GraphicsPipeline());
-
 	VkViewport viewport;
 	viewport.x = 0.0f;
 	viewport.y = 0.0f;
@@ -309,13 +308,20 @@ void Application::RecordCommandBuffer(VkCommandBuffer currentCommandBuffer, uint
 	scissor.extent = swapchain->vkExtent2D;
 	vkCmdSetScissor(currentCommandBuffer, 0, 1, &scissor);
 
+	applicationEditor->grid->Draw(device, currentCommandBuffer, pipeline, descriptorResource, m_currentFrame);
+	vkCmdBindPipeline(currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->GraphicsPipeline());
 	VkBuffer vertexBuffers[] = {vertexBuffer->buffer->vkBuffer};
 	VkDeviceSize offsets[] = {0};
 	vkCmdBindVertexBuffers(currentCommandBuffer, 0, 1, vertexBuffers, offsets);
-
 	vkCmdBindIndexBuffer(currentCommandBuffer, indexBuffer->buffer->vkBuffer, 0, VK_INDEX_TYPE_UINT32);
+	// auto modelMatrix = modelGameObject->transform->GetModelMatrix();
+	// debugUBO = uniformBuffers->UpdateUniformBuffer(m_currentFrame, editorCamera, modelMatrix, projection);
 	vkCmdBindDescriptorSets(currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->vkPipelineLayout, 0, 1, &descriptorResource->vkDescriptorSets[m_currentFrame], 0, nullptr);
-	vkCmdDrawIndexed(currentCommandBuffer, static_cast<uint32_t>(model->indices().size()), 1, 0, 0, 0);
+	vkCmdDrawIndexed(currentCommandBuffer, static_cast<uint32_t>(modelGameObject->model->indices().size()), 1, 0, 0, 0);
+
+	applicationEditor->transformGizmo->AdjustGizmoSize(editorCamera);
+	// uniformBuffers->UpdateUniformBuffer(m_currentFrame, editorCamera, applicationEditor->transformGizmo->modelMatrix, projection);
+	applicationEditor->transformGizmo->Draw(device, currentCommandBuffer, pipeline, descriptorResource, m_currentFrame);
 
 	vkCmdEndRenderPass(currentCommandBuffer);
 

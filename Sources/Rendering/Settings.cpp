@@ -58,7 +58,7 @@ void Settings::Save()
 
 void Settings::UpdateEditorCamera(const std::shared_ptr<Camera>& camera)
 {
-	EditorCameraPos = camera->Position;
-	EditorCameraRotationX = camera->RotationX;
-	EditorCameraRotationZ = camera->RotationZ;
+	EditorCameraPos = camera->position;
+	EditorCameraRotationX = camera->rotationX;
+	EditorCameraRotationZ = camera->rotationZ;
 }

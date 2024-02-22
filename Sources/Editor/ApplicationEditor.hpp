@@ -1,6 +1,11 @@
 #pragma once
+
 #include "backends/imgui_impl_vulkan.h"
+#include "Grid.hpp"
+#include "Gizmos/TransformGizmo.hpp"
 #include "Rendering/Application.hpp"
+
+class GizmoEditor;
 
 class ApplicationEditor
 {
@@ -18,12 +23,19 @@ public:
 	std::vector<VkFramebuffer> vkFramebuffers;
 	std::shared_ptr<Camera> editorCamera;
 	std::shared_ptr<Settings> settings;
+	// std::shared_ptr<GizmoEditor> gizmoEditor;
+	std::shared_ptr<Grid> grid;
+	std::shared_ptr<TransformGizmo> transformGizmo;
+
 
 	ApplicationEditor(const std::unique_ptr<Application>& application);
 	~ApplicationEditor();
 	void CreateFramebuffer(const std::unique_ptr<Application>& application);
 	void Cleanup();
 	void CleanupFramebuffers();
+	// void NewFrame();
+	// void DrawGizmos(Application& application, VkCommandBuffer currentCommandBuffer, uint32_t imageIndex);
+	// void RenderDrawData(Application& application, VkCommandBuffer currentCommandBuffer, uint32_t imageIndex);
 	void DrawFrame(Application& application, VkCommandBuffer currentCommandBuffer, uint32_t currentFrame, std::shared_ptr<SyncObjects> syncObjects, uint32_t imageIndex);
 	void CleanupWhenRecreateSwapchain();
 };

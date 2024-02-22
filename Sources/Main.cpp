@@ -22,9 +22,9 @@ int main()
 		Application::Instance = std::make_unique<Application>(setting);
 		Application::Instance->Initialize();
 		std::shared_ptr<ApplicationEditor> applicationEditor = std::make_shared<ApplicationEditor>(Application::Instance);
+		// applicationEditor->gizmoEditor = std::make_shared<GizmoEditor>(applicationEditor);
 		SettingsEditor::Create(applicationEditor);
 		ValueEditor::Create(applicationEditor);
-		GizmoEditor::Create(applicationEditor);
 		OverlayEditor::Create(applicationEditor);
 		while (!glfwWindowShouldClose(Application::Instance->surface->glfwWindow))
 		{

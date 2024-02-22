@@ -32,22 +32,22 @@ class Camera
 {
 public:
 	// Camera Attributes
-	glm::vec3 Position;
-	glm::vec3 Front;
-	glm::vec3 Up;
-	glm::vec3 Right;
-	glm::vec3 WorldUp;
+	glm::vec3 position;
+	glm::vec3 front;
+	glm::vec3 up;
+	glm::vec3 right;
+	glm::vec3 worldUp;
 	// Euler Angles
-	float RotationX;
-	float RotationZ;
+	float rotationX;
+	float rotationZ;
 	// Camera options
-	float MovementSpeed;
-	float MouseSensitivity;
-	float Zoom;
+	float movementSpeed;
+	float mouseSensitivity;
+	float zoom;
 
 
 	// Constructor with vectors
-	Camera(glm::vec3 position, glm::vec3 up, float rotationX, float rotationZ);
+	Camera(glm::vec3 inPosition, glm::vec3 inWorldUp, float rotationX, float rotationZ);
 
 	// Constructor with scalar values
 	Camera(float posX, float posY, float posZ, float upX, float upY, float upZ, float rotationX, float rotationZ);

@@ -1,7 +1,10 @@
 #include "GizmoEditor.hpp"
 #include <glm/gtc/type_ptr.hpp> // 包含glm::value_ptr
+
+#include "imgui.h"
 #include "ImGuizmo.h"
 #include "Infrastructures/DataBinding.hpp"
+#include "Rendering/Application.hpp"
 
 std::shared_ptr<GizmoEditor> GizmoEditor::m_instance = nullptr;
 

@@ -6,10 +6,6 @@
 
 Model::Model()
 {
-	transform = std::make_shared<Transform>();
-	transform->position = glm::vec3(0.0f, 0.0f, 0.0f);
-	transform->rotation = Quaternion::identity;
-	transform->scale = glm::vec3(1.0f, 1.0f, 1.0f);
 }
 
 Model::~Model()

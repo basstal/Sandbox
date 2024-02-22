@@ -12,7 +12,6 @@ private:
 	std::shared_ptr<Device> m_device;
 	std::shared_ptr<RenderPass> m_renderPass;
 	std::shared_ptr<DescriptorResource> m_descriptorResource;
-	VkShaderModule CreateShaderModule(const std::vector<char>& code);
 	bool m_cleaned = false;
 	bool m_fillModeNonSolid = false;
 
@@ -28,5 +27,10 @@ public:
 	void CreatePipeline(const std::vector<char>& vertexShader, const std::vector<char>& fragmentShader);
 	void CreateFillModeNonSolidPipeline();
 	VkPipeline CreatePipeline(const VkShaderModule& vertShaderModule, const VkShaderModule& fragShaderModule, bool fillModeNonSolid);
+	VkPipeline CreatePipeline(const VkShaderModule& vertShaderModule, const VkShaderModule& fragShaderModule, bool fillModeNonSolid, const VkPipelineVertexInputStateCreateInfo& vertexInputInfo,
+	                          const VkPipelineInputAssemblyStateCreateInfo& inputAssembly);
+	VkPipeline CreatePipeline(const VkShaderModule& vertShaderModule, const VkShaderModule& fragShaderModule, bool fillModeNonSolid, const VkPipelineVertexInputStateCreateInfo& vertexInputInfo, const
+	                          VkPipelineInputAssemblyStateCreateInfo& inputAssembly, const VkPipelineDepthStencilStateCreateInfo& depthStencil);
+	VkShaderModule CreateShaderModule(const std::vector<char>& code);
 	void Cleanup();
 };
