@@ -12,12 +12,12 @@ protected:
 	unsigned short m_mipLevels;
 
 public:
-	static std::shared_ptr<Image> loadImage(const char* path);
-	int width() const { return m_width; }
-	int height() const { return m_height; }
-	int channels() const { return m_channels; }
-	unsigned char* pixels() const { return m_pixels; }
-	unsigned short mipLevels() const { return m_mipLevels; }
+	static std::shared_ptr<Image> LoadImage(const char* path);
+	int Width() const { return m_width; }
+	int Height() const { return m_height; }
+	int Channels() const { return m_channels; }
+	unsigned char *Pixels() const { return m_pixels; }
+	unsigned short MipLevels() const { return m_mipLevels; }
 	Image();
 	~Image();
 };

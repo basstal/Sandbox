@@ -2,7 +2,6 @@
 #include <memory>
 
 #include "Editor/ApplicationEditor.hpp"
-#include "Editor/GizmoEditor.hpp"
 #include "Editor/OverlayEditor.hpp"
 #include "Editor/SettingsEditor.hpp"
 #include "Editor/ValueEditor.hpp"

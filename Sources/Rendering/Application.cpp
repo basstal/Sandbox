@@ -99,22 +99,63 @@ void Application::Cleanup()
 	{
 		return;
 	}
-	// TODO: 如果没有创建就不需要清理
-	swapchain->Cleanup();
+	if (material != nullptr)
+	{
+		material->Cleanup();
+	}
+	if (swapchain != nullptr)
+	{
+		swapchain->Cleanup();
+	}
+	if (renderTexture != nullptr)
+	{
+		renderTexture->Cleanup();
+	}
+	if (indexBuffer != nullptr)
+	{
+		indexBuffer->Cleanup();
+	}
+	if (vertexBuffer != nullptr)
+	{
+		vertexBuffer->Cleanup();
+	}
+	if (uniformBuffers != nullptr)
+	{
+		uniformBuffers->Cleanup();
+	}
+	if (pipeline != nullptr)
+	{
+		pipeline->Cleanup();
+	}
+	if (descriptorResource != nullptr)
+	{
+		descriptorResource->Cleanup();
+	}
+	if (renderPass != nullptr)
+	{
+		renderPass->Cleanup();
+	}
+	if (syncObjects != nullptr)
+	{
+		syncObjects->Cleanup();
+	}
+	if (commandResource != nullptr)
+	{
+		commandResource->Cleanup();
+	}
 
-	renderTexture->Cleanup();
-	indexBuffer->Cleanup();
-	vertexBuffer->Cleanup();
-	uniformBuffers->Cleanup();
-	pipeline->Cleanup();
-	descriptorResource->Cleanup();
-	renderPass->Cleanup();
-	syncObjects->Cleanup();
-	commandResource->Cleanup();
-	device->Cleanup();
-	surface->Cleanup();
+	if (device != nullptr)
+	{
+		device->Cleanup();
+	}
+	if (surface != nullptr)
+	{
+		surface->Cleanup();
+	}
 	vkDestroyInstance(vkInstance, nullptr);
 	glfwTerminate();
+
+
 	if (settings != nullptr)
 	{
 		settings->Save();
@@ -142,7 +183,15 @@ void Application::Initialize()
 	indexBuffer = std::make_shared<IndexBuffer>(device, modelGameObject->model, commandResource);
 	uniformBuffers = std::make_shared<UniformBuffers>(device);
 	descriptorResource->CreateDescriptorPool();
-	descriptorResource->CreateDescriptorSets(uniformBuffers, renderTexture);
+
+	std::filesystem::path assetsDir = FileSystemBase::getAssetsDir();
+	auto albedo = Image::LoadImage((assetsDir / "Textures/pbr/rusted_iron/albedo.png").string().c_str());
+	auto metallic = Image::LoadImage((assetsDir / "Textures/pbr/rusted_iron/metallic.png").string().c_str());
+	auto roughness = Image::LoadImage((assetsDir / "Textures/pbr/rusted_iron/roughness.png").string().c_str());
+	auto ao = Image::LoadImage((assetsDir / "Textures/pbr/rusted_iron/ao.png").string().c_str());
+
+	material = std::make_shared<Material>(device, albedo, metallic, roughness, ao, commandResource);
+	descriptorResource->CreateDescriptorSets(uniformBuffers, renderTexture, material);
 	commandResource->CreateCommandBuffers();
 	syncObjects = std::make_shared<SyncObjects>(device);
 	editorCamera = std::make_shared<Camera>(settings->EditorCameraPos, DEFAULT_UP, settings->EditorCameraRotationX, settings->EditorCameraRotationZ);
@@ -154,12 +203,12 @@ void Application::Initialize()
 void Application::LoadAssets()
 {
 	std::filesystem::path binariesDir = FileSystemBase::getBinariesDir();
-	vertexShader = FileSystemBase::readFile((binariesDir / "Shaders/Test_vert.spv").string());
-	fragmentShader = FileSystemBase::readFile((binariesDir / "Shaders/Test_frag.spv").string());
+	vertexShader = FileSystemBase::readFile((binariesDir / "Shaders/PBR_vert.spv").string());
+	fragmentShader = FileSystemBase::readFile((binariesDir / "Shaders/PBR_frag.spv").string());
 	std::filesystem::path assetsDir = FileSystemBase::getAssetsDir();
 	modelGameObject = std::make_shared<GameObject>();
 	modelGameObject->model = Model::LoadModel((assetsDir / "Models/viking_room.obj").string().c_str());
-	image = Image::loadImage((assetsDir / "Textures/viking_room.png").string().c_str());
+	image = Image::LoadImage((assetsDir / "Textures/viking_room.png").string().c_str());
 }
 
 void Application::CreateSwapchain()
@@ -203,8 +252,7 @@ void Application::DrawFrame(const std::shared_ptr<ApplicationEditor>& applicatio
 	vkResetFences(device->vkDevice, 1, &syncObjects->inFlightFences[m_currentFrame]);
 	vkResetCommandBuffer(currentCommandBuffer, 0);
 	RecordCommandBuffer(currentCommandBuffer, imageIndex, applicationEditor);
-	auto modelMatrix = modelGameObject->transform->GetModelMatrix();
-	debugUBO = uniformBuffers->UpdateUniformBuffer(m_currentFrame, editorCamera, modelMatrix, projection);
+
 
 	VkSubmitInfo submitInfo{};
 	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -313,10 +361,33 @@ void Application::RecordCommandBuffer(VkCommandBuffer currentCommandBuffer, uint
 	vkCmdBindPipeline(currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->GraphicsPipeline());
 	VkBuffer vertexBuffers[] = {vertexBuffer->buffer->vkBuffer};
 	VkDeviceSize offsets[] = {0};
+	vkCmdPushConstants(currentCommandBuffer, pipeline->vkPipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(glm::vec3), &editorCamera->position);
 	vkCmdBindVertexBuffers(currentCommandBuffer, 0, 1, vertexBuffers, offsets);
 	vkCmdBindIndexBuffer(currentCommandBuffer, indexBuffer->buffer->vkBuffer, 0, VK_INDEX_TYPE_UINT32);
 	vkCmdBindDescriptorSets(currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->vkPipelineLayout, 0, 1, &descriptorResource->vkDescriptorSets[m_currentFrame], 0, nullptr);
+	auto modelMatrix = modelGameObject->transform->GetModelMatrix();
+	debugUBO = uniformBuffers->UpdateMVP(m_currentFrame, editorCamera, modelMatrix, projection);
 	vkCmdDrawIndexed(currentCommandBuffer, static_cast<uint32_t>(modelGameObject->model->Indices().size()), 1, 0, 0, 0);
+
+	// VkBufferMemoryBarrier bufferMemoryBarrier = {};
+	// bufferMemoryBarrier.sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
+	// bufferMemoryBarrier.srcAccessMask = VK_ACCESS_HOST_WRITE_BIT | VK_ACCESS_TRANSFER_WRITE_BIT; // 如果之前的操作是CPU写入或其他写入操作
+	// bufferMemoryBarrier.dstAccessMask = VK_ACCESS_UNIFORM_READ_BIT; // 接下来需要进行Uniform读取
+	// bufferMemoryBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+	// bufferMemoryBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+	// bufferMemoryBarrier.buffer = uniformBuffers->mvpObjectBuffers[m_currentFrame]->vkBuffer;
+	// bufferMemoryBarrier.offset = 0;
+	// bufferMemoryBarrier.size = VK_WHOLE_SIZE;
+	//
+	// vkCmdPipelineBarrier(
+	// 	currentCommandBuffer,
+	// 	VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, // 从管道的顶部开始同步
+	// 	VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT, // 目标是顶点着色器阶段
+	// 	0, // Flags
+	// 	0, nullptr, // 内存屏障
+	// 	1, &bufferMemoryBarrier, // 缓冲区屏障
+	// 	0, nullptr); // 图像屏障
+
 
 	applicationEditor->transformGizmo->Draw(editorCamera, currentCommandBuffer, pipeline, descriptorResource, m_currentFrame, surface->glfwWindow, projection);
 

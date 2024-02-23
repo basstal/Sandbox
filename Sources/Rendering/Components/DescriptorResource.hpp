@@ -1,4 +1,5 @@
 ﻿#pragma once
+#include "Rendering/Material.hpp"
 #include "Rendering/Base/Device.hpp"
 #include "Rendering/Objects/RenderTexture.hpp"
 #include "Rendering/Objects/UniformBuffers.hpp"
@@ -17,6 +18,6 @@ public:
 	DescriptorResource(const std::shared_ptr<Device>& device);
 	~DescriptorResource();
 	void CreateDescriptorPool();
-	void CreateDescriptorSets(const std::shared_ptr<UniformBuffers>& uniformBuffers, const std::shared_ptr<RenderTexture>& renderTexture);
+	void CreateDescriptorSets(const std::shared_ptr<UniformBuffers>& uniformBuffers, const std::shared_ptr<RenderTexture>& renderTexture, const std::shared_ptr<Material>& material);
 	void Cleanup();
 };

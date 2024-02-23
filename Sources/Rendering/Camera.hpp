@@ -3,12 +3,27 @@
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 
-struct UniformBufferObject
+struct MVPObject
 {
 	alignas(16) glm::mat4 model;
 	alignas(16) glm::mat4 view;
 	alignas(16) glm::mat4 proj;
 };
+
+struct PBRMaterial
+{
+	glm::vec3 albedo;
+	float metallic;
+	float roughness;
+	float ao;
+};
+
+struct Light
+{
+	glm::vec3 position;
+	glm::vec3 color;
+};
+
 
 // Defines several possible options for camera movement. Used as abstraction to stay away from window-system specific input methods
 enum Camera_Movement

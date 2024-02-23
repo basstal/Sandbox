@@ -5,13 +5,14 @@ layout(location = 1) in vec3 inColor;
 
 layout(location = 0) out vec3 fragColor;
 
-layout(binding = 0) uniform UniformBufferObject {
+layout(binding = 0) uniform MVPObject {
     mat4 model;
     mat4 view;
     mat4 proj;
-}ubo;
+}
+ubo;
 
 void main() {
-    gl_Position  = ubo.proj * ubo.view * mat4(1.0f) * vec4(inPosition, 1.0);
-    fragColor    = inColor;
+    gl_Position = ubo.proj * ubo.view * mat4(1.0f) * vec4(inPosition, 1.0);
+    fragColor   = inColor;
 }

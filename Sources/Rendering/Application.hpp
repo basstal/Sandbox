@@ -62,12 +62,14 @@ public:
 	std::shared_ptr<UniformBuffers> uniformBuffers;
 	std::shared_ptr<SyncObjects> syncObjects;
 
+	std::shared_ptr<Material> material;
+
 	std::shared_ptr<Settings> settings;
 	std::shared_ptr<Camera> editorCamera;
 	std::shared_ptr<Timer> timer;
 
 	glm::vec4 clearColor = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
-	UniformBufferObject debugUBO;
+	MVPObject debugUBO;
 	glm::mat4 projection;
 	float deltaTime;
 	static std::unique_ptr<Application> Instance;

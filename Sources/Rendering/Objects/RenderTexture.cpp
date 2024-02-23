@@ -14,25 +14,25 @@ RenderTexture::RenderTexture(const std::shared_ptr<Device>& device, const std::s
 {
 	m_device = device;
 	m_commandPool = commandResource;
-	VkDeviceSize imageSize = (VkDeviceSize)image->width() * image->height() * 4;
+	VkDeviceSize imageSize = (VkDeviceSize)image->Width() * image->Height() * 4;
 	Buffer textureStagingBuffer(device, imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
 	                            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 
 	void* data;
 	VkFormat colorFormat = Swapchain::COLOR_FORMAT;
 	vkMapMemory(device->vkDevice, textureStagingBuffer.vkDeviceMemory, 0, imageSize, 0, &data);
-	memcpy(data, image->pixels(), static_cast<size_t>(imageSize));
+	memcpy(data, image->Pixels(), static_cast<size_t>(imageSize));
 	vkUnmapMemory(device->vkDevice, textureStagingBuffer.vkDeviceMemory);
-	m_device->CreateImage(image->width(), image->height(), image->mipLevels(), VK_SAMPLE_COUNT_1_BIT,
+	m_device->CreateImage(image->Width(), image->Height(), image->MipLevels(), VK_SAMPLE_COUNT_1_BIT,
 	                      colorFormat,
 	                      VK_IMAGE_TILING_OPTIMAL,
 	                      VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
 	                      VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, vkImage, vkDeviceMemory);
-	TransitionImageLayout(colorFormat, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, image->mipLevels());
-	CopyFromBuffer(textureStagingBuffer.vkBuffer, static_cast<uint32_t>(image->width()), static_cast<uint32_t>(image->height()));
-	GenerateMipmaps(colorFormat, image->width(), image->height(), image->mipLevels());
+	TransitionImageLayout(colorFormat, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, image->MipLevels());
+	CopyFromBuffer(textureStagingBuffer.vkBuffer, static_cast<uint32_t>(image->Width()), static_cast<uint32_t>(image->Height()));
+	GenerateMipmaps(colorFormat, image->Width(), image->Height(), image->MipLevels());
 	// ReSharper disable once CppObjectMemberMightNotBeInitialized
-	vkImageView = device->CreateImageView(vkImage, colorFormat, VK_IMAGE_ASPECT_COLOR_BIT, image->mipLevels());
+	vkImageView = device->CreateImageView(vkImage, colorFormat, VK_IMAGE_ASPECT_COLOR_BIT, image->MipLevels());
 	CreateTextureSampler();
 }
 

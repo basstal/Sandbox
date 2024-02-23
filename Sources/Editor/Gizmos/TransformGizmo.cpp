@@ -187,8 +187,8 @@ void TransformGizmo::PrepareDrawData(const std::shared_ptr<Device>& device, cons
 	commandResource->EndSingleTimeCommands(commandBuffer);
 
 	std::filesystem::path binariesDir = FileSystemBase::getBinariesDir();
-	auto nonSolidVertex = FileSystemBase::readFile((binariesDir / "Shaders/FillModeNonSolidTransformGizmo_vert.spv").string());
-	auto nonSolidFrag = FileSystemBase::readFile((binariesDir / "Shaders/FillModeNonSolidTransformGizmo_frag.spv").string());
+	auto nonSolidVertex = FileSystemBase::readFile((binariesDir / "Shaders/Gizmo_vert.spv").string());
+	auto nonSolidFrag = FileSystemBase::readFile((binariesDir / "Shaders/Gizmo_frag.spv").string());
 	VkShaderModule vertShaderModule = pipeline->CreateShaderModule(nonSolidVertex);
 	VkShaderModule fragShaderModule = pipeline->CreateShaderModule(nonSolidFrag);
 
@@ -263,14 +263,7 @@ void TransformGizmo::Draw(const std::shared_ptr<Camera>& camera, const VkCommand
 	VkDeviceSize offsets[] = {0};
 	vkCmdBindVertexBuffers(currentCommandBuffer, 0, 1, vertexBuffers, offsets);
 	vkCmdBindDescriptorSets(currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, vkPipelineLayout, 0, 1, &descriptorResource->vkDescriptorSets[currentFrame], 0, nullptr);
-	vkCmdPushConstants(
-		currentCommandBuffer, // 当前的命令缓冲区
-		vkPipelineLayout, // 使用的管线布局
-		VK_SHADER_STAGE_VERTEX_BIT, // 着色器阶段
-		0, // 偏移量
-		sizeof(glm::mat4), // 数据大小
-		&scaleMatrix // 指向数据的指针
-	);
+	vkCmdPushConstants(currentCommandBuffer, vkPipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::mat4), &scaleMatrix);
 	vkCmdDraw(currentCommandBuffer, static_cast<uint32_t>(gizmoData.size()), 1, 0, 0);
 	auto ray = CursorPositionToWorldRay(window, camera->GetViewMatrix(), projection);
 	float factor;
@@ -337,15 +330,16 @@ void TransformGizmo::UpdateGizmoAndObjectPosition(GLFWwindow* window, const std:
 		glm::vec3 intersectionPoint = rayOrigin + rayDir * t;
 
 		// 计算移动量
-		// glm::vec3 movement = intersectionPoint - referenceGameObject->transform->position;
+		glm::vec3 movement = intersectionPoint - referenceGameObject->transform->position;
 		// 根据激活的Gizmo轴选择移动方向
 		glm::vec3 axis = gizmoActiveX ? glm::vec3(1.0f, 0.0f, 0.0f) : gizmoActiveY ? glm::vec3(0.0f, 1.0f, 0.0f) : glm::vec3(0.0f, 0.0f, 1.0f);
 
 		// 计算沿着Gizmo轴的移动量
-		float movementAmount = glm::dot(intersectionPoint, axis);
+		float movementAmount = glm::dot(movement, axis);
 		auto movementAlongAxis = movementAmount * axis;
 		// 更新Gizmo和关联对象的位置
-		referenceGameObject->transform->position = movementAlongAxis;
-		modelMatrix = glm::translate(glm::mat4(1.0f), movementAlongAxis);
+		referenceGameObject->transform->position += movementAlongAxis;
+
+		modelMatrix = glm::translate(modelMatrix, movementAlongAxis);
 	}
 }

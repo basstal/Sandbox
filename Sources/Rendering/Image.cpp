@@ -23,7 +23,7 @@ Image::~Image()
 	}
 }
 
-std::shared_ptr<Image> Image::loadImage(const char* path)
+std::shared_ptr<Image> Image::LoadImage(const char* path)
 {
 	std::shared_ptr<Image> image = std::make_shared<Image>();
 	stbi_uc* pixels = stbi_load(path, &image->m_width, &image->m_height, &image->m_channels, STBI_rgb_alpha);
