@@ -29,7 +29,9 @@ static void SwitchCursor(Application& application, bool onEditorCamera)
 		glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 		lastCallback = glfwSetCursorPosCallback(window, [](GLFWwindow* window, double xPos, double yPos)
 		{
-			std::shared_ptr<TDataBinding<std::shared_ptr<Camera>>> editorCameraBinding = std::dynamic_pointer_cast<TDataBinding<std::shared_ptr<Camera>>>(DataBinding::Get("Rendering/EditorCamera"));
+			std::shared_ptr<TDataBinding<std::shared_ptr<ApplicationEditor>>> applicationEditorDataBinding = std::dynamic_pointer_cast<TDataBinding<std::shared_ptr<ApplicationEditor>>>(
+				DataBinding::Get("ApplicationEditor"));
+			std::shared_ptr<ApplicationEditor> applicationEditor = applicationEditorDataBinding->GetData();
 			if (moveMouse)
 			{
 				lastX = (float)xPos;
@@ -41,7 +43,7 @@ static void SwitchCursor(Application& application, bool onEditorCamera)
 			float offsetY = lastY - (float)yPos;
 			lastX = (float)xPos;
 			lastY = (float)yPos;
-			editorCameraBinding->GetData()->ProcessMouseMovement(offsetX, offsetY);
+			applicationEditor->editorCamera->ProcessMouseMovement(offsetX, offsetY);
 		});
 	}
 	else
@@ -307,8 +309,7 @@ void ApplicationEditor::DrawFrame(Application& application, VkCommandBuffer curr
 	bool isRightButtonPressed = glfwGetMouseButton(application.surface->glfwWindow, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS;
 	if (isRightButtonPressed)
 	{
-		auto deltaTime = application.timer->GetDeltaTime();
-		editorCamera->UpdatePosition(deltaTime, application.surface->glfwWindow);
+		editorCamera->UpdatePosition(application.deltaTime, application.surface->glfwWindow);
 		application.settings->UpdateEditorCamera(editorCamera);
 	}
 	SwitchCursor(application, isRightButtonPressed);

@@ -12,7 +12,7 @@
 
 struct Texture
 {
-	unsigned int ID;
+	unsigned int id;
 	// std::string Type;
 	// aiString Path;
 };

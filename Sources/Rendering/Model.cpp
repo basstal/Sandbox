@@ -12,7 +12,7 @@ Model::~Model()
 {
 }
 
-std::shared_ptr<Model> Model::loadModel(const char* path)
+std::shared_ptr<Model> Model::LoadModel(const char* path)
 {
 	std::shared_ptr<Model> model = std::make_shared<Model>();
 	Assimp::Importer importer;
@@ -22,24 +22,24 @@ std::shared_ptr<Model> Model::loadModel(const char* path)
 		throw std::runtime_error("ERROR::ASSIMP::" + std::string(importer.GetErrorString()));
 	}
 	model->m_directory = std::string(path).substr(0, std::string(path).find_last_of('/'));
-	model->processNode(scene->mRootNode, scene);
+	model->ProcessNode(scene->mRootNode, scene);
 	return model;
 }
 
-void Model::processNode(aiNode* node, const aiScene* scene)
+void Model::ProcessNode(aiNode* node, const aiScene* scene)
 {
 	for (uint32_t i = 0; i < node->mNumMeshes; i++)
 	{
 		aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
-		processMesh(mesh, scene);
+		ProcessMesh(mesh, scene);
 	}
 	for (uint32_t i = 0; i < node->mNumChildren; i++)
 	{
-		processNode(node->mChildren[i], scene);
+		ProcessNode(node->mChildren[i], scene);
 	}
 }
 
-void Model::processMesh(aiMesh* mesh, const aiScene* scene)
+void Model::ProcessMesh(aiMesh* mesh, const aiScene* scene)
 {
 	for (uint32_t i = 0; i < mesh->mNumVertices; i++)
 	{

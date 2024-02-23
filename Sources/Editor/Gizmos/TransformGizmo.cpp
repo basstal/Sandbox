@@ -1,17 +1,49 @@
 #include "TransformGizmo.hpp"
 
+#include <iostream>
 #include <vector>
 #include <glm/detail/type_quat.hpp>
 #include <glm/ext/quaternion_trigonometric.hpp>
 
 #include "SimpleVertex.hpp"
+#include "Editor/ApplicationEditor.hpp"
+#include "Infrastructures/CollisionDetect.hpp"
+#include "Infrastructures/DataBinding.hpp"
 #include "Infrastructures/FileSystemBase.hpp"
+#include "Infrastructures/Math/Ray.hpp"
 #include "Rendering/Base/Device.hpp"
 #include "Rendering/Components/CommandResource.hpp"
 #include "Rendering/Components/Pipeline.hpp"
 
 const float M_PI = 3.1415926f;
-const int segments = 32;
+const int SEGMENTS = 32;
+static bool isGizmoActived = false;
+static GLFWcursorposfun lastCallback = nullptr;
+const float BASE_SIZE = .25f; // 基础尺寸
+const float DISTANCE_SIZE_FACTOR = 0.25f;
+
+void TransformGizmo::ApplyGizmoMovement(GLFWwindow* window, bool active)
+{
+	if (isGizmoActived == active)
+	{
+		return;
+	}
+	if (!isGizmoActived)
+	{
+		lastCallback = glfwSetCursorPosCallback(window, [](GLFWwindow* window, double xPos, double yPos)
+		{
+			std::shared_ptr<TDataBinding<std::shared_ptr<ApplicationEditor>>> applicationEditorDataBinding = std::dynamic_pointer_cast<TDataBinding<std::shared_ptr<ApplicationEditor>>>(
+				DataBinding::Get("ApplicationEditor"));
+			std::shared_ptr<ApplicationEditor> innerApplicationEditor = applicationEditorDataBinding->GetData();
+			innerApplicationEditor->transformGizmo->UpdateGizmoAndObjectPosition(window, innerApplicationEditor->editorCamera);
+		});
+	}
+	else
+	{
+		glfwSetCursorPosCallback(window, lastCallback);
+	}
+	isGizmoActived = active;
+}
 
 TransformGizmo::TransformGizmo(const std::shared_ptr<GameObject> target, const std::shared_ptr<Device>& device, const std::shared_ptr<CommandResource>& commandResource,
                                const std::shared_ptr<Pipeline>& pipeline, const std::shared_ptr<DescriptorResource> descriptorResource)
@@ -47,8 +79,8 @@ void TransformGizmo::Cleanup()
 std::vector<SimpleVertex> TransformGizmo::GenerateArrowData(glm::vec3 color)
 {
 	std::vector<SimpleVertex> vertices;
-	float deltaAngle = 2.0f * M_PI / segments;
-	for (int i = 0; i < segments; ++i)
+	float deltaAngle = 2.0f * M_PI / SEGMENTS;
+	for (int i = 0; i < SEGMENTS; ++i)
 	{
 		float angle = static_cast<float>(i) * deltaAngle;
 		float nextAngle = static_cast<float>(i + 1) * deltaAngle;
@@ -74,7 +106,7 @@ std::vector<SimpleVertex> TransformGizmo::GenerateArrowData(glm::vec3 color)
 	}
 
 	glm::vec3 coneTip(0, 0, heightCylinder + heightCone); // 锥体顶点位于圆柱体顶部之上
-	for (int i = 0; i < segments; ++i)
+	for (int i = 0; i < SEGMENTS; ++i)
 	{
 		float angle = static_cast<float>(i) * deltaAngle;
 		float nextAngle = static_cast<float>(i + 1) * deltaAngle;
@@ -107,21 +139,22 @@ glm::vec3 RotateVectorByQuaternion(const glm::vec3& v, const glm::quat& q)
 void TransformGizmo::PrepareDrawData(const std::shared_ptr<Device>& device, const std::shared_ptr<CommandResource>& commandResource, const std::shared_ptr<Pipeline>& pipeline,
                                      const std::shared_ptr<DescriptorResource>& descriptorResource)
 {
-	auto arrowX = GenerateArrowData(glm::vec3(1.0f, 0.0f, 0.0f));
+	modelMatrix = glm::mat4(1.0f);
+	arrowX = GenerateArrowData(glm::vec3(1.0f, 0.0f, 0.0f));
 	// 对 arrowX 中每个点应用绕 y 轴 90 度旋转
 	glm::quat rotation = glm::angleAxis(glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 	for (auto& vertex : arrowX)
 	{
 		vertex.position = RotateVectorByQuaternion(vertex.position, rotation);
 	}
-	auto arrowY = GenerateArrowData(glm::vec3(0.0f, 1.0f, 0.0f));
+	arrowY = GenerateArrowData(glm::vec3(0.0f, 1.0f, 0.0f));
 	// 对 arrowY 中每个点应用绕 x 轴 -90 度旋转
 	rotation = glm::angleAxis(glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 	for (auto& vertex : arrowY)
 	{
 		vertex.position = RotateVectorByQuaternion(vertex.position, rotation);
 	}
-	auto arrowZ = GenerateArrowData(glm::vec3(0.0f, 0.0f, 1.0f));
+	arrowZ = GenerateArrowData(glm::vec3(0.0f, 0.0f, 1.0f));
 	gizmoData.insert(gizmoData.end(), arrowX.begin(), arrowX.end());
 	gizmoData.insert(gizmoData.end(), arrowY.begin(), arrowY.end());
 	gizmoData.insert(gizmoData.end(), arrowZ.begin(), arrowZ.end());
@@ -162,8 +195,8 @@ void TransformGizmo::PrepareDrawData(const std::shared_ptr<Device>& device, cons
 	// 创建管线
 	VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
 	vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-	auto bindingDescription = getBindingDescription();
-	auto attributeDescriptions = getAttributeDescriptions();
+	auto bindingDescription = GetBindingDescription();
+	auto attributeDescriptions = GetAttributeDescriptions();
 
 	vertexInputInfo.vertexBindingDescriptionCount = 1;
 	vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributeDescriptions.size());
@@ -209,9 +242,20 @@ void TransformGizmo::CreatePushConstantPipelineLayout(const std::shared_ptr<Desc
 		throw std::runtime_error("failed to create pipeline layout!");
 	}
 }
-void TransformGizmo::Draw(const std::shared_ptr<Device>& device, const VkCommandBuffer& currentCommandBuffer, const std::shared_ptr<Pipeline>& pipeline,
-                          const std::shared_ptr<DescriptorResource>& descriptorResource, uint32_t currentFrame)
+void TransformGizmo::Draw(const std::shared_ptr<Camera>& camera, const VkCommandBuffer& currentCommandBuffer, const std::shared_ptr<Pipeline>& pipeline,
+                          const std::shared_ptr<DescriptorResource>& descriptorResource, uint32_t currentFrame, GLFWwindow* window, const glm::mat4& inProjection)
 {
+	projection = inProjection;
+	float distance = glm::length(referenceGameObject->transform->position - camera->position);
+	float currentScaleFactor = distance * DISTANCE_SIZE_FACTOR; // 根据距离计算缩放因子
+	auto scaleMatrix = glm::scale(modelMatrix, glm::vec3(currentScaleFactor * BASE_SIZE));
+	if (abs(scaleFactor - currentScaleFactor) > 0.01f)
+	{
+		scaleFactor = currentScaleFactor;
+		gizmoAABB[0] = ConvertToAABB(arrowX, scaleMatrix);
+		gizmoAABB[1] = ConvertToAABB(arrowY, scaleMatrix);
+		gizmoAABB[2] = ConvertToAABB(arrowZ, scaleMatrix);
+	}
 	vkCmdBindPipeline(currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, vkPipeline);
 
 
@@ -225,16 +269,83 @@ void TransformGizmo::Draw(const std::shared_ptr<Device>& device, const VkCommand
 		VK_SHADER_STAGE_VERTEX_BIT, // 着色器阶段
 		0, // 偏移量
 		sizeof(glm::mat4), // 数据大小
-		&modelMatrix // 指向数据的指针
+		&scaleMatrix // 指向数据的指针
 	);
 	vkCmdDraw(currentCommandBuffer, static_cast<uint32_t>(gizmoData.size()), 1, 0, 0);
+	auto ray = CursorPositionToWorldRay(window, camera->GetViewMatrix(), projection);
+	float factor;
+	glm::vec3 intersectPoint;
+	auto leftMousePressed = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS;
+	if (!leftMousePressed)
+	{
+		gizmoActiveX = gizmoActiveY = gizmoActiveZ = false;
+	}
+	else if (!gizmoActiveX && !gizmoActiveY && !gizmoActiveZ)
+	{
+		auto isActiveX = CollisionDetect::IntersectRayAABB(ray, gizmoAABB[0], factor, intersectPoint);
+		auto isActiveY = CollisionDetect::IntersectRayAABB(ray, gizmoAABB[1], factor, intersectPoint);
+		auto isActiveZ = CollisionDetect::IntersectRayAABB(ray, gizmoAABB[2], factor, intersectPoint);
+		gizmoActiveX = isActiveX;
+		gizmoActiveY = !gizmoActiveX && isActiveY;
+		gizmoActiveZ = !gizmoActiveX && !gizmoActiveY && isActiveZ;
+	}
+	ApplyGizmoMovement(window, gizmoActiveX || gizmoActiveY || gizmoActiveZ);
 }
 
 
-void TransformGizmo::AdjustGizmoSize(const std::shared_ptr<Camera>& camera)
+
+Ray TransformGizmo::CursorPositionToWorldRay(GLFWwindow* window, const glm::mat4& viewMatrix, const glm::mat4& projectionMatrix)
 {
+	double mouseX, mouseY;
+	glfwGetCursorPos(window, &mouseX, &mouseY);
+	int windowWidth, windowHeight;
+	glfwGetWindowSize(window, &windowWidth, &windowHeight);
+	float x = (2.0f * static_cast<float>(mouseX)) / static_cast<float>(windowWidth) - 1.0f;
+	float y = 1.0f - (2.0f * static_cast<float>(mouseY)) / static_cast<float>(windowHeight);
+	float z = 1.0f; // 对于射线来说，Z分量通常设置为1
+	glm::vec3 rayNds = glm::vec3(x, y, z);
+
+	glm::vec4 rayClip = glm::vec4(rayNds.x, rayNds.y, -1.0f, 1.0f);
+	glm::vec4 rayEye = glm::inverse(projectionMatrix) * rayClip;
+	rayEye = glm::vec4(rayEye.x, rayEye.y, -1.0f, 0.0f);
+	glm::vec4 rayWorld = glm::inverse(viewMatrix) * rayEye;
+	auto direction = glm::normalize(glm::vec3(rayWorld));
+	auto origin = glm::vec3(glm::inverse(viewMatrix) * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f));
+	return Ray(origin, direction);
+}
+
+void TransformGizmo::UpdateGizmoAndObjectPosition(GLFWwindow* window, const std::shared_ptr<Camera>& camera)
+{
+	auto ray = CursorPositionToWorldRay(window, camera->GetViewMatrix(), projection); // 获取射线起点和方向
+	glm::vec3 rayOrigin = ray.origin;
+	glm::vec3 rayDir = ray.direction;
+
+	// 假设Gizmo距离摄像机的深度为distance
 	float distance = glm::length(referenceGameObject->transform->position - camera->position);
-	float baseSize = .25f; // 基础尺寸
-	float scaleFactor = distance * 0.25f; // 根据距离计算缩放因子
-	modelMatrix = glm::scale(glm::mat4(1.0f), glm::vec3(scaleFactor * baseSize));
+
+	// 使用射线与深度确定的平面交点来更新Gizmo位置
+	// 假设平面方程为Ax + By + Cz + D = 0，这里选择与摄像机视线垂直的平面
+	glm::vec3 planeNormal = glm::normalize(camera->front); // 摄像机前向向量作为平面法线
+	float D = -glm::dot(planeNormal, camera->position + planeNormal * distance); // 计算平面方程的D值
+
+	// 计算射线与平面的交点
+	float denom = glm::dot(planeNormal, rayDir);
+	if (abs(denom) > FLT_EPSILON)
+	{
+		// 确保不是平行（避免除以零）
+		float t = -(glm::dot(planeNormal, rayOrigin) + D) / denom;
+		glm::vec3 intersectionPoint = rayOrigin + rayDir * t;
+
+		// 计算移动量
+		// glm::vec3 movement = intersectionPoint - referenceGameObject->transform->position;
+		// 根据激活的Gizmo轴选择移动方向
+		glm::vec3 axis = gizmoActiveX ? glm::vec3(1.0f, 0.0f, 0.0f) : gizmoActiveY ? glm::vec3(0.0f, 1.0f, 0.0f) : glm::vec3(0.0f, 0.0f, 1.0f);
+
+		// 计算沿着Gizmo轴的移动量
+		float movementAmount = glm::dot(intersectionPoint, axis);
+		auto movementAlongAxis = movementAmount * axis;
+		// 更新Gizmo和关联对象的位置
+		referenceGameObject->transform->position = movementAlongAxis;
+		modelMatrix = glm::translate(glm::mat4(1.0f), movementAlongAxis);
+	}
 }

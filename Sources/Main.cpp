@@ -16,12 +16,13 @@ int main()
 	// FileSystemBase::addDllSearchPath(binariesDir + "/../ThirdPartyLibs");
 	try
 	{
-		auto setting = std::make_shared<Settings>();
+		std::shared_ptr<Settings> setting = std::make_shared<Settings>();
 		DataBinding::Create("Rendering/Settings", setting);
 
 		Application::Instance = std::make_unique<Application>(setting);
 		Application::Instance->Initialize();
 		std::shared_ptr<ApplicationEditor> applicationEditor = std::make_shared<ApplicationEditor>(Application::Instance);
+		DataBinding::Create("ApplicationEditor", applicationEditor);
 		// applicationEditor->gizmoEditor = std::make_shared<GizmoEditor>(applicationEditor);
 		SettingsEditor::Create(applicationEditor);
 		ValueEditor::Create(applicationEditor);

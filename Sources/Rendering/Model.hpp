@@ -7,22 +7,19 @@
 #include <string>
 #include <memory>
 
-#include "GameCore/Transform.hpp"
-
-
 class Model
 {
 public:
 	Model();
 	~Model();
-	const std::vector<Vertex> vertices() const { return m_vertices; }
-	const std::vector<uint32_t> indices() const { return m_indices; }
+	const std::vector<Vertex> Vertices() const { return m_vertices; }
+	const std::vector<uint32_t> Indices() const { return m_indices; }
 
-	static std::shared_ptr<Model> loadModel(const char* path);
+	static std::shared_ptr<Model> LoadModel(const char* path);
 
 private:
-	void processNode(aiNode* node, const aiScene* scene);
-	void processMesh(aiMesh* mesh, const aiScene* scene);
+	void ProcessNode(aiNode* node, const aiScene* scene);
+	void ProcessMesh(aiMesh* mesh, const aiScene* scene);
 	std::vector<Vertex> m_vertices;
 	std::vector<uint32_t> m_indices;
 	//std::vector<Texture> textures;

@@ -158,7 +158,7 @@ void Application::LoadAssets()
 	fragmentShader = FileSystemBase::readFile((binariesDir / "Shaders/Test_frag.spv").string());
 	std::filesystem::path assetsDir = FileSystemBase::getAssetsDir();
 	modelGameObject = std::make_shared<GameObject>();
-	modelGameObject->model = Model::loadModel((assetsDir / "Models/viking_room.obj").string().c_str());
+	modelGameObject->model = Model::LoadModel((assetsDir / "Models/viking_room.obj").string().c_str());
 	image = Image::loadImage((assetsDir / "Textures/viking_room.png").string().c_str());
 }
 
@@ -184,6 +184,7 @@ uint32_t Application::FindMemoryType(VkPhysicalDevice physicalDevice, uint32_t t
 
 void Application::DrawFrame(const std::shared_ptr<ApplicationEditor>& applicationEditor)
 {
+	deltaTime = timer->GetDeltaTime();
 	vkWaitForFences(device->vkDevice, 1, &syncObjects->inFlightFences[m_currentFrame], VK_TRUE, UINT64_MAX);
 	uint32_t imageIndex;
 	VkResult result = vkAcquireNextImageKHR(device->vkDevice, swapchain->vkSwapchain, UINT64_MAX, syncObjects->imageAvailableSemaphores[m_currentFrame], VK_NULL_HANDLE, &imageIndex);
@@ -314,14 +315,10 @@ void Application::RecordCommandBuffer(VkCommandBuffer currentCommandBuffer, uint
 	VkDeviceSize offsets[] = {0};
 	vkCmdBindVertexBuffers(currentCommandBuffer, 0, 1, vertexBuffers, offsets);
 	vkCmdBindIndexBuffer(currentCommandBuffer, indexBuffer->buffer->vkBuffer, 0, VK_INDEX_TYPE_UINT32);
-	// auto modelMatrix = modelGameObject->transform->GetModelMatrix();
-	// debugUBO = uniformBuffers->UpdateUniformBuffer(m_currentFrame, editorCamera, modelMatrix, projection);
 	vkCmdBindDescriptorSets(currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->vkPipelineLayout, 0, 1, &descriptorResource->vkDescriptorSets[m_currentFrame], 0, nullptr);
-	vkCmdDrawIndexed(currentCommandBuffer, static_cast<uint32_t>(modelGameObject->model->indices().size()), 1, 0, 0, 0);
+	vkCmdDrawIndexed(currentCommandBuffer, static_cast<uint32_t>(modelGameObject->model->Indices().size()), 1, 0, 0, 0);
 
-	applicationEditor->transformGizmo->AdjustGizmoSize(editorCamera);
-	// uniformBuffers->UpdateUniformBuffer(m_currentFrame, editorCamera, applicationEditor->transformGizmo->modelMatrix, projection);
-	applicationEditor->transformGizmo->Draw(device, currentCommandBuffer, pipeline, descriptorResource, m_currentFrame);
+	applicationEditor->transformGizmo->Draw(editorCamera, currentCommandBuffer, pipeline, descriptorResource, m_currentFrame, surface->glfwWindow, projection);
 
 	vkCmdEndRenderPass(currentCommandBuffer);
 

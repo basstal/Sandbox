@@ -11,6 +11,6 @@ struct Vertex
 	glm::vec2 texCoord;
 	glm::vec3 normal;
 
-	static VkVertexInputBindingDescription getBindingDescription();
-	static std::array<VkVertexInputAttributeDescription, 3> getAttributeDescriptions();
+	static VkVertexInputBindingDescription GetBindingDescription();
+	static std::array<VkVertexInputAttributeDescription, 3> GetAttributeDescriptions();
 };

@@ -145,7 +145,7 @@ void GizmoEditor::DrawGrid(glm::mat4 viewProjection, glm::mat4 matrix, const flo
 				thickness = (fabsf(f) < FLT_EPSILON) ? 2.3f : thickness;
 
 
-				ImGuizmo::AddLineToContextDrawList(ptA.x, ptA.y, ptA.z, ptB.x, ptB.y, ptB.z, glm::value_ptr(res), col, thickness);
+				// ImGuizmo::AddLineToContextDrawList(ptA.x, ptA.y, ptA.z, ptB.x, ptB.y, ptB.z, glm::value_ptr(res), col, thickness);
 			}
 		}
 	}

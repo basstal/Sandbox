@@ -1,7 +1,12 @@
 #include "SimpleVertex.hpp"
 
+#include <vector>
+#include <glm/mat4x4.hpp>
+#include <glm/common.hpp>
+
+#include "Infrastructures/Math/AABB.hpp"
 #include "Rendering/Vertex.hpp"
-VkVertexInputBindingDescription getBindingDescription()
+VkVertexInputBindingDescription GetBindingDescription()
 {
 	VkVertexInputBindingDescription bindingDescription;
 	bindingDescription.binding = 0;
@@ -10,7 +15,7 @@ VkVertexInputBindingDescription getBindingDescription()
 	return bindingDescription;
 }
 
-std::array<VkVertexInputAttributeDescription, 2> getAttributeDescriptions()
+std::array<VkVertexInputAttributeDescription, 2> GetAttributeDescriptions()
 {
 	std::array<VkVertexInputAttributeDescription, 2> attributeDescriptions{};
 
@@ -26,3 +31,25 @@ std::array<VkVertexInputAttributeDescription, 2> getAttributeDescriptions()
 
 	return attributeDescriptions;
 }
+
+
+AABB ConvertToAABB(const std::vector<SimpleVertex>& vertices, const glm::mat4& modelMatrix)
+{
+	AABB aabb;
+	aabb.min = glm::vec3(FLT_MAX);
+	aabb.max = glm::vec3(-FLT_MAX);
+
+	for (const auto& vertex : vertices)
+	{
+		auto position = modelMatrix * glm::vec4(vertex.position, 1.0f);
+		aabb.min.x = std::min(aabb.min.x, position.x);
+		aabb.min.y = std::min(aabb.min.y, position.y);
+		aabb.min.z = std::min(aabb.min.z, position.z);
+		aabb.max.x = std::max(aabb.max.x, position.x);
+		aabb.max.y = std::max(aabb.max.y, position.y);
+		aabb.max.z = std::max(aabb.max.z, position.z);
+	}
+
+	return aabb;
+}
+

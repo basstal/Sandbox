@@ -28,6 +28,8 @@ void ValueEditor::DrawFrame()
 	if (ImGui::Button("Reset"))
 	{
 		m_applicationEditor->editorCamera->Reset();
+		m_applicationEditor->transformGizmo->referenceGameObject->transform->position = glm::vec3(0.0f);
+		m_applicationEditor->transformGizmo->modelMatrix = glm::mat4(1.0f);
 	}
 	ImGui::End();
 }

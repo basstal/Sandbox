@@ -69,6 +69,7 @@ public:
 	glm::vec4 clearColor = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
 	UniformBufferObject debugUBO;
 	glm::mat4 projection;
+	float deltaTime;
 	static std::unique_ptr<Application> Instance;
 	Application(const std::shared_ptr<Settings>& settings);
 	~Application();
