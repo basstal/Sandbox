@@ -22,6 +22,7 @@ public:
 	~RenderPass();
 	void CreateEditorRenderPass();
 	void CreateGameRenderPass();
+	VkRenderPass CreateCubeMapRenderPass();
 	VkFormat FindDepthFormat();
 	void Cleanup();
 };

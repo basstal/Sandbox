@@ -46,12 +46,12 @@ void TransformGizmo::ApplyGizmoMovement(GLFWwindow* window, bool active)
 }
 
 TransformGizmo::TransformGizmo(const std::shared_ptr<GameObject> target, const std::shared_ptr<Device>& device, const std::shared_ptr<CommandResource>& commandResource,
-                               const std::shared_ptr<Pipeline>& pipeline, const std::shared_ptr<DescriptorResource> descriptorResource)
+                               const std::shared_ptr<Pipeline>& pipeline, const std::shared_ptr<DescriptorResource> descriptorResource, const std::shared_ptr<RenderPass>& renderPass)
 {
 	m_device = device;
 	referenceGameObject = target;
 
-	PrepareDrawData(device, commandResource, pipeline, descriptorResource);
+	PrepareDrawData(device, commandResource, pipeline, descriptorResource, renderPass);
 }
 
 TransformGizmo::~TransformGizmo()
@@ -137,7 +137,7 @@ glm::vec3 RotateVectorByQuaternion(const glm::vec3& v, const glm::quat& q)
 }
 
 void TransformGizmo::PrepareDrawData(const std::shared_ptr<Device>& device, const std::shared_ptr<CommandResource>& commandResource, const std::shared_ptr<Pipeline>& pipeline,
-                                     const std::shared_ptr<DescriptorResource>& descriptorResource)
+                                     const std::shared_ptr<DescriptorResource>& descriptorResource, const std::shared_ptr<RenderPass>& renderPass)
 {
 	modelMatrix = glm::mat4(1.0f);
 	arrowX = GenerateArrowData(glm::vec3(1.0f, 0.0f, 0.0f));
@@ -189,8 +189,8 @@ void TransformGizmo::PrepareDrawData(const std::shared_ptr<Device>& device, cons
 	std::filesystem::path binariesDir = FileSystemBase::getBinariesDir();
 	auto nonSolidVertex = FileSystemBase::readFile((binariesDir / "Shaders/Gizmo_vert.spv").string());
 	auto nonSolidFrag = FileSystemBase::readFile((binariesDir / "Shaders/Gizmo_frag.spv").string());
-	VkShaderModule vertShaderModule = pipeline->CreateShaderModule(nonSolidVertex);
-	VkShaderModule fragShaderModule = pipeline->CreateShaderModule(nonSolidFrag);
+	VkShaderModule vertShaderModule = pipeline->CreateShaderModule(m_device, nonSolidVertex);
+	VkShaderModule fragShaderModule = pipeline->CreateShaderModule(m_device, nonSolidFrag);
 
 	// 创建管线
 	VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
@@ -219,8 +219,8 @@ void TransformGizmo::PrepareDrawData(const std::shared_ptr<Device>& device, cons
 	depthStencil.stencilTestEnable = VK_FALSE;
 	depthStencil.front = {}; // Optional
 	depthStencil.back = {}; // Optional
-	vkPipeline = pipeline->CreatePipeline(vertShaderModule, fragShaderModule, false, vertexInputInfo, inputAssembly, depthStencil);
 	CreatePushConstantPipelineLayout(descriptorResource);
+	vkPipeline = pipeline->CreatePipeline(vertShaderModule, fragShaderModule, false, vertexInputInfo, inputAssembly, depthStencil, vkPipelineLayout, renderPass->vkRenderPass, false);
 }
 
 void TransformGizmo::CreatePushConstantPipelineLayout(const std::shared_ptr<DescriptorResource>& descriptorResource)

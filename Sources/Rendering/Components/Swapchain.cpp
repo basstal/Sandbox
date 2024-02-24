@@ -105,12 +105,12 @@ void Swapchain::Cleanup()
 void Swapchain::CreateFramebuffers(const std::shared_ptr<RenderPass>& renderPass)
 {
 	m_device->CreateImage(vkExtent2D.width, vkExtent2D.height, 1, m_device->msaaSamples, vkFormat, VK_IMAGE_TILING_OPTIMAL,
-	                      VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, m_vkColorImage, m_vkColorImageMemory);
+	                      VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, m_vkColorImage, m_vkColorImageMemory, false);
 	m_vkColorImageView = m_device->CreateImageView(m_vkColorImage, vkFormat, VK_IMAGE_ASPECT_COLOR_BIT, 1);
 
 	VkFormat depthFormat = renderPass->FindDepthFormat();
 	m_device->CreateImage(vkExtent2D.width, vkExtent2D.height, 1, m_device->msaaSamples, depthFormat,
-	                      VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, m_vkDepthImage, m_vkDepthImageMemory);
+	                      VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, m_vkDepthImage, m_vkDepthImageMemory, false);
 	m_vkDepthImageView = m_device->CreateImageView(m_vkDepthImage, depthFormat, VK_IMAGE_ASPECT_DEPTH_BIT, 1);
 	vkFramebuffers.resize(vkImageViews.size());
 	for (size_t i = 0; i < vkImageViews.size(); i++)

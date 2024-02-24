@@ -12,6 +12,8 @@ layout(binding = 2) uniform Light {
 }
 light;
 
+layout(binding = 3) uniform samplerCube irradianceMap;
+
 layout(push_constant) uniform PushConstants {
     vec3 camPos;
 }
@@ -20,10 +22,14 @@ pushConstants;
 
 const float PI = 3.14159265359;
 
-vec3 fresnelSchlick(float cosTheta, vec3 F0) {
+vec3 FresnelSchlick(float cosTheta, vec3 F0) {
     return F0 + (1.0 - F0) * pow(max(1.0 - cosTheta, 0.0), 5.0);
 }
 
+vec3 FresnelSchlickRoughness(float cosTheta, vec3 F0, float roughness)
+{
+    return F0 + (max(vec3(1.0 - roughness), F0) - F0) * pow(max(1.0 - cosTheta, 0.0), 5.0);
+}
 float DistributionGGX(vec3 N, vec3 H, float roughness) {
     float a      = roughness * roughness;
     float a2     = a * a;
@@ -66,39 +72,47 @@ void main() {
     vec3 V = normalize(pushConstants.camPos - WorldPos);
 
     vec3 Lo = vec3(0.0);
-    //    for (int i = 0; i < 4; ++i) {
-    // calculate per-light radiance
-    vec3  L           = normalize(light.position - WorldPos);
-    vec3  H           = normalize(V + L);
-    float dist        = length(light.position - WorldPos);
-    float attenuation = 1.0 / (dist * dist);
-    vec3  radiance    = light.color * attenuation;
-
     vec3 F0 = vec3(0.04);
     F0      = mix(F0, albedo, metallic);
 
-    // cook-torrance brdf
-    float NDF = DistributionGGX(N, H, roughness);
-    float G   = GeometrySmith(N, V, L, roughness);
-    vec3  F   = fresnelSchlick(max(dot(H, V), 0.0), F0);
+    //        for (int i = 0; i < 4; ++i)
+    {
+        // calculate per-light radiance
+        vec3  L           = normalize(light.position - WorldPos);
+        vec3  H           = normalize(V + L);
+        float dist        = length(light.position - WorldPos);
+        float attenuation = 1.0 / (dist * dist);
+        vec3  radiance    = light.color * attenuation;
 
-    vec3  numerator   = NDF * G * F;
-    float denominator = 4.0 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0);
-    vec3  specular    = numerator / max(denominator, 0.001);
 
-    vec3 kS = F;
-    vec3 kD = vec3(1.0) - kS;
+        // cook-torrance brdf
+        float NDF = DistributionGGX(N, H, roughness);
+        float G   = GeometrySmith(N, V, L, roughness);
+        vec3  F   = FresnelSchlick(max(dot(H, V), 0.0), F0);
 
+        vec3  numerator   = NDF * G * F;
+        float denominator = 4.0 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0);
+        vec3  specular    = numerator / max(denominator, 0.001);
+
+        vec3 kS = F;
+        vec3 kD = vec3(1.0) - kS;
+
+        kD *= 1.0 - metallic;
+
+        // add to outgoing radiance Lo
+        float NdotL = max(dot(N, L), 0.0);
+        Lo += (kD * albedo / PI + specular) * radiance * NdotL;
+    }
+
+    // ambient lighting (we now use IBL as the ambient term)
+    vec3 kS = FresnelSchlickRoughness(max(dot(N, V), 0.0), F0, roughness);
+    vec3 kD = 1.0 - kS;
     kD *= 1.0 - metallic;
+    vec3 irradiance = texture(irradianceMap, N).rgb;
+    vec3 diffuse = irradiance * albedo;
+    vec3 ambient = (kD * diffuse) * ao;
 
-    // add to outgoing radiance Lo
-    float NdotL = max(dot(N, L), 0.0);
-    Lo += (kD * albedo / PI + specular) * radiance * NdotL;
-    //    }
-
-    vec3 ambient = vec3(0.03) * albedo * ao;
-    vec3 color   = ambient + Lo;
-
+    vec3 color = ambient + Lo;
     color = color / (color + vec3(1.0));
     color = pow(color, vec3(1.0 / 2.2));
 

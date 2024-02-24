@@ -112,7 +112,7 @@ ApplicationEditor::ApplicationEditor(const std::unique_ptr<Application>& applica
 	editorCamera = application->editorCamera;
 	settings = application->settings;
 	grid = std::make_shared<Grid>(m_device, application->commandResource, application->pipeline);
-	transformGizmo = std::make_shared<TransformGizmo>(application->modelGameObject, m_device, application->commandResource, application->pipeline, application->descriptorResource);
+	transformGizmo = std::make_shared<TransformGizmo>(application->modelGameObject, m_device, application->commandResource, application->pipeline, application->descriptorResource, application->renderPass);
 }
 
 ApplicationEditor::~ApplicationEditor()

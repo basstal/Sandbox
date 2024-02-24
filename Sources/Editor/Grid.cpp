@@ -121,8 +121,8 @@ void Grid::PrepareDrawData(const std::shared_ptr<Device>& device, const std::sha
 	std::filesystem::path binariesDir = FileSystemBase::getBinariesDir();
 	auto nonSolidVertex = FileSystemBase::readFile((binariesDir / "Shaders/FillModeNonSolidGrid_vert.spv").string());
 	auto nonSolidFrag = FileSystemBase::readFile((binariesDir / "Shaders/FillModeNonSolidGrid_frag.spv").string());
-	VkShaderModule vertShaderModule = pipeline->CreateShaderModule(nonSolidVertex);
-	VkShaderModule fragShaderModule = pipeline->CreateShaderModule(nonSolidFrag);
+	VkShaderModule vertShaderModule = pipeline->CreateShaderModule(m_device, nonSolidVertex);
+	VkShaderModule fragShaderModule = pipeline->CreateShaderModule(m_device, nonSolidFrag);
 
 	// 创建管线
 	VkPipelineVertexInputStateCreateInfo vertexInputInfo{};

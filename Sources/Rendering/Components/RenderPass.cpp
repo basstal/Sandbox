@@ -65,6 +65,52 @@ void RenderPass::CreateEditorRenderPass()
 	}
 }
 
+VkRenderPass RenderPass::CreateCubeMapRenderPass()
+{
+	VkAttachmentDescription colorAttachment = {};
+	colorAttachment.format = VK_FORMAT_R16G16B16A16_SFLOAT; // 例如，对于高动态范围立方图
+	colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT; // 不使用多重采样
+	colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR; // 开始渲染时清除附件
+	colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE; // 渲染结束时保存附件数据
+	colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE; // 模板缓冲区不重要
+	colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE; // 模板缓冲区不重要
+	colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED; // 开始时不关心图像的布局
+	colorAttachment.finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL; // 渲染结束时将图像转换为颜色附件布局
+
+	VkAttachmentReference colorAttachmentRef;
+	colorAttachmentRef.attachment = 0; // 附件描述符数组中的索引
+	colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL; // 在子通道期间使用的布局
+
+	VkSubpassDescription subpass = {};
+	subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+	subpass.colorAttachmentCount = 1;
+	subpass.pColorAttachments = &colorAttachmentRef;
+
+	VkRenderPassCreateInfo renderPassInfo = {};
+	renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+	renderPassInfo.attachmentCount = 1;
+	renderPassInfo.pAttachments = &colorAttachment;
+	renderPassInfo.subpassCount = 1;
+	renderPassInfo.pSubpasses = &subpass;
+
+	VkSubpassDependency dependency{};
+	dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
+	dependency.dstSubpass = 0;
+	dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+	dependency.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+	dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+	dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+
+	renderPassInfo.dependencyCount = 1;
+	renderPassInfo.pDependencies = &dependency;
+	VkRenderPass renderPass;
+	if (vkCreateRenderPass(m_device->vkDevice, &renderPassInfo, nullptr, &renderPass) != VK_SUCCESS)
+	{
+		throw std::runtime_error("failed to create render pass!");
+	}
+	return renderPass;
+}
+
 void RenderPass::CreateGameRenderPass()
 {
 	VkAttachmentDescription colorAttachment{};

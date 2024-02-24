@@ -47,9 +47,9 @@ public:
 	const std::vector<const char*> GetDeviceExtensions() const;
 	QueueFamilyIndices FindQueueFamilies();
 	SwapChainSupportDetails QuerySwapChainSupport();
-	VkImageView CreateImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags, uint32_t mipLevels);
+	VkImageView CreateImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags, uint32_t mipLevels, bool isCubeMap = false);
 	void CreateImage(uint32_t width, uint32_t height, uint32_t mipLevels, VkSampleCountFlagBits numSamples, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage,
 	                 VkMemoryPropertyFlags properties,
-	                 VkImage& vkImage, VkDeviceMemory& vkDeviceMemory);
+	                 VkImage& vkImage, VkDeviceMemory& vkDeviceMemory, bool isCubeMap);
 	void Cleanup();
 };

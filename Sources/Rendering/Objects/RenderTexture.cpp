@@ -10,30 +10,61 @@
 #include "Rendering/Components/Buffer.hpp"
 
 
-RenderTexture::RenderTexture(const std::shared_ptr<Device>& device, const std::shared_ptr<Image>& image, const std::shared_ptr<CommandResource>& commandResource)
+RenderTexture::RenderTexture(const std::shared_ptr<Device>& device, const std::shared_ptr<CommandResource>& commandResource, bool isCubeMap, bool isHdrImage, uint32_t width, uint32_t height,
+                             uint32_t mipLevels)
 {
 	m_device = device;
 	m_commandPool = commandResource;
-	VkDeviceSize imageSize = (VkDeviceSize)image->Width() * image->Height() * 4;
-	Buffer textureStagingBuffer(device, imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-	                            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-
-	void* data;
-	VkFormat colorFormat = Swapchain::COLOR_FORMAT;
-	vkMapMemory(device->vkDevice, textureStagingBuffer.vkDeviceMemory, 0, imageSize, 0, &data);
-	memcpy(data, image->Pixels(), static_cast<size_t>(imageSize));
-	vkUnmapMemory(device->vkDevice, textureStagingBuffer.vkDeviceMemory);
-	m_device->CreateImage(image->Width(), image->Height(), image->MipLevels(), VK_SAMPLE_COUNT_1_BIT,
-	                      colorFormat,
+	vkFormat = isHdrImage ? VK_FORMAT_R16G16B16A16_SFLOAT : Swapchain::COLOR_FORMAT;
+	// mipLevels = isCubeMap ? 1 : mipLevels;
+	auto usage = VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+	m_device->CreateImage(width, height, mipLevels, VK_SAMPLE_COUNT_1_BIT,
+	                      vkFormat,
 	                      VK_IMAGE_TILING_OPTIMAL,
-	                      VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
-	                      VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, vkImage, vkDeviceMemory);
-	TransitionImageLayout(colorFormat, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, image->MipLevels());
+	                      usage,
+	                      VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, vkImage, vkDeviceMemory, isCubeMap);
+	vkImageView = device->CreateImageView(vkImage, vkFormat, VK_IMAGE_ASPECT_COLOR_BIT, mipLevels, isCubeMap);
+	CreateTextureSampler(isCubeMap ? VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE : VK_SAMPLER_ADDRESS_MODE_REPEAT); // TODO: 共享纹理采样器
+	m_supportImageProperty.width = width;
+	m_supportImageProperty.height = height;
+	m_supportImageProperty.isHdrImage = isHdrImage;
+	m_supportImageProperty.mipLevels = mipLevels;
+}
+
+bool RenderTexture::IsSupportImageProperty(uint32_t width, uint32_t height, bool isHdrImage)
+{
+	if (m_supportImageProperty.width == width && m_supportImageProperty.height == height && m_supportImageProperty.isHdrImage == isHdrImage)
+	{
+		return true;
+	}
+	return false;
+}
+
+void RenderTexture::AssignImageData(const std::shared_ptr<Image>& image)
+{
+	auto isHdrImage = image->IsHdr();
+	if (!IsSupportImageProperty(image->Width(), image->Height(), isHdrImage))
+	{
+		throw std::runtime_error("Image is not supported by this RenderTexture!");
+	}
+	auto byteSize = isHdrImage ? 8 : 4;
+	VkDeviceSize imageSize = (VkDeviceSize)image->Width() * image->Height() * byteSize;
+	Buffer textureStagingBuffer(m_device, imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+	                            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+	void* data;
+	vkMapMemory(m_device->vkDevice, textureStagingBuffer.vkDeviceMemory, 0, imageSize, 0, &data);
+	if (isHdrImage)
+	{
+		memcpy(data, image->PixelsHdr(), static_cast<size_t>(imageSize));
+	}
+	else
+	{
+		memcpy(data, image->Pixels(), static_cast<size_t>(imageSize));
+	}
+	vkUnmapMemory(m_device->vkDevice, textureStagingBuffer.vkDeviceMemory);
+	TransitionImageLayout(vkFormat, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, image->MipLevels());
 	CopyFromBuffer(textureStagingBuffer.vkBuffer, static_cast<uint32_t>(image->Width()), static_cast<uint32_t>(image->Height()));
-	GenerateMipmaps(colorFormat, image->Width(), image->Height(), image->MipLevels());
-	// ReSharper disable once CppObjectMemberMightNotBeInitialized
-	vkImageView = device->CreateImageView(vkImage, colorFormat, VK_IMAGE_ASPECT_COLOR_BIT, image->MipLevels());
-	CreateTextureSampler();
+	GenerateMipmaps(vkFormat, image->Width(), image->Height(), image->MipLevels());
 }
 
 RenderTexture::~RenderTexture()
@@ -51,6 +82,11 @@ void RenderTexture::Cleanup()
 	vkDestroyImage(m_device->vkDevice, vkImage, nullptr);
 	vkFreeMemory(m_device->vkDevice, vkDeviceMemory, nullptr);
 	m_cleaned = true;
+}
+
+void RenderTexture::TransitionImageLayout(VkImageLayout oldLayout, VkImageLayout newLayout)
+{
+	TransitionImageLayout(vkFormat, oldLayout, newLayout, m_supportImageProperty.mipLevels);
 }
 
 void RenderTexture::TransitionImageLayout(VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout, uint32_t mipLevels)
@@ -85,6 +121,14 @@ void RenderTexture::TransitionImageLayout(VkFormat format, VkImageLayout oldLayo
 		sourceStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
 		destinationStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
 	}
+	// else if (oldLayout == VK_IMAGE_LAYOUT_UNDEFINED && newLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
+	// {
+	// 	barrier.srcAccessMask = 0;
+	// 	barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+	//
+	// 	sourceStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+	// 	destinationStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+	// }
 	else
 	{
 		throw std::invalid_argument("unsupported layout transition!");
@@ -224,15 +268,15 @@ void RenderTexture::GenerateMipmaps(VkFormat imageFormat, int32_t texWidth, int3
 	m_commandPool->EndSingleTimeCommands(commandBuffer);
 }
 
-void RenderTexture::CreateTextureSampler()
+void RenderTexture::CreateTextureSampler(VkSamplerAddressMode samplerAddressMode)
 {
 	VkSamplerCreateInfo samplerInfo{};
 	samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
 	samplerInfo.magFilter = VK_FILTER_LINEAR;
 	samplerInfo.minFilter = VK_FILTER_LINEAR;
-	samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-	samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-	samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+	samplerInfo.addressModeU = samplerAddressMode;
+	samplerInfo.addressModeV = samplerAddressMode;
+	samplerInfo.addressModeW = samplerAddressMode;
 	samplerInfo.anisotropyEnable = VK_TRUE;
 	VkPhysicalDeviceProperties properties{};
 	vkGetPhysicalDeviceProperties(m_device->vkPhysicalDevice, &properties);

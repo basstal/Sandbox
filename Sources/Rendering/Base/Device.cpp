@@ -265,6 +265,7 @@ void Device::CreateDevice()
 	VkPhysicalDeviceFeatures deviceFeatures{};
 	deviceFeatures.samplerAnisotropy = VK_TRUE;
 	deviceFeatures.sampleRateShading = VK_TRUE;
+	deviceFeatures.fillModeNonSolid = VK_TRUE;
 	createInfo.pEnabledFeatures = &deviceFeatures;
 	const std::vector<const char*> deviceExtensions = GetDeviceExtensions();
 	createInfo.enabledExtensionCount = static_cast<uint32_t>(deviceExtensions.size());
@@ -279,18 +280,18 @@ void Device::CreateDevice()
 	vkGetDeviceQueue(vkDevice, *queueFamilies.presentFamily, 0, &presentQueue);
 }
 
-VkImageView Device::CreateImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags, uint32_t mipLevels)
+VkImageView Device::CreateImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags, uint32_t mipLevels, bool isCubeMap)
 {
 	VkImageViewCreateInfo viewInfo{};
 	viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
 	viewInfo.image = image;
-	viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+	viewInfo.viewType = isCubeMap ? VK_IMAGE_VIEW_TYPE_CUBE : VK_IMAGE_VIEW_TYPE_2D;
 	viewInfo.format = format;
 	viewInfo.subresourceRange.aspectMask = aspectFlags;
 	viewInfo.subresourceRange.baseMipLevel = 0;
 	viewInfo.subresourceRange.levelCount = mipLevels;
 	viewInfo.subresourceRange.baseArrayLayer = 0;
-	viewInfo.subresourceRange.layerCount = 1;
+	viewInfo.subresourceRange.layerCount = isCubeMap ? 6 : 1;
 
 	VkImageView imageView;
 	if (vkCreateImageView(vkDevice, &viewInfo, nullptr, &imageView) != VK_SUCCESS)
@@ -303,24 +304,28 @@ VkImageView Device::CreateImageView(VkImage image, VkFormat format, VkImageAspec
 
 
 void Device::CreateImage(uint32_t width, uint32_t height, uint32_t mipLevels, VkSampleCountFlagBits numSamples, VkFormat format, VkImageTiling tiling,
-                         VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& vkImage, VkDeviceMemory& vkDeviceMemory)
+                         VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& vkImage, VkDeviceMemory& vkDeviceMemory, bool isCubeMap)
 {
-	VkImageCreateInfo imageInfo{};
-	imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-	imageInfo.imageType = VK_IMAGE_TYPE_2D;
-	imageInfo.extent.width = width;
-	imageInfo.extent.height = height;
-	imageInfo.extent.depth = 1;
-	imageInfo.mipLevels = mipLevels;
-	imageInfo.arrayLayers = 1;
-	imageInfo.format = format;
-	imageInfo.tiling = tiling;
-	imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-	imageInfo.usage = usage;
-	imageInfo.samples = numSamples;
-	imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+	VkImageCreateInfo imageCreateInfo{};
+	imageCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+	imageCreateInfo.imageType = VK_IMAGE_TYPE_2D;
+	imageCreateInfo.extent.width = width;
+	imageCreateInfo.extent.height = height;
+	imageCreateInfo.extent.depth = 1;
+	imageCreateInfo.mipLevels = mipLevels;
+	imageCreateInfo.arrayLayers = isCubeMap ? 6 : 1;
+	imageCreateInfo.format = format;
+	imageCreateInfo.tiling = tiling;
+	imageCreateInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+	imageCreateInfo.usage = usage;
+	imageCreateInfo.samples = numSamples;
+	imageCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+	if (isCubeMap)
+	{
+		imageCreateInfo.flags = VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT;
+	}
 
-	if (vkCreateImage(vkDevice, &imageInfo, nullptr, &vkImage) != VK_SUCCESS)
+	if (vkCreateImage(vkDevice, &imageCreateInfo, nullptr, &vkImage) != VK_SUCCESS)
 	{
 		throw std::runtime_error("failed to create image!");
 	}

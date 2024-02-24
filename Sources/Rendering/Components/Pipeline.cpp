@@ -15,7 +15,7 @@ Pipeline::Pipeline(const std::shared_ptr<Device>& device, const std::shared_ptr<
 	m_device = device;
 	m_renderPass = renderPass;
 	m_descriptorResource = descriptorResource;
-	CreatePipelineLayout();
+	vkPipelineLayout = CreatePipelineLayout(descriptorResource->vkDescriptorSetLayout);
 	std::shared_ptr<TDataBinding<std::shared_ptr<Settings>>> settingsBinding = std::dynamic_pointer_cast<TDataBinding<std::shared_ptr<Settings>>>(DataBinding::Get("Rendering/Settings"));
 	Delegate<std::shared_ptr<Settings>> bindFunction(
 		[this](std::shared_ptr<Settings> settings)
@@ -31,7 +31,7 @@ Pipeline::~Pipeline()
 	Cleanup();
 }
 
-void Pipeline::CreatePipelineLayout()
+VkPipelineLayout Pipeline::CreatePipelineLayout(VkDescriptorSetLayout descriptorSetLayout)
 {
 	VkPushConstantRange pushConstantRange;
 	pushConstantRange.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
@@ -41,14 +41,16 @@ void Pipeline::CreatePipelineLayout()
 	VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
 	pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
 	pipelineLayoutInfo.setLayoutCount = 1;
-	pipelineLayoutInfo.pSetLayouts = &m_descriptorResource->vkDescriptorSetLayout;
+	pipelineLayoutInfo.pSetLayouts = &descriptorSetLayout;
 	pipelineLayoutInfo.pushConstantRangeCount = 1;
 	pipelineLayoutInfo.pPushConstantRanges = &pushConstantRange;
 
-	if (vkCreatePipelineLayout(m_device->vkDevice, &pipelineLayoutInfo, nullptr, &vkPipelineLayout) != VK_SUCCESS)
+	VkPipelineLayout layout;
+	if (vkCreatePipelineLayout(m_device->vkDevice, &pipelineLayoutInfo, nullptr, &layout) != VK_SUCCESS)
 	{
 		throw std::runtime_error("failed to create pipeline layout!");
 	}
+	return layout;
 }
 
 void Pipeline::ApplySettings(std::shared_ptr<Settings> settings)
@@ -58,8 +60,8 @@ void Pipeline::ApplySettings(std::shared_ptr<Settings> settings)
 
 void Pipeline::CreatePipeline(const std::vector<char>& vertexShader, const std::vector<char>& fragmentShader)
 {
-	VkShaderModule vertShaderModule = CreateShaderModule(vertexShader);
-	VkShaderModule fragShaderModule = CreateShaderModule(fragmentShader);
+	VkShaderModule vertShaderModule = CreateShaderModule(m_device, vertexShader);
+	VkShaderModule fragShaderModule = CreateShaderModule(m_device, fragmentShader);
 	auto vkPipeline = CreatePipeline(vertShaderModule, fragShaderModule, false);
 	vkPipelines.push_back(vkPipeline);
 	vkDestroyShaderModule(m_device->vkDevice, fragShaderModule, nullptr);
@@ -71,8 +73,8 @@ void Pipeline::CreateFillModeNonSolidPipeline()
 	std::filesystem::path binariesDir = FileSystemBase::getBinariesDir();
 	auto nonSolidVertex = FileSystemBase::readFile((binariesDir / "Shaders/FillModeNonSolid_vert.spv").string());
 	auto nonSolidFrag = FileSystemBase::readFile((binariesDir / "Shaders/FillModeNonSolid_frag.spv").string());
-	VkShaderModule vertShaderModule = CreateShaderModule(nonSolidVertex);
-	VkShaderModule fragShaderModule = CreateShaderModule(nonSolidFrag);
+	VkShaderModule vertShaderModule = CreateShaderModule(m_device, nonSolidVertex);
+	VkShaderModule fragShaderModule = CreateShaderModule(m_device, nonSolidFrag);
 	nonSolidPipeline = CreatePipeline(vertShaderModule, fragShaderModule, true);
 	vkDestroyShaderModule(m_device->vkDevice, fragShaderModule, nullptr);
 	vkDestroyShaderModule(m_device->vkDevice, vertShaderModule, nullptr);
@@ -113,10 +115,12 @@ VkPipeline Pipeline::CreatePipeline(const VkShaderModule& vertShaderModule, cons
 	depthStencil.stencilTestEnable = VK_FALSE;
 	depthStencil.front = {}; // Optional
 	depthStencil.back = {}; // Optional
-	return CreatePipeline(vertShaderModule, fragShaderModule, fillModeNonSolid, vertexInputInfo, inputAssembly, depthStencil);
+	return CreatePipeline(vertShaderModule, fragShaderModule, fillModeNonSolid, vertexInputInfo, inputAssembly, depthStencil, vkPipelineLayout, m_renderPass->vkRenderPass, true);
 }
+
 VkPipeline Pipeline::CreatePipeline(const VkShaderModule& vertShaderModule, const VkShaderModule& fragShaderModule, bool fillModeNonSolid, const VkPipelineVertexInputStateCreateInfo& vertexInputInfo,
-                                    const VkPipelineInputAssemblyStateCreateInfo& inputAssembly, const VkPipelineDepthStencilStateCreateInfo& depthStencil)
+                                    const VkPipelineInputAssemblyStateCreateInfo& inputAssembly, const VkPipelineDepthStencilStateCreateInfo& depthStencil, const VkPipelineLayout& inVkPipelineLayout,
+                                    const VkRenderPass& inVkRenderPass, bool useMultiSampling)
 {
 	VkPipeline vkPipeline;
 	// use viewport and scissor dynamically
@@ -199,12 +203,12 @@ VkPipeline Pipeline::CreatePipeline(const VkShaderModule& vertShaderModule, cons
 	pipelineInfo.pInputAssemblyState = &inputAssembly;
 	pipelineInfo.pViewportState = &viewportState;
 	pipelineInfo.pRasterizationState = &rasterizer;
-	pipelineInfo.pMultisampleState = &multisampling;
+	pipelineInfo.pMultisampleState = useMultiSampling ? &multisampling : nullptr;
 	pipelineInfo.pDepthStencilState = nullptr; // Optional
 	pipelineInfo.pColorBlendState = &colorBlending;
 	pipelineInfo.pDynamicState = &dynamicState;
-	pipelineInfo.layout = vkPipelineLayout;
-	pipelineInfo.renderPass = m_renderPass->vkRenderPass;
+	pipelineInfo.layout = inVkPipelineLayout;
+	pipelineInfo.renderPass = inVkRenderPass;
 	pipelineInfo.subpass = 0;
 	pipelineInfo.basePipelineHandle = VK_NULL_HANDLE; // Optional
 	pipelineInfo.basePipelineIndex = -1; // Optional
@@ -240,14 +244,14 @@ VkPipeline Pipeline::GraphicsPipeline()
 }
 
 
-VkShaderModule Pipeline::CreateShaderModule(const std::vector<char>& code)
+VkShaderModule Pipeline::CreateShaderModule(const std::shared_ptr<Device>& device, const std::vector<char>& code)
 {
 	VkShaderModuleCreateInfo createInfo{};
 	createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
 	createInfo.codeSize = code.size();
 	createInfo.pCode = reinterpret_cast<const uint32_t*>(code.data());
 	VkShaderModule shaderModule;
-	if (vkCreateShaderModule(m_device->vkDevice, &createInfo, nullptr, &shaderModule) != VK_SUCCESS)
+	if (vkCreateShaderModule(device->vkDevice, &createInfo, nullptr, &shaderModule) != VK_SUCCESS)
 	{
 		throw std::runtime_error("failed to create shader module!");
 	}

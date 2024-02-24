@@ -15,4 +15,3 @@ compile_environment:
     - vulkan
     - imgui
     - yamlcpp
-    - imguizmo

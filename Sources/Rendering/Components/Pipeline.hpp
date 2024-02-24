@@ -22,7 +22,7 @@ public:
 	VkPipeline GraphicsPipeline();
 	Pipeline(const std::shared_ptr<Device>& device, const std::shared_ptr<DescriptorResource>& descriptorResource, const std::shared_ptr<RenderPass>& renderPass);
 	~Pipeline();
-	void CreatePipelineLayout();
+	VkPipelineLayout CreatePipelineLayout(VkDescriptorSetLayout descriptorSetLayout);
 	void ApplySettings(std::shared_ptr<Settings> settings);
 	void CreatePipeline(const std::vector<char>& vertexShader, const std::vector<char>& fragmentShader);
 	void CreateFillModeNonSolidPipeline();
@@ -30,7 +30,8 @@ public:
 	VkPipeline CreatePipeline(const VkShaderModule& vertShaderModule, const VkShaderModule& fragShaderModule, bool fillModeNonSolid, const VkPipelineVertexInputStateCreateInfo& vertexInputInfo,
 	                          const VkPipelineInputAssemblyStateCreateInfo& inputAssembly);
 	VkPipeline CreatePipeline(const VkShaderModule& vertShaderModule, const VkShaderModule& fragShaderModule, bool fillModeNonSolid, const VkPipelineVertexInputStateCreateInfo& vertexInputInfo, const
-	                          VkPipelineInputAssemblyStateCreateInfo& inputAssembly, const VkPipelineDepthStencilStateCreateInfo& depthStencil);
-	VkShaderModule CreateShaderModule(const std::vector<char>& code);
+	                          VkPipelineInputAssemblyStateCreateInfo& inputAssembly, const VkPipelineDepthStencilStateCreateInfo& depthStencil, const VkPipelineLayout& inVkPipelineLayout, const VkRenderPass& inVkRenderPass, bool
+	                          useMultiSampling);
+	static VkShaderModule CreateShaderModule(const std::shared_ptr<Device>& device, const std::vector<char>& code);
 	void Cleanup();
 };

@@ -5,6 +5,7 @@
 #include <vulkan/vulkan_core.h>
 
 #include "Rendering/Camera.hpp"
+#include "Rendering/Light.hpp"
 #include "Rendering/Material.hpp"
 #include "Rendering/Base/Device.hpp"
 #include "Rendering/Objects/RenderTexture.hpp"
@@ -15,6 +16,7 @@ DescriptorResource::DescriptorResource(const std::shared_ptr<Device>& device):
 	vkDescriptorPool(nullptr)
 {
 	m_device = device;
+
 	VkDescriptorSetLayoutBinding mvpLayoutBinding;
 	mvpLayoutBinding.binding = 0;
 	mvpLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
@@ -36,6 +38,7 @@ DescriptorResource::DescriptorResource(const std::shared_ptr<Device>& device):
 	pbrMaterialLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
 	pbrMaterialLayoutBinding.pImmutableSamplers = nullptr; // Optional
 
+
 	VkDescriptorSetLayoutBinding pbrLightLayoutBinding;
 	pbrLightLayoutBinding.binding = 2;
 	pbrLightLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
@@ -43,16 +46,14 @@ DescriptorResource::DescriptorResource(const std::shared_ptr<Device>& device):
 	pbrLightLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
 	pbrLightLayoutBinding.pImmutableSamplers = nullptr; // Optional
 
-	std::array<VkDescriptorSetLayoutBinding, 3> bindings = {mvpLayoutBinding, pbrMaterialLayoutBinding, pbrLightLayoutBinding};
-	VkDescriptorSetLayoutCreateInfo layoutInfo{};
-	layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-	layoutInfo.bindingCount = static_cast<uint32_t>(bindings.size());
-	layoutInfo.pBindings = bindings.data();
+	VkDescriptorSetLayoutBinding irradianceMapLayoutBinding;
+	irradianceMapLayoutBinding.binding = 3;
+	irradianceMapLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	irradianceMapLayoutBinding.descriptorCount = 1;
+	irradianceMapLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+	irradianceMapLayoutBinding.pImmutableSamplers = nullptr; // Optional
 
-	if (vkCreateDescriptorSetLayout(device->vkDevice, &layoutInfo, nullptr, &vkDescriptorSetLayout) != VK_SUCCESS)
-	{
-		throw std::runtime_error("failed to create descriptor set layout!");
-	}
+	vkDescriptorSetLayout = CreateDescriptorSetLayout({mvpLayoutBinding, pbrMaterialLayoutBinding, pbrLightLayoutBinding, irradianceMapLayoutBinding});
 }
 
 DescriptorResource::~DescriptorResource()
@@ -60,6 +61,20 @@ DescriptorResource::~DescriptorResource()
 	Cleanup();
 }
 
+VkDescriptorSetLayout DescriptorResource::CreateDescriptorSetLayout(const std::vector<VkDescriptorSetLayoutBinding>& bindings)
+{
+	VkDescriptorSetLayoutCreateInfo layoutInfo{};
+	layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+	layoutInfo.bindingCount = static_cast<uint32_t>(bindings.size());
+	layoutInfo.pBindings = bindings.data();
+
+	VkDescriptorSetLayout layout;
+	if (vkCreateDescriptorSetLayout(m_device->vkDevice, &layoutInfo, nullptr, &layout) != VK_SUCCESS)
+	{
+		throw std::runtime_error("failed to create descriptor set layout!");
+	}
+	return layout;
+}
 
 void DescriptorResource::CreateDescriptorPool()
 {
@@ -76,7 +91,6 @@ void DescriptorResource::CreateDescriptorPool()
 	poolInfo.maxSets = DESCRIPTOR_POOL_SIZE;
 	if (vkCreateDescriptorPool(m_device->vkDevice, &poolInfo, nullptr, &vkDescriptorPool) != VK_SUCCESS)
 	{
-		
 		throw std::runtime_error("failed to create descriptor pool!");
 	}
 }
@@ -116,6 +130,13 @@ void DescriptorResource::CreateDescriptorSets(const std::shared_ptr<UniformBuffe
 		// imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 		// imageInfo.imageView = renderTexture->vkImageView;
 		// imageInfo.sampler = renderTexture->vkSampler;
+		// descriptorWrites[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		// descriptorWrites[1].dstSet = vkDescriptorSets[i];
+		// descriptorWrites[1].dstBinding = 1;
+		// descriptorWrites[1].dstArrayElement = 0;
+		// descriptorWrites[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+		// descriptorWrites[1].descriptorCount = 1;
+		// descriptorWrites[1].pImageInfo = &imageInfo;
 
 		std::array<VkDescriptorImageInfo, 4> pbrImageInfo{};
 		pbrImageInfo[0].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
@@ -131,42 +152,52 @@ void DescriptorResource::CreateDescriptorSets(const std::shared_ptr<UniformBuffe
 		pbrImageInfo[3].imageView = material->aoMap->vkImageView;
 		pbrImageInfo[3].sampler = material->aoMap->vkSampler;
 
-		std::array<VkWriteDescriptorSet, 3> descriptorWrites{};
-		descriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-		descriptorWrites[0].dstSet = vkDescriptorSets[i];
-		descriptorWrites[0].dstBinding = 0;
-		descriptorWrites[0].dstArrayElement = 0;
-		descriptorWrites[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-		descriptorWrites[0].descriptorCount = 1;
-		descriptorWrites[0].pBufferInfo = &mvpBufferInfo;
-		descriptorWrites[0].pImageInfo = nullptr; // Optional
-		descriptorWrites[0].pTexelBufferView = nullptr; // Optional
-
-		// descriptorWrites[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-		// descriptorWrites[1].dstSet = vkDescriptorSets[i];
-		// descriptorWrites[1].dstBinding = 1;
-		// descriptorWrites[1].dstArrayElement = 0;
-		// descriptorWrites[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-		// descriptorWrites[1].descriptorCount = 1;
-		// descriptorWrites[1].pImageInfo = &imageInfo;
-
+		VkWriteDescriptorSet mvpWrite{};
+		mvpWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		mvpWrite.dstSet = vkDescriptorSets[i];
+		mvpWrite.dstBinding = 0;
+		mvpWrite.dstArrayElement = 0;
+		mvpWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+		mvpWrite.descriptorCount = 1;
+		mvpWrite.pBufferInfo = &mvpBufferInfo;
+		mvpWrite.pImageInfo = nullptr; // Optional
+		mvpWrite.pTexelBufferView = nullptr; // Optional
+		
 		// PBRMaterial
-		descriptorWrites[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-		descriptorWrites[1].dstSet = vkDescriptorSets[i]; // 您的描述符集
-		descriptorWrites[1].dstBinding = 1; // 对应于 layout(binding = 1) in GLSL
-		descriptorWrites[1].dstArrayElement = 0;
-		descriptorWrites[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-		descriptorWrites[1].descriptorCount = static_cast<uint32_t>(pbrImageInfo.size());
-		descriptorWrites[1].pImageInfo = pbrImageInfo.data();
+		VkWriteDescriptorSet pbrMaterialWrite{};
+		pbrMaterialWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		pbrMaterialWrite.dstSet = vkDescriptorSets[i]; // 您的描述符集
+		pbrMaterialWrite.dstBinding = 1; // 对应于 layout(binding = 1) in GLSL
+		pbrMaterialWrite.dstArrayElement = 0;
+		pbrMaterialWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+		pbrMaterialWrite.descriptorCount = static_cast<uint32_t>(pbrImageInfo.size());
+		pbrMaterialWrite.pImageInfo = pbrImageInfo.data();
 
 		// PRBLight
-		descriptorWrites[2].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-		descriptorWrites[2].dstSet = vkDescriptorSets[i]; // 您的描述符集
-		descriptorWrites[2].dstBinding = 2; // 对应于 layout(binding = 2) in GLSL
-		descriptorWrites[2].dstArrayElement = 0;
-		descriptorWrites[2].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-		descriptorWrites[2].descriptorCount = 1;
-		descriptorWrites[2].pBufferInfo = &pbrLightBufferInfo;
+		VkWriteDescriptorSet pbrLightWrite{};
+		pbrLightWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		pbrLightWrite.dstSet = vkDescriptorSets[i]; // 您的描述符集
+		pbrLightWrite.dstBinding = 2; // 对应于 layout(binding = 2) in GLSL
+		pbrLightWrite.dstArrayElement = 0;
+		pbrLightWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+		pbrLightWrite.descriptorCount = 1;
+		pbrLightWrite.pBufferInfo = &pbrLightBufferInfo;
+
+		VkDescriptorImageInfo irradianceImageInfo{};
+		irradianceImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		irradianceImageInfo.imageView = material->irradianceMap->renderTexture->vkImageView;
+		irradianceImageInfo.sampler = material->irradianceMap->renderTexture->vkSampler;
+
+		VkWriteDescriptorSet irradianceMapWrite{};
+		irradianceMapWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		irradianceMapWrite.dstSet = vkDescriptorSets[i];
+		irradianceMapWrite.dstBinding = 3;
+		irradianceMapWrite.dstArrayElement = 0;
+		irradianceMapWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+		irradianceMapWrite.descriptorCount = 1;
+		irradianceMapWrite.pImageInfo = &irradianceImageInfo;
+
+		std::array descriptorWrites{mvpWrite, pbrMaterialWrite, pbrLightWrite, irradianceMapWrite};
 		vkUpdateDescriptorSets(m_device->vkDevice, static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
 	}
 }

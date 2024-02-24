@@ -178,7 +178,7 @@ void Application::Initialize()
 	swapchain->CreateFramebuffers(renderPass);
 	commandResource = std::make_shared<CommandResource>(device);
 
-	renderTexture = std::make_shared<RenderTexture>(device, image, commandResource);
+	// renderTexture = std::make_shared<RenderTexture>(device, commandResource, false, false, swapchain->vkExtent2D.width, swapchain->vkExtent2D.height, 1);
 	vertexBuffer = std::make_shared<VertexBuffer>(device, modelGameObject->model, commandResource);
 	indexBuffer = std::make_shared<IndexBuffer>(device, modelGameObject->model, commandResource);
 	uniformBuffers = std::make_shared<UniformBuffers>(device);
@@ -189,8 +189,10 @@ void Application::Initialize()
 	auto metallic = Image::LoadImage((assetsDir / "Textures/pbr/rusted_iron/metallic.png").string().c_str());
 	auto roughness = Image::LoadImage((assetsDir / "Textures/pbr/rusted_iron/roughness.png").string().c_str());
 	auto ao = Image::LoadImage((assetsDir / "Textures/pbr/rusted_iron/ao.png").string().c_str());
+	auto irradiance = Image::LoadHdrImage((assetsDir / "Textures/hdr/newport_loft.hdr").string().c_str());
 
-	material = std::make_shared<Material>(device, albedo, metallic, roughness, ao, commandResource);
+	material = std::make_shared<Material>(device, albedo, metallic, roughness, ao, irradiance, commandResource, pipeline, renderPass, descriptorResource);
+	material->TransitionImageLayout();
 	descriptorResource->CreateDescriptorSets(uniformBuffers, renderTexture, material);
 	commandResource->CreateCommandBuffers();
 	syncObjects = std::make_shared<SyncObjects>(device);
@@ -198,6 +200,7 @@ void Application::Initialize()
 	DataBinding::Create("Rendering/EditorCamera", editorCamera);
 	timer = std::make_shared<Timer>();
 	projection = glm::perspective(glm::radians(45.0f), (float)swapchain->vkExtent2D.width / (float)swapchain->vkExtent2D.height, 0.1f, 100.f);
+	material->irradianceMap->RenderCube(commandResource, uniformBuffers, descriptorResource);
 }
 
 void Application::LoadAssets()
@@ -253,6 +256,9 @@ void Application::DrawFrame(const std::shared_ptr<ApplicationEditor>& applicatio
 	vkResetCommandBuffer(currentCommandBuffer, 0);
 	RecordCommandBuffer(currentCommandBuffer, imageIndex, applicationEditor);
 
+	auto modelMatrix = modelGameObject->transform->GetModelMatrix();
+	debugUBO = uniformBuffers->UpdateMVP(m_currentFrame, editorCamera, modelMatrix, projection);
+	uniformBuffers->UpdatePBRLight(m_currentFrame, glm::vec3(0.0f, 0.0f, 1.0f), glm::vec3(1.0f));
 
 	VkSubmitInfo submitInfo{};
 	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -365,8 +371,6 @@ void Application::RecordCommandBuffer(VkCommandBuffer currentCommandBuffer, uint
 	vkCmdBindVertexBuffers(currentCommandBuffer, 0, 1, vertexBuffers, offsets);
 	vkCmdBindIndexBuffer(currentCommandBuffer, indexBuffer->buffer->vkBuffer, 0, VK_INDEX_TYPE_UINT32);
 	vkCmdBindDescriptorSets(currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->vkPipelineLayout, 0, 1, &descriptorResource->vkDescriptorSets[m_currentFrame], 0, nullptr);
-	auto modelMatrix = modelGameObject->transform->GetModelMatrix();
-	debugUBO = uniformBuffers->UpdateMVP(m_currentFrame, editorCamera, modelMatrix, projection);
 	vkCmdDrawIndexed(currentCommandBuffer, static_cast<uint32_t>(modelGameObject->model->Indices().size()), 1, 0, 0, 0);
 
 	// VkBufferMemoryBarrier bufferMemoryBarrier = {};
