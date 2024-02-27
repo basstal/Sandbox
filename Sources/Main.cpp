@@ -1,39 +1,15 @@
 #include <iostream>
-#include <memory>
 
-#include "Editor/ApplicationEditor.hpp"
-#include "Editor/OverlayEditor.hpp"
-#include "Editor/SettingsEditor.hpp"
-#include "Editor/ValueEditor.hpp"
-#include "Infrastructures/DataBinding.hpp"
-#include "Rendering/Application.hpp"
-#include "Rendering/Settings.hpp"
+#include "GameCore/Engine.hpp"
 
 int main()
 {
-	// std::string binariesDir = FileSystemBase::getBinariesDir();
-	// FileSystemBase::addDllSearchPath(binariesDir + "/../ThirdPartyLibs");
 	try
 	{
-		std::shared_ptr<Settings> setting = std::make_shared<Settings>();
-		DataBinding::Create("Rendering/Settings", setting);
-
-		Application::Instance = std::make_unique<Application>(setting);
-		Application::Instance->Initialize();
-		std::shared_ptr<ApplicationEditor> applicationEditor = std::make_shared<ApplicationEditor>(Application::Instance);
-		DataBinding::Create("ApplicationEditor", applicationEditor);
-		// applicationEditor->gizmoEditor = std::make_shared<GizmoEditor>(applicationEditor);
-		SettingsEditor::Create(applicationEditor);
-		ValueEditor::Create(applicationEditor);
-		OverlayEditor::Create(applicationEditor);
-		while (!glfwWindowShouldClose(Application::Instance->surface->glfwWindow))
-		{
-			glfwPollEvents();
-			Application::Instance->DrawFrame(applicationEditor);
-		}
-		vkDeviceWaitIdle(Application::Instance->device->vkDevice);
-		applicationEditor->Cleanup();
-		Application::Instance->Cleanup();
+		Engine engine;
+		engine.Initialize();
+		engine.MainLoop();
+		engine.Cleanup();
 	}
 	catch (const std::exception& e)
 	{

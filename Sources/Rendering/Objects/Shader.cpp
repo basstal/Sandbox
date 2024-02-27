@@ -313,10 +313,8 @@ VkShaderModule Shader::GetShaderModuleStage(VkShaderStageFlagBits stageFlag)
 std::shared_ptr<DescriptorResource> Shader::CreateDescriptorResource()
 {
 	std::map<VkDescriptorType, uint32_t> descriptorPoolCount;
-	std::map<std::string, int32_t> nameToBinding;
 	DescriptorResource::CreateDescriptorPool(m_device);
 	std::shared_ptr<DescriptorResource> result = std::make_shared<DescriptorResource>(m_device);
-
 	uint32_t pushConstantOffset = 0;
 	for (const auto& [uniformBlockName, uniformBlock] : m_uniformBlocks)
 	{
@@ -331,7 +329,7 @@ std::shared_ptr<DescriptorResource> Shader::CreateDescriptorResource()
 		}
 		else
 		{
-			nameToBinding[uniformBlockName] = uniformBlock.binding;
+			result->nameToBinding[uniformBlockName] = uniformBlock.binding;
 			VkDescriptorSetLayoutBinding layoutBinding{};
 			layoutBinding.binding = uniformBlock.binding;
 			layoutBinding.descriptorType = uniformBlock.descriptorType;
@@ -352,7 +350,7 @@ std::shared_ptr<DescriptorResource> Shader::CreateDescriptorResource()
 	}
 	for (const auto& [uniformName, uniform] : m_uniforms)
 	{
-		nameToBinding[uniformName] = uniform.binding;
+		result->nameToBinding[uniformName] = uniform.binding;
 		VkDescriptorSetLayoutBinding layoutBinding{};
 		layoutBinding.binding = uniform.binding;
 		layoutBinding.descriptorType = uniform.descriptorType;
@@ -393,12 +391,9 @@ std::shared_ptr<DescriptorResource> Shader::CreateDescriptorResource()
 		result->vkVertexInputAttributeDescriptions.emplace_back(vertexInputAttributeDescription);
 	}
 
-	VkVertexInputBindingDescription vertexInputBindingDescription;
-	vertexInputBindingDescription.binding = 0;
-	vertexInputBindingDescription.stride = offset;
-	vertexInputBindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
-	result->vkVertexInputBindingDescription = vertexInputBindingDescription;
+	result->vkVertexInputBindingDescription.binding = 0;
+	result->vkVertexInputBindingDescription.stride = offset;
+	result->vkVertexInputBindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
 	result->vkDescriptorSetLayout = result->CreateDescriptorSetLayout(result->vkDescriptorSetLayoutBindings);
-	result->nameToBinding = nameToBinding;
 	return result;
 }

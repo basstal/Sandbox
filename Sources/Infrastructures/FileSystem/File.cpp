@@ -30,10 +30,14 @@ bool File::Exists() const
 	return std::filesystem::exists(m_path) && std::filesystem::is_regular_file(m_path);
 }
 
-
-bool File::CreateDirectory(const std::filesystem::path& path)
+void File::CreateDirectory()
 {
-	return std::filesystem::create_directories(path);
+	std::filesystem::create_directories(m_path.parent_path());
+}
+
+std::string File::GetPath()
+{
+	return m_path.string();
 }
 
 bool File::Remove(const std::filesystem::path& path)

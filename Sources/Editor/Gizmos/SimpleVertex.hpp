@@ -5,7 +5,7 @@
 #include <glm/vec3.hpp>
 
 #include "Infrastructures/Math/AABB.hpp"
-#include "Rendering/Vertex.hpp"
+#include "GameCore/Vertex.hpp"
 
 struct SimpleVertex
 {

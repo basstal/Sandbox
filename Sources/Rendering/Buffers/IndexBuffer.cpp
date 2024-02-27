@@ -1,6 +1,6 @@
 ﻿#include "IndexBuffer.hpp"
 
-#include "Rendering/Model.hpp"
+#include "GameCore/Model.hpp"
 #include "Rendering/Buffers/Buffer.hpp"
 #include "Rendering/Components/CommandResource.hpp"
 

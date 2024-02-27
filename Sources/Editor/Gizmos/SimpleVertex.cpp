@@ -5,7 +5,7 @@
 #include <glm/common.hpp>
 
 #include "Infrastructures/Math/AABB.hpp"
-#include "Rendering/Vertex.hpp"
+#include "GameCore/Vertex.hpp"
 VkVertexInputBindingDescription GetBindingDescription()
 {
 	VkVertexInputBindingDescription bindingDescription;

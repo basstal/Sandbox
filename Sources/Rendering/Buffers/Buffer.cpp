@@ -37,7 +37,7 @@ Buffer::Buffer(const std::shared_ptr<Device> device, VkDeviceSize size, VkBuffer
 }
 Buffer::~Buffer()
 {
-	Cleanup();
+	// Cleanup();
 }
 void Buffer::Cleanup()
 {

@@ -1,6 +1,7 @@
 #include "Grid.hpp"
 
 #include "Gizmos/SimpleVertex.hpp"
+#include "Infrastructures/SingletonOrganizer.hpp"
 #include "Infrastructures/FileSystem/File.hpp"
 #include "Infrastructures/FileSystem/FileSystemBase.hpp"
 #include "Rendering/Application.hpp"
@@ -125,7 +126,7 @@ void Grid::PrepareDrawData(const std::shared_ptr<Device>& device, const std::sha
 	shader->LoadShaderForStage(std::make_shared<File>((sourceDir / "Shaders/FillModeNonSolidGrid.vert").string()), "", VK_SHADER_STAGE_VERTEX_BIT);
 	shader->LoadShaderForStage(std::make_shared<File>((sourceDir / "Shaders/FillModeNonSolidGrid.frag").string()), "", VK_SHADER_STAGE_FRAGMENT_BIT);
 
-	pipeline = std::make_shared<Pipeline>(device, shader, Application::Instance->renderPass, VK_PRIMITIVE_TOPOLOGY_LINE_LIST, VK_POLYGON_MODE_FILL);
+	pipeline = std::make_shared<Pipeline>(device, shader, SingletonOrganizer::Get<Application>()->renderPass, VK_PRIMITIVE_TOPOLOGY_LINE_LIST, VK_POLYGON_MODE_FILL);
 
 	uniformBuffer = std::make_shared<UniformBuffers>(device);
 	uniformBuffer->UpdateWriteDescriptorSet(pipeline->descriptorResource);

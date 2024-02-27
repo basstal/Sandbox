@@ -2,6 +2,7 @@
 
 #include "Application.hpp"
 #include "CubeMap.hpp"
+#include "Infrastructures/SingletonOrganizer.hpp"
 Material::~Material()
 {
 	// Cleanup();
@@ -68,7 +69,7 @@ void Material::TransitionImageLayout()
 
 void Material::UpdateWriteDescriptorSet(const std::shared_ptr<DescriptorResource>& descriptorResource)
 {
-	auto device = Application::Instance->device;
+	auto device = SingletonOrganizer::Get<Application>()->device;
 	for (size_t i = 0; i < device->MAX_FRAMES_IN_FLIGHT; i++)
 	{
 		int32_t bindingIrradiance = descriptorResource->nameToBinding.contains("irradianceMap") ? descriptorResource->nameToBinding["irradianceMap"] : -1;

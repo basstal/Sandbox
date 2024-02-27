@@ -2,7 +2,7 @@
 #include <memory>
 
 #include "Rendering/Camera.hpp"
-#include "Rendering/Model.hpp"
+#include "GameCore/Model.hpp"
 #include "Rendering/Base/Device.hpp"
 #include "Rendering/Buffers/Buffer.hpp"
 #include "Rendering/Components/DescriptorResource.hpp"

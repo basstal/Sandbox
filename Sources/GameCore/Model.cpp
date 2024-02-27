@@ -25,6 +25,9 @@ std::shared_ptr<Model> Model::LoadModel(const char* path)
 	model->ProcessNode(scene->mRootNode, scene);
 	return model;
 }
+void Model::Update()
+{
+}
 
 void Model::ProcessNode(aiNode* node, const aiScene* scene)
 {

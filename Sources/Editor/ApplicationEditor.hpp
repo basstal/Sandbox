@@ -28,9 +28,9 @@ public:
 	std::shared_ptr<TransformGizmo> transformGizmo;
 
 
-	ApplicationEditor(const std::unique_ptr<Application>& application);
+	ApplicationEditor();
 	~ApplicationEditor();
-	void CreateFramebuffer(const std::unique_ptr<Application>& application);
+	void CreateFramebuffer();
 	void Cleanup();
 	void CleanupFramebuffers();
 	// void NewFrame();

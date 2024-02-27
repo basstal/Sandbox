@@ -437,6 +437,10 @@ public class Project
                 "Debug", "Release"
             },
             AdditionalIncludeDirectories = string.Join(";", includeDirectoryReferences.Distinct().Select(directory => directory.FullName)),
+            AdditionalOptions = string.Join(" ", new[]
+            {
+                "/Zc:__cplusplus", // Boost.hana requires __cplusplus https://github.com/boostorg/hana/issues/516
+            }),
             AdditionalDependencies = string.Join(";", additionalDependencies.Distinct().Select(file => file.FullName)),
             PostBuildCommandsPath = postBuildCommandsPath,
             OutputDir = outputDir,

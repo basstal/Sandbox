@@ -9,19 +9,20 @@
 #include <vulkan/vulkan_core.h>
 
 #include "Image.hpp"
-#include "Model.hpp"
+#include "GameCore/Model.hpp"
 #include "Infrastructures/FileSystem/FileSystemBase.hpp"
 #include "Components/RenderPass.hpp"
 #include "Base/Device.hpp"
 #include "Components/CommandResource.hpp"
 #include "Editor/ApplicationEditor.hpp"
 #include "Infrastructures/DataBinding.hpp"
+#include "Infrastructures/SingletonOrganizer.hpp"
 #include "Infrastructures/FileSystem/File.hpp"
 #include "Objects/RenderTexture.hpp"
 
 
 // 定义和初始化静态成员变量
-std::unique_ptr<Application> Application::Instance = nullptr;
+// std::shared_ptr<Application> Application::Instance = nullptr;
 
 std::vector<const char*> Application::GetRequiredExtensions()
 {
@@ -59,14 +60,15 @@ void Application::CheckExtensionsSupport(uint32_t glfwExtensionCount, const char
 	}
 }
 
-Application::Application(const std::shared_ptr<Settings>& inSettings)
+Application::Application()
 {
-	settings = inSettings;
+	std::shared_ptr<Settings> setting = std::make_shared<Settings>();
+	settings = DataBinding::Create("Rendering/Settings", setting)->GetData();
 	glfwInit();
 
 	VkApplicationInfo appInfo{};
 	appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-	appInfo.pApplicationName = settings->ApplicationName.c_str();
+	appInfo.pApplicationName = settings->settingsConfig.ApplicationName.c_str();
 	appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
 	appInfo.pEngineName = "No Engine";
 	appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
@@ -196,8 +198,8 @@ void Application::Initialize()
 	commandResource = std::make_shared<CommandResource>(device);
 
 	// renderTexture = std::make_shared<RenderTexture>(device, commandResource, false, false, swapchain->vkExtent2D.width, swapchain->vkExtent2D.height, 1);
-	vertexBuffer = std::make_shared<VertexBuffer>(device, modelGameObject->model, commandResource);
-	indexBuffer = std::make_shared<IndexBuffer>(device, modelGameObject->model, commandResource);
+	vertexBuffer = std::make_shared<VertexBuffer>(device, modelGameObject->GetComponent<Model>(), commandResource);
+	indexBuffer = std::make_shared<IndexBuffer>(device, modelGameObject->GetComponent<Model>(), commandResource);
 	// descriptorResource->CreateDescriptorPool();
 
 	std::filesystem::path assetsDir = FileSystemBase::getAssetsDir();
@@ -211,7 +213,7 @@ void Application::Initialize()
 	material->TransitionImageLayout();
 	commandResource->CreateCommandBuffers();
 	syncObjects = std::make_shared<SyncObjects>(device);
-	editorCamera = std::make_shared<Camera>(settings->EditorCameraPos, DEFAULT_UP, settings->EditorCameraRotationX, settings->EditorCameraRotationZ);
+	editorCamera = std::make_shared<Camera>(settings->settingsConfig.EditorCameraPos, DEFAULT_UP, settings->settingsConfig.EditorCameraRotationX, settings->settingsConfig.EditorCameraRotationZ);
 	DataBinding::Create("Rendering/EditorCamera", editorCamera);
 	timer = std::make_shared<Timer>();
 	projection = glm::perspective(glm::radians(45.0f), (float)swapchain->vkExtent2D.width / (float)swapchain->vkExtent2D.height, 0.1f, 100.f);
@@ -225,7 +227,7 @@ void Application::LoadAssets()
 	// fragmentShader = FileSystemBase::readFile((binariesDir / "Shaders/PBR_frag.spv").string());
 	std::filesystem::path assetsDir = FileSystemBase::getAssetsDir();
 	modelGameObject = std::make_shared<GameObject>();
-	modelGameObject->model = Model::LoadModel((assetsDir / "Models/viking_room.obj").string().c_str());
+	modelGameObject->AddComponent(Model::LoadModel((assetsDir / "Models/viking_room.obj").string().c_str()));
 	image = Image::LoadImage((assetsDir / "Textures/viking_room.png").string().c_str());
 }
 
@@ -237,7 +239,7 @@ void Application::CreateSwapchain()
 
 void Application::DrawFrame(const std::shared_ptr<ApplicationEditor>& applicationEditor)
 {
-	deltaTime = timer->GetDeltaTime();
+	deltaTime = SingletonOrganizer::Get<Timer>()->deltaTime;
 	vkWaitForFences(device->vkDevice, 1, &syncObjects->inFlightFences[m_currentFrame], VK_TRUE, UINT64_MAX);
 	uint32_t imageIndex;
 	VkResult result = vkAcquireNextImageKHR(device->vkDevice, swapchain->vkSwapchain, UINT64_MAX, syncObjects->imageAvailableSemaphores[m_currentFrame], VK_NULL_HANDLE, &imageIndex);
@@ -323,7 +325,7 @@ void Application::RecreateSwapchain(const std::shared_ptr<ApplicationEditor>& ed
 	editor->CleanupWhenRecreateSwapchain();
 	swapchain->CreateSwapchain(surface, device);
 	swapchain->CreateFramebuffers(renderPass);
-	editor->CreateFramebuffer(Instance);
+	editor->CreateFramebuffer();
 }
 
 void Application::RecordCommandBuffer(VkCommandBuffer currentCommandBuffer, uint32_t imageIndex, const std::shared_ptr<ApplicationEditor>& applicationEditor)
@@ -366,7 +368,7 @@ void Application::RecordCommandBuffer(VkCommandBuffer currentCommandBuffer, uint
 	vkCmdBindIndexBuffer(currentCommandBuffer, indexBuffer->buffer->vkBuffer, 0, VK_INDEX_TYPE_UINT32);
 	vkCmdBindDescriptorSets(currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, mainPipeline->vkPipelineLayout, 0, 1, &mainPipeline->descriptorResource->vkDescriptorSets[m_currentFrame], 0,
 	                        nullptr);
-	vkCmdDrawIndexed(currentCommandBuffer, static_cast<uint32_t>(modelGameObject->model->Indices().size()), 1, 0, 0, 0);
+	vkCmdDrawIndexed(currentCommandBuffer, static_cast<uint32_t>(modelGameObject->GetComponent<Model>()->Indices().size()), 1, 0, 0, 0);
 
 	// VkBufferMemoryBarrier bufferMemoryBarrier = {};
 	// bufferMemoryBarrier.sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;

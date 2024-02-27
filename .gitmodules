@@ -17,3 +17,6 @@
 [submodule "Plugins/glslang/glslang"]
 	path = Plugins/glslang/glslang
 	url = https://github.com/KhronosGroup/glslang
+[submodule "Plugins/boost/hana"]
+	path = Plugins/boost/hana
+	url = https://github.com/boostorg/hana

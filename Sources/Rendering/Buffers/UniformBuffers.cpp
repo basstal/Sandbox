@@ -2,7 +2,7 @@
 
 #include "Rendering/Camera.hpp"
 #include "Rendering/Light.hpp"
-#include "Rendering/Model.hpp"
+#include "GameCore/Model.hpp"
 #include "Rendering/Base/Device.hpp"
 #include "Rendering/Components/DescriptorResource.hpp"
 
@@ -37,7 +37,7 @@ UniformBuffers::UniformBuffers(const std::shared_ptr<Device>& device)
 
 UniformBuffers::~UniformBuffers()
 {
-	Cleanup();
+	// Cleanup();
 }
 
 MVPObject UniformBuffers::UpdateMVP(uint32_t currentImage, const std::shared_ptr<Camera>& camera, const glm::mat4& model,

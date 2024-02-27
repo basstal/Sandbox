@@ -1,0 +1,3 @@
+type: Library
+additional_include_paths:
+  - hana/include

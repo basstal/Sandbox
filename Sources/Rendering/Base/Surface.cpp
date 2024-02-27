@@ -14,18 +14,18 @@ Surface::Surface(const VkInstance& instance, const std::shared_ptr<Settings>& se
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 	glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
 	// 获取一个指向用户的主监视器的指针
-	GLFWmonitor* monitor = settings->IsWindow ? nullptr : glfwGetPrimaryMonitor();
+	GLFWmonitor* monitor = settings->settingsConfig.IsWindow ? nullptr : glfwGetPrimaryMonitor();
 	// 获取该监视器的视频模式，特别是为了得到屏幕的分辨率。你可以使用glfwGetVideoMode来获取当前视频模式：
-	const GLFWvidmode* mode = settings->IsWindow ? nullptr : glfwGetVideoMode(monitor);
-	int width = settings->IsWindow ? (int)settings->Width : mode->width;
-	int height = settings->IsWindow ? (int)settings->Height : mode->height;
+	const GLFWvidmode* mode = settings->settingsConfig.IsWindow ? nullptr : glfwGetVideoMode(monitor);
+	int width = settings->settingsConfig.IsWindow ? (int)settings->settingsConfig.Width : mode->width;
+	int height = settings->settingsConfig.IsWindow ? (int)settings->settingsConfig.Height : mode->height;
 	// 创建窗口
-	glfwWindow = glfwCreateWindow(width, height, settings->ApplicationName.c_str(), monitor, nullptr);
+	glfwWindow = glfwCreateWindow(width, height, settings->settingsConfig.ApplicationName.c_str(), monitor, nullptr);
 	if (glfwWindow == nullptr)
 	{
 		throw std::runtime_error("failed to create window!");
 	}
-	glfwSetWindowPos(glfwWindow, (int)settings->WindowPositionX, (int)settings->WindowPositionY);
+	glfwSetWindowPos(glfwWindow, (int)settings->settingsConfig.WindowPositionX, (int)settings->settingsConfig.WindowPositionY);
 	glfwSetWindowUserPointer(glfwWindow, this);
 	glfwSetFramebufferSizeCallback(glfwWindow, FramebufferResizeCallback);
 	glfwSetWindowPosCallback(glfwWindow, [](GLFWwindow* window, int x, int y)
@@ -34,8 +34,8 @@ Surface::Surface(const VkInstance& instance, const std::shared_ptr<Settings>& se
 		if (currentIsWindow)
 		{
 			auto surface = static_cast<Surface*>(glfwGetWindowUserPointer(window));
-			surface->m_settings->WindowPositionX = x;
-			surface->m_settings->WindowPositionY = y;
+			surface->m_settings->settingsConfig.WindowPositionX = x;
+			surface->m_settings->settingsConfig.WindowPositionY = y;
 		}
 	});
 	glfwSetWindowSizeCallback(glfwWindow, [](GLFWwindow* window, int width, int height)
@@ -44,23 +44,16 @@ Surface::Surface(const VkInstance& instance, const std::shared_ptr<Settings>& se
 		auto currentIsWindow = glfwGetWindowMonitor(window) == nullptr;
 		if (currentIsWindow)
 		{
-			surface->m_settings->Width = width;
-			surface->m_settings->Height = height;
+			surface->m_settings->settingsConfig.Width = width;
+			surface->m_settings->settingsConfig.Height = height;
 		}
 	});
 	if (glfwCreateWindowSurface(instance, glfwWindow, nullptr, &vkSurface) != VK_SUCCESS)
 	{
 		throw std::runtime_error("failed to create window surface!");
 	}
-	// auto test1 = DataBinding::Get("Rendering/Settings");
-	std::shared_ptr<TDataBinding<std::shared_ptr<Settings>>> settingsBinding = std::dynamic_pointer_cast<TDataBinding<std::shared_ptr<Settings>>>(DataBinding::Get("Rendering/Settings"));
-	Delegate<std::shared_ptr<Settings>> bindFunction(
-		[this](std::shared_ptr<Settings> settings)
-		{
-			this->ApplySettings(settings);
-		}
-	);
-	settingsBinding->Bind(bindFunction);
+	auto settingsBinding = DataBinding::Get<std::shared_ptr<Settings>>("Rendering/Settings");
+	settingsBinding->BindMember<Surface, &Surface::ApplySettings>(this);
 }
 
 Surface::~Surface()
@@ -82,14 +75,14 @@ void Surface::ApplySettings(std::shared_ptr<Settings> settings)
 	}
 	auto currentIsWindow = glfwGetWindowMonitor(glfwWindow) == nullptr;
 
-	if (settings->IsWindow != currentIsWindow)
+	if (settings->settingsConfig.IsWindow != currentIsWindow)
 	{
-		if (settings->IsWindow)
+		if (settings->settingsConfig.IsWindow)
 		{
 			// 当前是全屏模式，切换到窗口模式
 			glfwSetWindowMonitor(glfwWindow, NULL,
-			                     (int)settings->WindowPositionX, (int)settings->WindowPositionY,
-			                     (int)settings->Width, (int)settings->Height, 0);
+			                     (int)settings->settingsConfig.WindowPositionX, (int)settings->settingsConfig.WindowPositionY,
+			                     (int)settings->settingsConfig.Width, (int)settings->settingsConfig.Height, 0);
 		}
 		else
 		{
@@ -101,16 +94,16 @@ void Surface::ApplySettings(std::shared_ptr<Settings> settings)
 			glfwSetWindowMonitor(glfwWindow, monitor, 0, 0, mode->width, mode->height, mode->refreshRate);
 		}
 	}
-	if (settings->IsWindow)
+	if (settings->settingsConfig.IsWindow)
 	{
 		int posX, posY, width, height;
 		// 保存当前窗口位置和大小
 		glfwGetWindowPos(glfwWindow, &posX, &posY);
 		glfwGetWindowSize(glfwWindow, &width, &height);
-		if (posX != settings->WindowPositionX || posY != settings->WindowPositionY || width != settings->Width || height != settings->Height)
+		if (posX != settings->settingsConfig.WindowPositionX || posY != settings->settingsConfig.WindowPositionY || width != settings->settingsConfig.Width || height != settings->settingsConfig.Height)
 		{
-			glfwSetWindowPos(glfwWindow, (int)settings->WindowPositionX, (int)settings->WindowPositionY);
-			glfwSetWindowSize(glfwWindow, (int)settings->Width, (int)settings->Height);
+			glfwSetWindowPos(glfwWindow, (int)settings->settingsConfig.WindowPositionX, (int)settings->settingsConfig.WindowPositionY);
+			glfwSetWindowSize(glfwWindow, (int)settings->settingsConfig.Width, (int)settings->settingsConfig.Height);
 		}
 	}
 }

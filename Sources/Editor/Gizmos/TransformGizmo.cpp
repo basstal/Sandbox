@@ -9,6 +9,7 @@
 #include "Editor/ApplicationEditor.hpp"
 #include "Infrastructures/CollisionDetect.hpp"
 #include "Infrastructures/DataBinding.hpp"
+#include "Infrastructures/SingletonOrganizer.hpp"
 #include "Infrastructures/FileSystem/File.hpp"
 #include "Infrastructures/FileSystem/FileSystemBase.hpp"
 #include "Infrastructures/Math/Ray.hpp"
@@ -33,8 +34,7 @@ void TransformGizmo::ApplyGizmoMovement(GLFWwindow* window, bool active)
 	{
 		lastCallback = glfwSetCursorPosCallback(window, [](GLFWwindow* window, double xPos, double yPos)
 		{
-			std::shared_ptr<TDataBinding<std::shared_ptr<ApplicationEditor>>> applicationEditorDataBinding = std::dynamic_pointer_cast<TDataBinding<std::shared_ptr<ApplicationEditor>>>(
-				DataBinding::Get("ApplicationEditor"));
+			auto applicationEditorDataBinding = DataBinding::Get<std::shared_ptr<ApplicationEditor>>("ApplicationEditor");
 			std::shared_ptr<ApplicationEditor> innerApplicationEditor = applicationEditorDataBinding->GetData();
 			innerApplicationEditor->transformGizmo->UpdateGizmoAndObjectPosition(window, innerApplicationEditor->editorCamera);
 		});
@@ -222,7 +222,7 @@ void TransformGizmo::PrepareDrawData(const std::shared_ptr<Device>& device, cons
 
 	// vkPipeline = pipeline->CreatePipeline(vertShaderModule, fragShaderModule, false, vertexInputInfo, inputAssembly, depthStencil, vkPipelineLayout, renderPass->vkRenderPass, false);
 
-	pipeline = std::make_shared<Pipeline>(m_device, shader, Application::Instance->renderPass, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, VK_POLYGON_MODE_FILL);
+	pipeline = std::make_shared<Pipeline>(m_device, shader, SingletonOrganizer::Get<Application>()->renderPass, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, VK_POLYGON_MODE_FILL);
 	CreatePushConstantPipelineLayout(pipeline->descriptorResource);
 
 	uniformBuffer = std::make_shared<UniformBuffers>(m_device);
@@ -252,7 +252,7 @@ void TransformGizmo::Draw(const std::shared_ptr<Camera>& camera, const VkCommand
                           const std::shared_ptr<DescriptorResource>& descriptorResource, uint32_t currentFrame, GLFWwindow* window, const glm::mat4& inProjection)
 {
 	projection = inProjection;
-	float distance = glm::length(referenceGameObject->transform->position - camera->position);
+	float distance = glm::length(referenceGameObject->transform->GetPosition() - camera->position);
 	float currentScaleFactor = distance * DISTANCE_SIZE_FACTOR; // 根据距离计算缩放因子
 	auto scaleMatrix = glm::scale(modelMatrix, glm::vec3(currentScaleFactor * BASE_SIZE));
 	if (abs(scaleFactor - currentScaleFactor) > 0.01f)
@@ -320,7 +320,7 @@ void TransformGizmo::UpdateGizmoAndObjectPosition(GLFWwindow* window, const std:
 	glm::vec3 rayDir = ray.direction;
 
 	// 假设Gizmo距离摄像机的深度为distance
-	float distance = glm::length(referenceGameObject->transform->position - camera->position);
+	float distance = glm::length(referenceGameObject->transform->GetPosition() - camera->position);
 
 	// 使用射线与深度确定的平面交点来更新Gizmo位置
 	// 假设平面方程为Ax + By + Cz + D = 0，这里选择与摄像机视线垂直的平面
@@ -336,7 +336,7 @@ void TransformGizmo::UpdateGizmoAndObjectPosition(GLFWwindow* window, const std:
 		glm::vec3 intersectionPoint = rayOrigin + rayDir * t;
 
 		// 计算移动量
-		glm::vec3 movement = intersectionPoint - referenceGameObject->transform->position;
+		glm::vec3 movement = intersectionPoint - referenceGameObject->transform->GetPosition();
 		// 根据激活的Gizmo轴选择移动方向
 		glm::vec3 axis = gizmoActiveX ? glm::vec3(1.0f, 0.0f, 0.0f) : gizmoActiveY ? glm::vec3(0.0f, 1.0f, 0.0f) : glm::vec3(0.0f, 0.0f, 1.0f);
 
@@ -344,7 +344,7 @@ void TransformGizmo::UpdateGizmoAndObjectPosition(GLFWwindow* window, const std:
 		float movementAmount = glm::dot(movement, axis);
 		auto movementAlongAxis = movementAmount * axis;
 		// 更新Gizmo和关联对象的位置
-		referenceGameObject->transform->position += movementAlongAxis;
+		referenceGameObject->transform->GetPosition() += movementAlongAxis;
 
 		modelMatrix = glm::translate(modelMatrix, movementAlongAxis);
 	}

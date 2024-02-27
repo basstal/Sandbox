@@ -7,7 +7,7 @@
 #include "Infrastructures/FileSystem/FileSystemBase.hpp"
 #include "Rendering/Components/DescriptorResource.hpp"
 #include "Rendering/Components/RenderPass.hpp"
-#include "Rendering/Vertex.hpp"
+#include "GameCore/Vertex.hpp"
 #include "Rendering/Objects/Shader.hpp"
 
 
@@ -143,18 +143,12 @@ Pipeline::Pipeline(const std::shared_ptr<Device>& device, const std::shared_ptr<
 		throw std::runtime_error("failed to create graphics pipeline!");
 	}
 
-	std::shared_ptr<TDataBinding<std::shared_ptr<Settings>>> settingsBinding = std::dynamic_pointer_cast<TDataBinding<std::shared_ptr<Settings>>>(DataBinding::Get("Rendering/Settings"));
-	Delegate<std::shared_ptr<Settings>> bindFunction(
-		[this](std::shared_ptr<Settings> settings)
-		{
-			this->ApplySettings(settings);
-		}
-	);
-	settingsBinding->Bind(bindFunction);
+	std::shared_ptr<TDataBinding<std::shared_ptr<Settings>>> settingsBinding = DataBinding::Get<std::shared_ptr<Settings>>("Rendering/Settings");
+	settingsBinding->BindMember<Pipeline, &Pipeline::ApplySettings>(this);
 }
 Pipeline::~Pipeline()
 {
-	Cleanup();
+	// Cleanup();
 }
 
 VkPipelineLayout Pipeline::CreatePipelineLayout(const std::shared_ptr<DescriptorResource>& inDescriptorResource, VkDescriptorSetLayout descriptorSetLayout)
@@ -176,7 +170,7 @@ VkPipelineLayout Pipeline::CreatePipelineLayout(const std::shared_ptr<Descriptor
 
 void Pipeline::ApplySettings(std::shared_ptr<Settings> settings)
 {
-	m_fillModeNonSolid = settings->ViewMode == Wireframe;
+	m_fillModeNonSolid = settings->settingsConfig.ViewMode == Wireframe;
 }
 
 void Pipeline::CreatePipeline(const std::vector<char>& vertexShader, const std::vector<char>& fragmentShader)
@@ -206,23 +200,24 @@ void Pipeline::CreateFillModeNonSolidPipeline()
 
 VkPipeline Pipeline::CreatePipeline(const VkShaderModule& vertShaderModule, const VkShaderModule& fragShaderModule, bool fillModeNonSolid)
 {
-	VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
-	vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-	auto bindingDescription = Vertex::GetBindingDescription();
-	auto attributeDescriptions = Vertex::GetAttributeDescriptions();
-
-	vertexInputInfo.vertexBindingDescriptionCount = 1;
-	vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributeDescriptions.size());
-	vertexInputInfo.pVertexBindingDescriptions = &bindingDescription;
-	vertexInputInfo.pVertexAttributeDescriptions = attributeDescriptions.data();
-
-	VkPipelineInputAssemblyStateCreateInfo inputAssembly{};
-	inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
-	inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
-	inputAssembly.primitiveRestartEnable = VK_FALSE;
-
-
-	return CreatePipeline(vertShaderModule, fragShaderModule, fillModeNonSolid, vertexInputInfo, inputAssembly);
+	throw std::runtime_error("not implemented");
+	// VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
+	// vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+	// auto bindingDescription = Vertex::GetBindingDescription();
+	// auto attributeDescriptions = Vertex::GetAttributeDescriptions();
+	//
+	// vertexInputInfo.vertexBindingDescriptionCount = 1;
+	// vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributeDescriptions.size());
+	// vertexInputInfo.pVertexBindingDescriptions = &bindingDescription;
+	// vertexInputInfo.pVertexAttributeDescriptions = attributeDescriptions.data();
+	//
+	// VkPipelineInputAssemblyStateCreateInfo inputAssembly{};
+	// inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
+	// inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+	// inputAssembly.primitiveRestartEnable = VK_FALSE;
+	//
+	//
+	// return CreatePipeline(vertShaderModule, fragShaderModule, fillModeNonSolid, vertexInputInfo, inputAssembly);
 }
 
 VkPipeline Pipeline::CreatePipeline(const VkShaderModule& vertShaderModule, const VkShaderModule& fragShaderModule, bool fillModeNonSolid, const VkPipelineVertexInputStateCreateInfo& vertexInputInfo,

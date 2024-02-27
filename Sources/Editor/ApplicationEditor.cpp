@@ -9,6 +9,7 @@
 #include "Grid.hpp"
 #include "Gizmos/TransformGizmo.hpp"
 #include "Infrastructures/DataBinding.hpp"
+#include "Infrastructures/SingletonOrganizer.hpp"
 #include "Rendering/Application.hpp"
 
 static bool cursorOff = false;
@@ -29,8 +30,7 @@ static void SwitchCursor(Application& application, bool onEditorCamera)
 		glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 		lastCallback = glfwSetCursorPosCallback(window, [](GLFWwindow* window, double xPos, double yPos)
 		{
-			std::shared_ptr<TDataBinding<std::shared_ptr<ApplicationEditor>>> applicationEditorDataBinding = std::dynamic_pointer_cast<TDataBinding<std::shared_ptr<ApplicationEditor>>>(
-				DataBinding::Get("ApplicationEditor"));
+			auto applicationEditorDataBinding = DataBinding::Get<std::shared_ptr<ApplicationEditor>>("ApplicationEditor");
 			std::shared_ptr<ApplicationEditor> applicationEditor = applicationEditorDataBinding->GetData();
 			if (moveMouse)
 			{
@@ -64,15 +64,16 @@ static void CheckVkResult(VkResult err)
 		abort();
 }
 
-ApplicationEditor::ApplicationEditor(const std::unique_ptr<Application>& application)
+ApplicationEditor::ApplicationEditor()
 {
+	auto application = SingletonOrganizer::Get<Application>();
 	m_device = application->device;
 	auto subpass = std::make_shared<Subpass>(m_device, false);
 	subpass->BeginSubpassAttachments();
 	subpass->AddColorAttachment("editor", Swapchain::COLOR_FORMAT, VK_ATTACHMENT_LOAD_OP_DONT_CARE, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
 	subpass->EndSubpassAttachments();
 	renderPass = std::make_shared<RenderPass>(application->device, subpass);
-	CreateFramebuffer(application);
+	CreateFramebuffer();
 
 	// Setup Dear ImGui context
 	IMGUI_CHECKVERSION();
@@ -118,6 +119,7 @@ ApplicationEditor::ApplicationEditor(const std::unique_ptr<Application>& applica
 	grid = std::make_shared<Grid>(m_device, application->commandResource, renderPass);
 	transformGizmo = std::make_shared<TransformGizmo>(application->modelGameObject, m_device, application->commandResource, application->mainPipeline, application->mainPipeline->descriptorResource,
 	                                                  renderPass);
+	
 }
 
 ApplicationEditor::~ApplicationEditor()
@@ -125,8 +127,9 @@ ApplicationEditor::~ApplicationEditor()
 	Cleanup();
 }
 
-void ApplicationEditor::CreateFramebuffer(const std::unique_ptr<Application>& application)
+void ApplicationEditor::CreateFramebuffer()
 {
+	auto application = SingletonOrganizer::Get<Application>();
 	uint32_t imageCount = static_cast<uint32_t>(application->swapchain->vkImages.size());
 	// Create The Image Views
 	{

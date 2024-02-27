@@ -4,7 +4,7 @@
 #include <vulkan/vulkan_core.h>
 
 #include "Camera.hpp"
-#include "Model.hpp"
+#include "GameCore/Model.hpp"
 #include "Settings.hpp"
 #include "Components/RenderPass.hpp"
 #include "Base/Device.hpp"
@@ -42,6 +42,8 @@ private:
 	bool m_cleaned = false;
 
 public:
+	Application();
+	~Application();
 	VkInstance vkInstance;
 	std::shared_ptr<Surface> surface;
 	std::shared_ptr<Device> device;
@@ -73,9 +75,7 @@ public:
 	MVPObject debugUBO;
 	glm::mat4 projection;
 	float deltaTime;
-	static std::unique_ptr<Application> Instance;
-	Application(const std::shared_ptr<Settings>& settings);
-	~Application();
+
 	void Cleanup();
 	void Initialize();
 	void LoadAssets();

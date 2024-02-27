@@ -1,5 +1,7 @@
 #include "ValueEditor.hpp"
 
+#include "Infrastructures/SingletonOrganizer.hpp"
+
 std::shared_ptr<ValueEditor> ValueEditor::m_instance = nullptr;
 
 void ValueEditor::DisplayMatrixInImGui(glm::mat4& mat, const std::string& matrixName)
@@ -21,14 +23,14 @@ void ValueEditor::DrawFrame()
 {
 	// ImGuiIO& io = ImGui::GetIO();
 	ImGui::Begin("DebugValues"); // Create a window called "Hello, world!" and append into it.
-	DisplayMatrixInImGui(Application::Instance->debugUBO.model, "model");
-	DisplayMatrixInImGui(Application::Instance->debugUBO.view, "view");
-	DisplayMatrixInImGui(Application::Instance->debugUBO.proj, "proj");
+	DisplayMatrixInImGui(SingletonOrganizer::Get<Application>()->debugUBO.model, "model");
+	DisplayMatrixInImGui(SingletonOrganizer::Get<Application>()->debugUBO.view, "view");
+	DisplayMatrixInImGui(SingletonOrganizer::Get<Application>()->debugUBO.proj, "proj");
 
 	if (ImGui::Button("Reset"))
 	{
 		m_applicationEditor->editorCamera->Reset();
-		m_applicationEditor->transformGizmo->referenceGameObject->transform->position = glm::vec3(0.0f);
+		m_applicationEditor->transformGizmo->referenceGameObject->transform->GetPosition() = glm::vec3(0.0f);
 		m_applicationEditor->transformGizmo->modelMatrix = glm::mat4(1.0f);
 	}
 	ImGui::End();

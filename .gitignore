@@ -465,3 +465,4 @@ Sandbox.sln
 *.vcxproj
 imgui.ini
 /Assets/Settings
+/Plugins/**/CMakeLists.txt

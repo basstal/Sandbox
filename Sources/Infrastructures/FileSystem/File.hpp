@@ -20,7 +20,8 @@ public:
 	bool Exists() const;
 
 	// 创建目录
-	static bool CreateDirectory(const std::filesystem::path& path);
+	void CreateDirectory();
+	std::string GetPath();
 
 	// 删除文件或目录
 	static bool Remove(const std::filesystem::path& path);

@@ -3,6 +3,9 @@
 #include <cmath>
 #include <glm/fwd.hpp>
 
+#include "yaml-cpp/yaml.h"
+
+
 class Quaternion
 {
 public:
@@ -99,3 +102,33 @@ public:
 
 	void ToRotationMatrix(glm::mat4& matrix) const;
 };
+
+namespace YAML
+{
+	template <>
+	struct convert<Quaternion>
+	{
+		static Node encode(const Quaternion& rhs)
+		{
+			Node node;
+			node["x"] = rhs.x;
+			node["y"] = rhs.y;
+			node["z"] = rhs.z;
+			node["w"] = rhs.w;
+			return node;
+		}
+
+		static bool decode(const Node& node, Quaternion& rhs)
+		{
+			if (!node["x"] || !node["y"] || !node["z"] || !node["w"])
+			{
+				return false;
+			}
+			rhs.x = node["x"].as<float>();
+			rhs.y = node["y"].as<float>();
+			rhs.z = node["z"].as<float>();
+			rhs.w = node["w"].as<float>();
+			return true;
+		}
+	};
+}

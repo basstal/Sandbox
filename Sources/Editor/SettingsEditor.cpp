@@ -21,7 +21,7 @@ void SettingsEditor::DrawFrame()
 
 	// 2. Show a simple window that we create ourselves. We use a Begin/End pair to create a named window.
 	{
-		std::shared_ptr<TDataBinding<std::shared_ptr<Settings>>> settingsBinding = std::dynamic_pointer_cast<TDataBinding<std::shared_ptr<Settings>>>(DataBinding::Get("Rendering/Settings"));
+		std::shared_ptr<TDataBinding<std::shared_ptr<Settings>>> settingsBinding = DataBinding::Get<std::shared_ptr<Settings>>("Rendering/Settings");
 		std::shared_ptr<Settings> settings = settingsBinding->GetData();
 
 		ImGui::Begin("Rendering/Settings"); // Create a window called "Hello, world!" and append into it.
@@ -37,13 +37,13 @@ void SettingsEditor::DrawFrame()
 		// 	counter++;
 		// ImGui::SameLine();
 		// ImGui::Text("counter = %d", counter);
-		auto changed = ImGui::Checkbox("IsWindow", &settings->IsWindow);
-		if (settings->IsWindow)
+		auto changed = ImGui::Checkbox("IsWindow", &settings->settingsConfig.IsWindow);
+		if (settings->settingsConfig.IsWindow)
 		{
-			changed = ImGui::DragInt("WindowPositionX", &settings->WindowPositionX) || changed;
-			changed = ImGui::DragInt("WindowPositionY", &settings->WindowPositionY) || changed;
-			changed = ImGui::DragInt("Width", &settings->Width) || changed;
-			changed = ImGui::DragInt("Height", &settings->Height) || changed;
+			changed = ImGui::DragInt("WindowPositionX", &settings->settingsConfig.WindowPositionX) || changed;
+			changed = ImGui::DragInt("WindowPositionY", &settings->settingsConfig.WindowPositionY) || changed;
+			changed = ImGui::DragInt("Width", &settings->settingsConfig.Width) || changed;
+			changed = ImGui::DragInt("Height", &settings->settingsConfig.Height) || changed;
 		}
 		// changed = ImGui::Checkbox("FillModeNonSolid", &settings->FillModeNonSolid) || changed;
 		if (changed)
