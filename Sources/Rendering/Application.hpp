@@ -16,11 +16,11 @@
 #include "GameCore/GameObject.hpp"
 #include "Infrastructures/Timer.hpp"
 
-#include "Objects/IndexBuffer.hpp"
+#include "Rendering/Buffers/IndexBuffer.hpp"
 #include "Objects/RenderTexture.hpp"
 #include "Objects/SyncObjects.hpp"
-#include "Objects/UniformBuffers.hpp"
-#include "Objects/VertexBuffer.hpp"
+#include "Rendering/Buffers/UniformBuffers.hpp"
+#include "Rendering/Buffers/VertexBuffer.hpp"
 
 class ApplicationEditor;
 
@@ -47,16 +47,17 @@ public:
 	std::shared_ptr<Device> device;
 	std::shared_ptr<Swapchain> swapchain;
 	std::shared_ptr<RenderPass> renderPass;
-	std::shared_ptr<DescriptorResource> descriptorResource;
-	std::shared_ptr<Pipeline> pipeline;
+	// std::shared_ptr<DescriptorResource> descriptorResource;
+	std::shared_ptr<Pipeline> mainPipeline;
 	std::shared_ptr<CommandResource> commandResource;
 
 	// specific to usage
+	// std::shared_ptr<Shader> pbrShader;
 	std::shared_ptr<RenderTexture> renderTexture;
 	std::shared_ptr<GameObject> modelGameObject;
 	std::shared_ptr<Image> image;
-	std::vector<char> vertexShader;
-	std::vector<char> fragmentShader;
+	// std::vector<char> vertexShader;
+	// std::vector<char> fragmentShader;
 	std::shared_ptr<VertexBuffer> vertexBuffer;
 	std::shared_ptr<IndexBuffer> indexBuffer;
 	std::shared_ptr<UniformBuffers> uniformBuffers;
@@ -79,8 +80,10 @@ public:
 	void Initialize();
 	void LoadAssets();
 	void CreateSwapchain();
-	static uint32_t FindMemoryType(VkPhysicalDevice physicalDevice, uint32_t typeFilter, VkMemoryPropertyFlags properties);
 	void DrawFrame(const std::shared_ptr<ApplicationEditor>& applicationEditor);
 	void RecreateSwapchain(const std::shared_ptr<ApplicationEditor>& editor);
 	void RecordCommandBuffer(VkCommandBuffer currentCommandBuffer, uint32_t imageIndex, const std::shared_ptr<ApplicationEditor>& applicationEditor);
+	VkDescriptorSet CreateDescriptorSet(const VkDescriptorSetLayout& descriptorSetLayout, const std::shared_ptr<UniformBuffers>& inUniformBuffers,
+	                                    const std::shared_ptr<DescriptorResource>& inDescriptorResource, const std::shared_ptr<RenderTexture>& inRenderTexture);
+	void Draw(const glm::vec3& position, const std::shared_ptr<RenderTexture>& inRenderTexture, const VkCommandBuffer& commandBuffer);
 };

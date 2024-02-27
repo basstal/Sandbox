@@ -1,0 +1,20 @@
+type: Library
+additional_include_paths:
+  - glslang
+lib_paths:
+  # - MinSizeRel/glslang.lib
+  # - MinSizeRel/MachineIndependent.lib
+  # - MinSizeRel/glslang-default-resource-limits.lib
+  # - MinSizeRel/GenericCodeGen.lib
+  # TODO:需要区别调试模式和发布模式链接的库文件
+  - Debug/glslangd.lib
+  - Debug/MachineIndependentd.lib
+  - Debug/glslang-default-resource-limitsd.lib
+  - Debug/GenericCodeGend.lib
+  - Debug/SPIRVd.lib
+  - Debug/SPVRemapperd.lib
+  - Debug/SPIRV-Toolsd.lib
+  - Debug/SPIRV-Tools-sharedd.lib
+  - Debug/SPIRV-Tools-optd.lib
+dll_paths:
+  - Debug/SPIRV-Tools-sharedd.dll

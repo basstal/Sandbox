@@ -14,3 +14,6 @@
 [submodule "Plugins/imguizmo/ImGuizmo"]
 	path = Plugins/imguizmo/ImGuizmo
 	url = https://github.com/CedricGuillemet/ImGuizmo
+[submodule "Plugins/glslang/glslang"]
+	path = Plugins/glslang/glslang
+	url = https://github.com/KhronosGroup/glslang

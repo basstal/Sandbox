@@ -9,7 +9,8 @@
 #include "Editor/ApplicationEditor.hpp"
 #include "Infrastructures/CollisionDetect.hpp"
 #include "Infrastructures/DataBinding.hpp"
-#include "Infrastructures/FileSystemBase.hpp"
+#include "Infrastructures/FileSystem/File.hpp"
+#include "Infrastructures/FileSystem/FileSystemBase.hpp"
 #include "Infrastructures/Math/Ray.hpp"
 #include "Rendering/Base/Device.hpp"
 #include "Rendering/Components/CommandResource.hpp"
@@ -51,7 +52,7 @@ TransformGizmo::TransformGizmo(const std::shared_ptr<GameObject> target, const s
 	m_device = device;
 	referenceGameObject = target;
 
-	PrepareDrawData(device, commandResource, pipeline, descriptorResource, renderPass);
+	PrepareDrawData(device, commandResource, descriptorResource, renderPass);
 }
 
 TransformGizmo::~TransformGizmo()
@@ -136,7 +137,7 @@ glm::vec3 RotateVectorByQuaternion(const glm::vec3& v, const glm::quat& q)
 	return glm::vec3(rotatedQuat.x, rotatedQuat.y, rotatedQuat.z);
 }
 
-void TransformGizmo::PrepareDrawData(const std::shared_ptr<Device>& device, const std::shared_ptr<CommandResource>& commandResource, const std::shared_ptr<Pipeline>& pipeline,
+void TransformGizmo::PrepareDrawData(const std::shared_ptr<Device>& device, const std::shared_ptr<CommandResource>& commandResource,
                                      const std::shared_ptr<DescriptorResource>& descriptorResource, const std::shared_ptr<RenderPass>& renderPass)
 {
 	modelMatrix = glm::mat4(1.0f);
@@ -186,41 +187,46 @@ void TransformGizmo::PrepareDrawData(const std::shared_ptr<Device>& device, cons
 	vkCmdCopyBuffer(commandBuffer, bufferStaging.vkBuffer, buffer->vkBuffer, 1, &copyRegion);
 	commandResource->EndSingleTimeCommands(commandBuffer);
 
-	std::filesystem::path binariesDir = FileSystemBase::getBinariesDir();
-	auto nonSolidVertex = FileSystemBase::readFile((binariesDir / "Shaders/Gizmo_vert.spv").string());
-	auto nonSolidFrag = FileSystemBase::readFile((binariesDir / "Shaders/Gizmo_frag.spv").string());
-	VkShaderModule vertShaderModule = pipeline->CreateShaderModule(m_device, nonSolidVertex);
-	VkShaderModule fragShaderModule = pipeline->CreateShaderModule(m_device, nonSolidFrag);
+	std::filesystem::path sourceDir = FileSystemBase::getSourceDir();
+	auto shader = std::make_shared<Shader>(m_device);
+	shader->LoadShaderForStage(std::make_shared<File>((sourceDir / "Shaders/Gizmo.vert").string()), "", VK_SHADER_STAGE_VERTEX_BIT);
+	shader->LoadShaderForStage(std::make_shared<File>((sourceDir / "Shaders/Gizmo.frag").string()), "", VK_SHADER_STAGE_FRAGMENT_BIT);
 
 	// 创建管线
-	VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
-	vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-	auto bindingDescription = GetBindingDescription();
-	auto attributeDescriptions = GetAttributeDescriptions();
+	// VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
+	// vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+	// auto bindingDescription = GetBindingDescription();
+	// auto attributeDescriptions = GetAttributeDescriptions();
+	//
+	// vertexInputInfo.vertexBindingDescriptionCount = 1;
+	// vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributeDescriptions.size());
+	// vertexInputInfo.pVertexBindingDescriptions = &bindingDescription;
+	// vertexInputInfo.pVertexAttributeDescriptions = attributeDescriptions.data();
+	//
+	// VkPipelineInputAssemblyStateCreateInfo inputAssembly{};
+	// inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
+	// inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+	// inputAssembly.primitiveRestartEnable = VK_FALSE;
 
-	vertexInputInfo.vertexBindingDescriptionCount = 1;
-	vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributeDescriptions.size());
-	vertexInputInfo.pVertexBindingDescriptions = &bindingDescription;
-	vertexInputInfo.pVertexAttributeDescriptions = attributeDescriptions.data();
+	// VkPipelineDepthStencilStateCreateInfo depthStencil{};
+	// depthStencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+	// depthStencil.depthTestEnable = VK_FALSE;
+	// depthStencil.depthWriteEnable = VK_FALSE;
+	// depthStencil.depthCompareOp = VK_COMPARE_OP_LESS;
+	// depthStencil.depthBoundsTestEnable = VK_FALSE;
+	// depthStencil.minDepthBounds = 0.0f; // Optional
+	// depthStencil.maxDepthBounds = 1.0f; // Optional
+	// depthStencil.stencilTestEnable = VK_FALSE;
+	// depthStencil.front = {}; // Optional
+	// depthStencil.back = {}; // Optional
 
-	VkPipelineInputAssemblyStateCreateInfo inputAssembly{};
-	inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
-	inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
-	inputAssembly.primitiveRestartEnable = VK_FALSE;
+	// vkPipeline = pipeline->CreatePipeline(vertShaderModule, fragShaderModule, false, vertexInputInfo, inputAssembly, depthStencil, vkPipelineLayout, renderPass->vkRenderPass, false);
 
-	VkPipelineDepthStencilStateCreateInfo depthStencil{};
-	depthStencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
-	depthStencil.depthTestEnable = VK_FALSE;
-	depthStencil.depthWriteEnable = VK_FALSE;
-	depthStencil.depthCompareOp = VK_COMPARE_OP_LESS;
-	depthStencil.depthBoundsTestEnable = VK_FALSE;
-	depthStencil.minDepthBounds = 0.0f; // Optional
-	depthStencil.maxDepthBounds = 1.0f; // Optional
-	depthStencil.stencilTestEnable = VK_FALSE;
-	depthStencil.front = {}; // Optional
-	depthStencil.back = {}; // Optional
-	CreatePushConstantPipelineLayout(descriptorResource);
-	vkPipeline = pipeline->CreatePipeline(vertShaderModule, fragShaderModule, false, vertexInputInfo, inputAssembly, depthStencil, vkPipelineLayout, renderPass->vkRenderPass, false);
+	pipeline = std::make_shared<Pipeline>(m_device, shader, Application::Instance->renderPass, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, VK_POLYGON_MODE_FILL);
+	CreatePushConstantPipelineLayout(pipeline->descriptorResource);
+
+	uniformBuffer = std::make_shared<UniformBuffers>(m_device);
+	uniformBuffer->UpdateWriteDescriptorSet(pipeline->descriptorResource);
 }
 
 void TransformGizmo::CreatePushConstantPipelineLayout(const std::shared_ptr<DescriptorResource>& descriptorResource)
@@ -242,7 +248,7 @@ void TransformGizmo::CreatePushConstantPipelineLayout(const std::shared_ptr<Desc
 		throw std::runtime_error("failed to create pipeline layout!");
 	}
 }
-void TransformGizmo::Draw(const std::shared_ptr<Camera>& camera, const VkCommandBuffer& currentCommandBuffer, const std::shared_ptr<Pipeline>& pipeline,
+void TransformGizmo::Draw(const std::shared_ptr<Camera>& camera, const VkCommandBuffer& currentCommandBuffer,
                           const std::shared_ptr<DescriptorResource>& descriptorResource, uint32_t currentFrame, GLFWwindow* window, const glm::mat4& inProjection)
 {
 	projection = inProjection;
@@ -256,13 +262,13 @@ void TransformGizmo::Draw(const std::shared_ptr<Camera>& camera, const VkCommand
 		gizmoAABB[1] = ConvertToAABB(arrowY, scaleMatrix);
 		gizmoAABB[2] = ConvertToAABB(arrowZ, scaleMatrix);
 	}
-	vkCmdBindPipeline(currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, vkPipeline);
+	vkCmdBindPipeline(currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->vkPipeline);
 
 
 	VkBuffer vertexBuffers[] = {buffer->vkBuffer};
 	VkDeviceSize offsets[] = {0};
 	vkCmdBindVertexBuffers(currentCommandBuffer, 0, 1, vertexBuffers, offsets);
-	vkCmdBindDescriptorSets(currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, vkPipelineLayout, 0, 1, &descriptorResource->vkDescriptorSets[currentFrame], 0, nullptr);
+	vkCmdBindDescriptorSets(currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, vkPipelineLayout, 0, 1, &pipeline->descriptorResource->vkDescriptorSets[currentFrame], 0, nullptr);
 	vkCmdPushConstants(currentCommandBuffer, vkPipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::mat4), &scaleMatrix);
 	vkCmdDraw(currentCommandBuffer, static_cast<uint32_t>(gizmoData.size()), 1, 0, 0);
 	auto ray = CursorPositionToWorldRay(window, camera->GetViewMatrix(), projection);

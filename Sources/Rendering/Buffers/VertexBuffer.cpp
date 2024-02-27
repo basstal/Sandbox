@@ -2,7 +2,7 @@
 
 #include "Rendering/Model.hpp"
 #include "Rendering/Base/Device.hpp"
-#include "Rendering/Components/Buffer.hpp"
+#include "Rendering/Buffers/Buffer.hpp"
 #include "Rendering/Components/CommandResource.hpp"
 
 

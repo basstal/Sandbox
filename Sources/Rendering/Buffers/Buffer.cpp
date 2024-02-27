@@ -1,9 +1,8 @@
 ﻿#include "Buffer.hpp"
-
-#include <stdexcept>
-
-#include "Rendering/Application.hpp"
 #include "Rendering/Base/Device.hpp"
+#include "Rendering/Base/Properties.hpp"
+
+
 
 
 Buffer::Buffer(const std::shared_ptr<Device> device, VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties)
@@ -26,8 +25,8 @@ Buffer::Buffer(const std::shared_ptr<Device> device, VkDeviceSize size, VkBuffer
 	VkMemoryAllocateInfo allocInfo{};
 	allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 	allocInfo.allocationSize = memRequirements.size;
-	allocInfo.memoryTypeIndex = Application::FindMemoryType(device->vkPhysicalDevice,
-	                                                        memRequirements.memoryTypeBits, properties);
+	allocInfo.memoryTypeIndex = FindMemoryType(device->vkPhysicalDevice,
+	                                           memRequirements.memoryTypeBits, properties);
 	// NOTE:be careful https://docs.vulkan.org/tutorial/latest/04_Vertex_buffers/02_Staging_buffer.html#_conclusion
 	if (vkAllocateMemory(device->vkDevice, &allocInfo, nullptr, &vkDeviceMemory) != VK_SUCCESS)
 	{

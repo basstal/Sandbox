@@ -6,6 +6,7 @@
 #include <vector>
 #include <vulkan/vulkan_core.h>
 
+#include "Properties.hpp"
 #include "Rendering/Application.hpp"
 
 bool QueueFamilyIndices::isComplete()
@@ -336,7 +337,7 @@ void Device::CreateImage(uint32_t width, uint32_t height, uint32_t mipLevels, Vk
 	VkMemoryAllocateInfo allocInfo{};
 	allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 	allocInfo.allocationSize = memRequirements.size;
-	allocInfo.memoryTypeIndex = Application::FindMemoryType(vkPhysicalDevice, memRequirements.memoryTypeBits, properties);
+	allocInfo.memoryTypeIndex = FindMemoryType(vkPhysicalDevice, memRequirements.memoryTypeBits, properties);
 
 	if (vkAllocateMemory(vkDevice, &allocInfo, nullptr, &vkDeviceMemory) != VK_SUCCESS)
 	{

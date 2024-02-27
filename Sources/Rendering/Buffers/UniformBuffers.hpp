@@ -4,12 +4,14 @@
 #include "Rendering/Camera.hpp"
 #include "Rendering/Model.hpp"
 #include "Rendering/Base/Device.hpp"
-#include "Rendering/Components/Buffer.hpp"
+#include "Rendering/Buffers/Buffer.hpp"
+#include "Rendering/Components/DescriptorResource.hpp"
 
 class UniformBuffers
 {
 private:
 	bool m_cleanup = false;
+	std::shared_ptr<Device> m_device;
 
 public:
 	std::vector<std::shared_ptr<Buffer>> mvpObjectBuffers;
@@ -26,5 +28,6 @@ public:
 	MVPObject UpdateMVP(uint32_t currentImage, const glm::mat4& view, const glm::mat4& model, const glm::mat4& projection);
 	// void UpdatePBRMaterial(uint32_t currentImage);
 	void UpdatePBRLight(uint32_t currentImage, const glm::vec3& position, const glm::vec3& color);
+	void UpdateWriteDescriptorSet(const std::shared_ptr<DescriptorResource>& descriptorResource);
 	void Cleanup();
 };

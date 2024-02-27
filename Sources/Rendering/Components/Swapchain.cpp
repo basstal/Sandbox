@@ -117,8 +117,8 @@ void Swapchain::CreateFramebuffers(const std::shared_ptr<RenderPass>& renderPass
 	{
 		const std::vector<VkImageView> attachments = {
 			m_vkColorImageView,
-			m_vkDepthImageView,
-			vkImageViews[i]
+			vkImageViews[i],
+			m_vkDepthImageView
 		};
 		CreateFramebuffer(vkFramebuffers[i], renderPass->vkRenderPass, attachments);
 	}

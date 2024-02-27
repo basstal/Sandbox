@@ -5,7 +5,7 @@
 #include <cmath>
 
 #include "Base/Device.hpp"
-#include "Components/Buffer.hpp"
+#include "Buffers/Buffer.hpp"
 
 Image::Image()
 {

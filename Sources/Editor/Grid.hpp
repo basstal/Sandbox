@@ -25,10 +25,12 @@ public:
 	std::shared_ptr<Buffer> buffer;
 	std::vector<SimpleVertex> lineListProperties;
 	std::vector<SimpleVertex> GetLineListProperties();
-	Grid(const std::shared_ptr<Device>& device, const std::shared_ptr<CommandResource>& commandResource, const std::shared_ptr<Pipeline>& pipeline);
+	std::shared_ptr<Pipeline> pipeline;
+	std::shared_ptr<UniformBuffers> uniformBuffer;
+	Grid(const std::shared_ptr<Device>& device, const std::shared_ptr<CommandResource>& commandResource, const std::shared_ptr<RenderPass>& renderPass);
 	~Grid();
 	void Cleanup();
-	void PrepareDrawData(const std::shared_ptr<Device>& device, const std::shared_ptr<CommandResource>& commandResource, const std::shared_ptr<Pipeline>& pipeline);
-	void Draw(const std::shared_ptr<Device>& device, const VkCommandBuffer& currentCommandBuffer, const std::shared_ptr<Pipeline>& pipeline,
+	void PrepareDrawData(const std::shared_ptr<Device>& device, const std::shared_ptr<CommandResource>& commandResource, const std::shared_ptr<RenderPass>& renderPass);
+	void Draw(const std::shared_ptr<Device>& device, const VkCommandBuffer& currentCommandBuffer,
 	          const std::shared_ptr<DescriptorResource>& descriptorResource, uint32_t currentFrame);
 };

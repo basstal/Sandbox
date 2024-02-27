@@ -1,8 +1,10 @@
 #include "Grid.hpp"
 
 #include "Gizmos/SimpleVertex.hpp"
-#include "Infrastructures/FileSystemBase.hpp"
-#include "Rendering/Components/Buffer.hpp"
+#include "Infrastructures/FileSystem/File.hpp"
+#include "Infrastructures/FileSystem/FileSystemBase.hpp"
+#include "Rendering/Application.hpp"
+#include "Rendering/Buffers/Buffer.hpp"
 #include "Rendering/Components/CommandResource.hpp"
 #include "Rendering/Components/Pipeline.hpp"
 
@@ -59,11 +61,11 @@ std::vector<SimpleVertex> Grid::GetLineListProperties()
 	return lineListProperty;
 }
 
-Grid::Grid(const std::shared_ptr<Device>& device, const std::shared_ptr<CommandResource>& commandResource, const std::shared_ptr<Pipeline>& pipeline)
+Grid::Grid(const std::shared_ptr<Device>& device, const std::shared_ptr<CommandResource>& commandResource, const std::shared_ptr<RenderPass>& renderPass)
 {
 	m_device = device;
 
-	PrepareDrawData(device, commandResource, pipeline);
+	PrepareDrawData(device, commandResource, renderPass);
 }
 
 Grid::~Grid()
@@ -89,7 +91,7 @@ void Grid::Cleanup()
 
 
 
-void Grid::PrepareDrawData(const std::shared_ptr<Device>& device, const std::shared_ptr<CommandResource>& commandResource, const std::shared_ptr<Pipeline>& pipeline)
+void Grid::PrepareDrawData(const std::shared_ptr<Device>& device, const std::shared_ptr<CommandResource>& commandResource, const std::shared_ptr<RenderPass>& renderPass)
 {
 	lineListProperties = GetLineListProperties();
 	auto vkDevice = device->vkDevice;
@@ -118,39 +120,40 @@ void Grid::PrepareDrawData(const std::shared_ptr<Device>& device, const std::sha
 	vkCmdCopyBuffer(commandBuffer, bufferStaging.vkBuffer, buffer->vkBuffer, 1, &copyRegion);
 	commandResource->EndSingleTimeCommands(commandBuffer);
 
-	std::filesystem::path binariesDir = FileSystemBase::getBinariesDir();
-	auto nonSolidVertex = FileSystemBase::readFile((binariesDir / "Shaders/FillModeNonSolidGrid_vert.spv").string());
-	auto nonSolidFrag = FileSystemBase::readFile((binariesDir / "Shaders/FillModeNonSolidGrid_frag.spv").string());
-	VkShaderModule vertShaderModule = pipeline->CreateShaderModule(m_device, nonSolidVertex);
-	VkShaderModule fragShaderModule = pipeline->CreateShaderModule(m_device, nonSolidFrag);
+	auto shader = std::make_shared<Shader>(device);
+	std::filesystem::path sourceDir = FileSystemBase::getSourceDir();
+	shader->LoadShaderForStage(std::make_shared<File>((sourceDir / "Shaders/FillModeNonSolidGrid.vert").string()), "", VK_SHADER_STAGE_VERTEX_BIT);
+	shader->LoadShaderForStage(std::make_shared<File>((sourceDir / "Shaders/FillModeNonSolidGrid.frag").string()), "", VK_SHADER_STAGE_FRAGMENT_BIT);
 
-	// 创建管线
-	VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
-	vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-	auto bindingDescription = GetBindingDescription();
-	auto attributeDescriptions = GetAttributeDescriptions();
+	pipeline = std::make_shared<Pipeline>(device, shader, Application::Instance->renderPass, VK_PRIMITIVE_TOPOLOGY_LINE_LIST, VK_POLYGON_MODE_FILL);
 
-	vertexInputInfo.vertexBindingDescriptionCount = 1;
-	vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributeDescriptions.size());
-	vertexInputInfo.pVertexBindingDescriptions = &bindingDescription;
-	vertexInputInfo.pVertexAttributeDescriptions = attributeDescriptions.data();
-
-	VkPipelineInputAssemblyStateCreateInfo inputAssembly{};
-	inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
-	inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_LINE_LIST;
-	inputAssembly.primitiveRestartEnable = VK_FALSE;
-	vkPipeline = pipeline->CreatePipeline(vertShaderModule, fragShaderModule, true, vertexInputInfo, inputAssembly);
+	uniformBuffer = std::make_shared<UniformBuffers>(device);
+	uniformBuffer->UpdateWriteDescriptorSet(pipeline->descriptorResource);
+	// // 创建管线
+	// VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
+	// vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+	// auto bindingDescription = GetBindingDescription();
+	// auto attributeDescriptions = GetAttributeDescriptions();
+	//
+	// vertexInputInfo.vertexBindingDescriptionCount = 1;
+	// vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributeDescriptions.size());
+	// vertexInputInfo.pVertexBindingDescriptions = &bindingDescription;
+	// vertexInputInfo.pVertexAttributeDescriptions = attributeDescriptions.data();
+	//
+	// VkPipelineInputAssemblyStateCreateInfo inputAssembly{};
+	// inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
+	// inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_LINE_LIST;
+	// inputAssembly.primitiveRestartEnable = VK_FALSE;
+	// vkPipeline = pipeline->CreatePipeline(vertShaderModule, fragShaderModule, true, vertexInputInfo, inputAssembly);
 }
 
-void Grid::Draw(const std::shared_ptr<Device>& device, const VkCommandBuffer& currentCommandBuffer, const std::shared_ptr<Pipeline>& pipeline,
+void Grid::Draw(const std::shared_ptr<Device>& device, const VkCommandBuffer& currentCommandBuffer,
                 const std::shared_ptr<DescriptorResource>& descriptorResource, uint32_t currentFrame)
 {
-	vkCmdBindPipeline(currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, vkPipeline);
-
-
+	vkCmdBindPipeline(currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->vkPipeline);
 	VkBuffer vertexBuffers[] = {buffer->vkBuffer};
 	VkDeviceSize offsets[] = {0};
 	vkCmdBindVertexBuffers(currentCommandBuffer, 0, 1, vertexBuffers, offsets);
-	vkCmdBindDescriptorSets(currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->vkPipelineLayout, 0, 1, &descriptorResource->vkDescriptorSets[currentFrame], 0, nullptr);
+	vkCmdBindDescriptorSets(currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->vkPipelineLayout, 0, 1, &pipeline->descriptorResource->vkDescriptorSets[currentFrame], 0, nullptr);
 	vkCmdDraw(currentCommandBuffer, static_cast<uint32_t>(lineListProperties.size()), 1, 0, 0);
 }

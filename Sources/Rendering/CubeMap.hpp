@@ -2,7 +2,7 @@
 #include <memory>
 
 #include "Base/Device.hpp"
-#include "Components/Buffer.hpp"
+#include "Buffers/Buffer.hpp"
 #include "Objects/RenderTexture.hpp"
 
 class Pipeline;
@@ -27,6 +27,7 @@ public:
 	std::shared_ptr<RenderTexture> irradianceMap;
 	std::shared_ptr<Buffer> vertexBuffer;
 	VkPipeline vkPipeline;
+	std::shared_ptr<Pipeline> pipeline;
 	VkPipelineLayout vkPipelineLayout;
 	VkRenderPass vkRenderPass;
 	uint32_t size;
@@ -34,10 +35,11 @@ public:
 	VkDescriptorSetLayout vkDescriptorSetLayout;
 	VkDescriptorSet vkDescriptorSet;
 	CubeMap(const std::shared_ptr<Device>& device, const std::shared_ptr<Image>& image, const std::shared_ptr<CommandResource>& commandResource, uint32_t inSize,
-	        const std::shared_ptr<Pipeline>& pipeline, const std::shared_ptr<RenderPass>& renderPass, const std::shared_ptr<DescriptorResource>& descriptorResource);
+	        const std::shared_ptr<RenderPass>& renderPass, const std::shared_ptr<DescriptorResource>& descriptorResource);
 	~CubeMap();
 	void Cleanup();
 	void CreateDescriptorSet(const std::shared_ptr<UniformBuffers>& uniformBuffers, const std::shared_ptr<DescriptorResource>& descriptorResource);
 	void RenderCube(const std::shared_ptr<CommandResource>& commandResource, const std::shared_ptr<UniformBuffers>& uniformBuffers, const std::shared_ptr<DescriptorResource>& descriptorResource);
 	void CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size, const std::shared_ptr<CommandResource>& commandResource);
+	void CopyCubeMapFace(VkCommandBuffer commandBuffer, VkImage srcImage, VkImage dstImage, uint32_t width, uint32_t height, uint32_t srcArrayLayer, uint32_t dstArrayLayer);
 };

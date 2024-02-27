@@ -1,13 +1,16 @@
 ﻿#pragma once
-#include <inttypes.h>
 
-#include "Rendering/Base/Device.hpp"
+#include <memory>
+#include <vulkan/vulkan_core.h>
+
+class Device;
 
 class Buffer
 {
 private:
 	bool m_cleaned = false;
 	std::shared_ptr<Device> m_device;
+
 public:
 	VkBuffer vkBuffer;
 	VkDeviceMemory vkDeviceMemory;

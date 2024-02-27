@@ -60,6 +60,12 @@ std::string FileSystemBase::getSettingsDir()
 	std::filesystem::path executablePath = std::filesystem::path::path(getExecutablePath());
 	return executablePath.parent_path().parent_path().append("Assets").append("Settings").string();
 }
+std::string FileSystemBase::getSourceDir()
+{
+	// TODO: temp implementation
+	std::filesystem::path executablePath = std::filesystem::path::path(getExecutablePath());
+	return executablePath.parent_path().parent_path().append("Sources").string();
+}
 
 std::vector<char> FileSystemBase::readFile(const std::string& filename)
 {

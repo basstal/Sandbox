@@ -5,7 +5,7 @@
 #include "SimpleVertex.hpp"
 #include "GameCore/GameObject.hpp"
 #include "Infrastructures/Math/Ray.hpp"
-#include "Rendering/Components/Buffer.hpp"
+#include "Rendering/Buffers/Buffer.hpp"
 #include "Rendering/Components/Pipeline.hpp"
 
 class TransformGizmo
@@ -40,11 +40,13 @@ public:
 	std::vector<SimpleVertex> GenerateArrowData(glm::vec3 color);
 	VkPipeline vkPipeline;
 	VkPipelineLayout vkPipelineLayout;
-	void PrepareDrawData(const std::shared_ptr<Device>& device, const std::shared_ptr<CommandResource>& commandResource, const std::shared_ptr<Pipeline>& pipeline,
+	std::shared_ptr<Pipeline> pipeline;
+	std::shared_ptr<UniformBuffers> uniformBuffer;
+	void PrepareDrawData(const std::shared_ptr<Device>& device, const std::shared_ptr<CommandResource>& commandResource,
 	                     const std::shared_ptr<DescriptorResource>& descriptorResource, const std::shared_ptr<RenderPass>& renderPass);
 	void CreatePushConstantPipelineLayout(const std::shared_ptr<DescriptorResource>& descriptorResource);
 	void Draw(const std::shared_ptr<Camera>& camera, const VkCommandBuffer& currentCommandBuffer,
-	          const std::shared_ptr<Pipeline>& pipeline, const std::shared_ptr<DescriptorResource>& descriptorResource, uint32_t currentFrame, GLFWwindow* window, const glm::mat4& projection);
+	          const std::shared_ptr<DescriptorResource>& descriptorResource, uint32_t currentFrame, GLFWwindow* window, const glm::mat4& projection);
 	Ray CursorPositionToWorldRay(GLFWwindow* window, const glm::mat4& viewMatrix, const glm::mat4& projectionMatrix);
 	void UpdateGizmoAndObjectPosition(GLFWwindow* window, const std::shared_ptr<Camera>& camera);
 };

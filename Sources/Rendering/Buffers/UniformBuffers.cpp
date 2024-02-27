@@ -4,10 +4,12 @@
 #include "Rendering/Light.hpp"
 #include "Rendering/Model.hpp"
 #include "Rendering/Base/Device.hpp"
+#include "Rendering/Components/DescriptorResource.hpp"
 
 
 UniformBuffers::UniformBuffers(const std::shared_ptr<Device>& device)
 {
+	m_device = device;
 	mvpObjectBuffers.resize(device->MAX_FRAMES_IN_FLIGHT);
 	mvpObjectBuffersMapped.resize(device->MAX_FRAMES_IN_FLIGHT);
 	for (size_t i = 0; i < device->MAX_FRAMES_IN_FLIGHT; i++)
@@ -78,6 +80,51 @@ void UniformBuffers::UpdatePBRLight(uint32_t currentImage, const glm::vec3& posi
 	Light light(position, color);
 	// light.intensity = 1.0f;
 	memcpy(pbrLightBuffersMapped[currentImage], &light, sizeof(light));
+}
+void UniformBuffers::UpdateWriteDescriptorSet(const std::shared_ptr<DescriptorResource>& descriptorResource)
+{
+	for (size_t i = 0; i < m_device->MAX_FRAMES_IN_FLIGHT; i++)
+	{
+		int32_t bindingMvp = descriptorResource->nameToBinding.contains("MVPObject") ? descriptorResource->nameToBinding["MVPObject"] : -1;
+		int32_t bindingLight = descriptorResource->nameToBinding.contains("Light") ? descriptorResource->nameToBinding["Light"] : -1;
+		if (bindingLight >= 0)
+		{
+			VkDescriptorBufferInfo pbrLightBufferInfo{};
+			pbrLightBufferInfo.buffer = pbrLightBuffers[i]->vkBuffer; // PRBLight 的缓冲区
+			pbrLightBufferInfo.offset = 0;
+			pbrLightBufferInfo.range = sizeof(Light);
+
+			VkWriteDescriptorSet pbrLightWrite{};
+			pbrLightWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+			pbrLightWrite.dstSet = descriptorResource->vkDescriptorSets[i];
+			pbrLightWrite.dstBinding = bindingLight;
+			pbrLightWrite.dstArrayElement = 0;
+			pbrLightWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+			pbrLightWrite.descriptorCount = 1;
+			pbrLightWrite.pBufferInfo = &pbrLightBufferInfo;
+			vkUpdateDescriptorSets(m_device->vkDevice, 1, &pbrLightWrite, 0, nullptr);
+		}
+
+		if (bindingMvp >= 0)
+		{
+			VkDescriptorBufferInfo mvpBufferInfo{};
+			mvpBufferInfo.buffer = mvpObjectBuffers[i]->vkBuffer;
+			mvpBufferInfo.offset = 0;
+			mvpBufferInfo.range = sizeof(MVPObject);
+
+			VkWriteDescriptorSet mvpWrite{};
+			mvpWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+			mvpWrite.dstSet = descriptorResource->vkDescriptorSets[i];
+			mvpWrite.dstBinding = bindingMvp;
+			mvpWrite.dstArrayElement = 0;
+			mvpWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+			mvpWrite.descriptorCount = 1;
+			mvpWrite.pBufferInfo = &mvpBufferInfo;
+			mvpWrite.pImageInfo = nullptr; // Optional
+			mvpWrite.pTexelBufferView = nullptr; // Optional
+			vkUpdateDescriptorSets(m_device->vkDevice, 1, &mvpWrite, 0, nullptr);
+		}
+	}
 }
 
 void UniformBuffers::Cleanup()

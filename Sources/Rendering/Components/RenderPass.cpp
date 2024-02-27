@@ -4,20 +4,53 @@
 #include <memory>
 #include <stdexcept>
 
+#include "Subpass.hpp"
 #include "Rendering/Base/Device.hpp"
+#include "Rendering/Base/Properties.hpp"
 #include "Rendering/Components/Swapchain.hpp"
 
-RenderPass::RenderPass(const std::shared_ptr<Device>& device, const std::shared_ptr<Swapchain>& swapchain, RenderPassType renderPassType)
+RenderPass::RenderPass(const std::shared_ptr<Device>& device, const std::shared_ptr<Subpass>& inSubpass)
 {
 	m_device = device;
-	m_swapchain = swapchain;
-	if (renderPassType == RenderPassType::GAME_RENDER_PASS)
+	enableDepth = inSubpass->hasDepthAttachment;
+	enableMSAA = inSubpass->isMSAASample;
+	for (const auto& attachment : inSubpass->attachmentDescriptions)
 	{
-		CreateGameRenderPass();
+		attachments.push_back(*attachment);
 	}
-	else if (renderPassType == RenderPassType::EDITOR_RENDER_PASS)
+	isAttachmentClearDepthStencil = inSubpass->isAttachmentClearDepthStencil;
+
+	VkSubpassDependency dependency{};
+	if (enableDepth)
 	{
-		CreateEditorRenderPass();
+		dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
+		dependency.dstSubpass = 0;
+		dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+		dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+		dependency.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+		dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+	}
+	else
+	{
+		dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
+		dependency.dstSubpass = 0;
+		dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+		dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+		dependency.srcAccessMask = 0;
+		dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+	}
+
+	VkRenderPassCreateInfo renderPassCreateInfo = {};
+	renderPassCreateInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+	renderPassCreateInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
+	renderPassCreateInfo.pAttachments = attachments.data();
+	renderPassCreateInfo.subpassCount = static_cast<uint32_t>(inSubpass->subpassDescriptions.size());
+	renderPassCreateInfo.pSubpasses = inSubpass->subpassDescriptions.data();
+	renderPassCreateInfo.dependencyCount = 1;
+	renderPassCreateInfo.pDependencies = &dependency;
+	if (vkCreateRenderPass(m_device->vkDevice, &renderPassCreateInfo, nullptr, &vkRenderPass) != VK_SUCCESS)
+	{
+		throw std::runtime_error("failed to create editor render pass!");
 	}
 }
 
@@ -189,10 +222,10 @@ void RenderPass::CreateGameRenderPass()
 
 VkFormat RenderPass::FindDepthFormat()
 {
-	return FindSupportedFormat(
-		{VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT},
-		VK_IMAGE_TILING_OPTIMAL,
-		VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT
+	return FindSupportedFormat(m_device->vkPhysicalDevice,
+	                           {VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT},
+	                           VK_IMAGE_TILING_OPTIMAL,
+	                           VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT
 	);
 }
 
@@ -204,22 +237,28 @@ void RenderPass::Cleanup()
 		m_cleaned = true;
 	}
 }
-
-
-VkFormat RenderPass::FindSupportedFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features)
+void RenderPass::BeginRenderPass(VkCommandBuffer vkCommandBuffer, VkFramebuffer vkFramebuffer, VkExtent2D vkExtent2D, VkClearColorValue clearColorValue,
+                                 VkClearDepthStencilValue clearDepthStencilValue)
 {
-	for (VkFormat format : candidates)
+	VkRenderPassBeginInfo renderPassInfo{};
+	renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+	renderPassInfo.renderPass = vkRenderPass;
+	renderPassInfo.framebuffer = vkFramebuffer;
+	renderPassInfo.renderArea.offset = {0, 0};
+	renderPassInfo.renderArea.extent = vkExtent2D;
+	std::vector<VkClearValue> clearValues(attachments.size());
+	for (size_t i = 0; i < clearValues.size(); ++i)
 	{
-		VkFormatProperties props;
-		vkGetPhysicalDeviceFormatProperties(m_device->vkPhysicalDevice, format, &props);
-		if (tiling == VK_IMAGE_TILING_LINEAR && (props.linearTilingFeatures & features) == features)
+		if (isAttachmentClearDepthStencil[i])
 		{
-			return format;
+			clearValues[i].depthStencil = clearDepthStencilValue;
 		}
-		if (tiling == VK_IMAGE_TILING_OPTIMAL && (props.optimalTilingFeatures & features) == features)
+		else
 		{
-			return format;
+			clearValues[i].color = clearColorValue;
 		}
 	}
-	throw std::runtime_error("failed to find supported format!");
+	renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
+	renderPassInfo.pClearValues = clearValues.data();
+	vkCmdBeginRenderPass(vkCommandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 }

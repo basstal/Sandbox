@@ -3,9 +3,10 @@
 #include <glm/ext/matrix_clip_space.hpp>
 #include <glm/ext/matrix_transform.hpp>
 
-#include "Components/Buffer.hpp"
+#include "Buffers/Buffer.hpp"
 #include "Components/Pipeline.hpp"
-#include "Infrastructures/FileSystemBase.hpp"
+#include "Infrastructures/FileSystem/File.hpp"
+#include "Infrastructures/FileSystem/FileSystemBase.hpp"
 
 const glm::mat4 EquirectangularCaptureProjection = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f);
 const glm::mat4 EquirectangularCaptureViews[] =
@@ -19,7 +20,7 @@ const glm::mat4 EquirectangularCaptureViews[] =
 };
 
 CubeMap::CubeMap(const std::shared_ptr<Device>& device, const std::shared_ptr<Image>& image, const std::shared_ptr<CommandResource>& commandResource, uint32_t inSize,
-                 const std::shared_ptr<Pipeline>& pipeline, const std::shared_ptr<RenderPass>& renderPass, const std::shared_ptr<DescriptorResource>& descriptorResource)
+                 const std::shared_ptr<RenderPass>& renderPass, const std::shared_ptr<DescriptorResource>& descriptorResource)
 {
 	m_device = device;
 	size = inSize;
@@ -48,63 +49,64 @@ CubeMap::CubeMap(const std::shared_ptr<Device>& device, const std::shared_ptr<Im
 	// renderTexture->TransitionImageLayout(renderTexture->vkFormat, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, 1);
 	vkRenderPass = renderPass->CreateCubeMapRenderPass();
 
-	VkDescriptorSetLayoutBinding mvpLayoutBinding;
-	mvpLayoutBinding.binding = 0;
-	mvpLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-	mvpLayoutBinding.descriptorCount = 1;
-	mvpLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-	mvpLayoutBinding.pImmutableSamplers = nullptr; // Optional
+	// VkDescriptorSetLayoutBinding mvpLayoutBinding;
+	// mvpLayoutBinding.binding = 0;
+	// mvpLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+	// mvpLayoutBinding.descriptorCount = 1;
+	// mvpLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+	// mvpLayoutBinding.pImmutableSamplers = nullptr; // Optional
+	//
+	//
+	// VkDescriptorSetLayoutBinding irradianceMapLayoutBinding;
+	// irradianceMapLayoutBinding.binding = 1;
+	// irradianceMapLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	// irradianceMapLayoutBinding.descriptorCount = 1;
+	// irradianceMapLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+	// irradianceMapLayoutBinding.pImmutableSamplers = nullptr; // Optional
+	// vkDescriptorSetLayout = descriptorResource->CreateDescriptorSetLayout({mvpLayoutBinding, irradianceMapLayoutBinding});
+	// vkPipelineLayout = pipeline->CreatePipelineLayout(descriptorResource, vkDescriptorSetLayout);
 
+	std::filesystem::path sourceDir = FileSystemBase::getSourceDir();
 
-	VkDescriptorSetLayoutBinding irradianceMapLayoutBinding;
-	irradianceMapLayoutBinding.binding = 1;
-	irradianceMapLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-	irradianceMapLayoutBinding.descriptorCount = 1;
-	irradianceMapLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-	irradianceMapLayoutBinding.pImmutableSamplers = nullptr; // Optional
-	vkDescriptorSetLayout = descriptorResource->CreateDescriptorSetLayout({mvpLayoutBinding, irradianceMapLayoutBinding});
-	vkPipelineLayout = pipeline->CreatePipelineLayout(vkDescriptorSetLayout);
+	// VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
+	// vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+	// auto bindingDescription = GetBindingDescription();
+	// auto attributeDescriptions = GetAttributeDescriptions();
+	//
+	// vertexInputInfo.vertexBindingDescriptionCount = 1;
+	// vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributeDescriptions.size());
+	// vertexInputInfo.pVertexBindingDescriptions = &bindingDescription;
+	// vertexInputInfo.pVertexAttributeDescriptions = attributeDescriptions.data();
+	//
+	// VkPipelineInputAssemblyStateCreateInfo inputAssembly{};
+	// inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
+	// inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+	// inputAssembly.primitiveRestartEnable = VK_FALSE;
+	//
+	// VkPipelineDepthStencilStateCreateInfo depthStencil{};
+	// depthStencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+	// depthStencil.depthTestEnable = VK_TRUE;
+	// depthStencil.depthWriteEnable = VK_TRUE;
+	// depthStencil.depthCompareOp = VK_COMPARE_OP_LESS;
+	// depthStencil.depthBoundsTestEnable = VK_FALSE;
+	// depthStencil.minDepthBounds = 0.0f; // Optional
+	// depthStencil.maxDepthBounds = 1.0f; // Optional
+	// depthStencil.stencilTestEnable = VK_FALSE;
+	// depthStencil.front = {}; // Optional
+	// depthStencil.back = {}; // Optional
 
-	std::filesystem::path binariesDir = FileSystemBase::getBinariesDir();
-	auto vertexShader = FileSystemBase::readFile((binariesDir / "Shaders/EquirectangularMap_vert.spv").string());
-	auto fragmentShader = FileSystemBase::readFile((binariesDir / "Shaders/EquirectangularMap_frag.spv").string());
-	VkShaderModule vertShaderModule = Pipeline::CreateShaderModule(device, vertexShader);
-	VkShaderModule fragShaderModule = Pipeline::CreateShaderModule(device, fragmentShader);
-
-	VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
-	vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-	auto bindingDescription = GetBindingDescription();
-	auto attributeDescriptions = GetAttributeDescriptions();
-
-	vertexInputInfo.vertexBindingDescriptionCount = 1;
-	vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributeDescriptions.size());
-	vertexInputInfo.pVertexBindingDescriptions = &bindingDescription;
-	vertexInputInfo.pVertexAttributeDescriptions = attributeDescriptions.data();
-
-	VkPipelineInputAssemblyStateCreateInfo inputAssembly{};
-	inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
-	inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
-	inputAssembly.primitiveRestartEnable = VK_FALSE;
-
-	VkPipelineDepthStencilStateCreateInfo depthStencil{};
-	depthStencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
-	depthStencil.depthTestEnable = VK_TRUE;
-	depthStencil.depthWriteEnable = VK_TRUE;
-	depthStencil.depthCompareOp = VK_COMPARE_OP_LESS;
-	depthStencil.depthBoundsTestEnable = VK_FALSE;
-	depthStencil.minDepthBounds = 0.0f; // Optional
-	depthStencil.maxDepthBounds = 1.0f; // Optional
-	depthStencil.stencilTestEnable = VK_FALSE;
-	depthStencil.front = {}; // Optional
-	depthStencil.back = {}; // Optional
-	vkPipeline = pipeline->CreatePipeline(vertShaderModule, fragShaderModule, false, vertexInputInfo, inputAssembly, depthStencil, vkPipelineLayout, vkRenderPass, false);
-
-	vkDestroyShaderModule(m_device->vkDevice, fragShaderModule, nullptr);
-	vkDestroyShaderModule(m_device->vkDevice, vertShaderModule, nullptr);
+	auto shader = std::make_shared<Shader>(device);
+	shader->LoadShaderForStage(std::make_shared<File>((sourceDir / "Shaders/EquirectangularMap.vert").string()), "", VK_SHADER_STAGE_VERTEX_BIT);
+	shader->LoadShaderForStage(std::make_shared<File>((sourceDir / "Shaders/EquirectangularMap.frag").string()), "", VK_SHADER_STAGE_FRAGMENT_BIT);
+	// vkPipeline = pipeline->CreatePipeline(vertShaderModule, fragShaderModule, false, vertexInputInfo, inputAssembly, depthStencil, vkPipelineLayout, vkRenderPass, false);
+	pipeline = std::make_shared<Pipeline>(device, shader, renderPass, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, VK_POLYGON_MODE_FILL);
+	// vkPipeline = pipeline->vkPipeline;
+	// vkDestroyShaderModule(m_device->vkDevice, fragShaderModule, nullptr);
+	// vkDestroyShaderModule(m_device->vkDevice, vertShaderModule, nullptr);
 }
 CubeMap::~CubeMap()
 {
-	Cleanup();
+	// Cleanup();
 }
 
 void CubeMap::Cleanup()
@@ -321,9 +323,9 @@ void CubeMap::RenderCube(const std::shared_ptr<CommandResource>& commandResource
 		renderPassInfo.framebuffer = vkFramebuffers[i];
 		renderPassInfo.renderArea.offset = {0, 0};
 		renderPassInfo.renderArea.extent = {size, size};
-		std::array<VkClearValue, 1> clearValues{};
+		std::array<VkClearValue, 2> clearValues{};
 		clearValues[0].color = {{1.0f, 1.0f, 1.0f, 0.0f}};
-		// clearValues[1].depthStencil = {1.0f, 0};
+		clearValues[1].depthStencil = {1.0f, 0};
 
 		renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
 		renderPassInfo.pClearValues = clearValues.data();
@@ -334,7 +336,7 @@ void CubeMap::RenderCube(const std::shared_ptr<CommandResource>& commandResource
 
 
 		// 绑定管线和顶点缓冲区等
-		vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, vkPipeline);
+		vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->vkPipeline);
 		vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, vkPipelineLayout, 0, 1, &vkDescriptorSet, 0, nullptr);
 		VkBuffer vertexBuffers[] = {vertexBuffer->vkBuffer};
 		VkDeviceSize offsets[] = {0};
@@ -361,4 +363,33 @@ void CubeMap::CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize de
 	copyRegion.size = deviceSize;
 	vkCmdCopyBuffer(commandBuffer, srcBuffer, dstBuffer, 1, &copyRegion);
 	commandResource->EndSingleTimeCommands(commandBuffer);
+}
+
+void CubeMap::CopyCubeMapFace(VkCommandBuffer commandBuffer,
+                              VkImage srcImage, VkImage dstImage,
+                              uint32_t width, uint32_t height,
+                              uint32_t srcArrayLayer, uint32_t dstArrayLayer)
+{
+	VkImageCopy copyRegion;
+
+	copyRegion.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+	copyRegion.srcSubresource.mipLevel = 0; // 假设我们不处理 mipmap
+	copyRegion.srcSubresource.baseArrayLayer = srcArrayLayer;
+	copyRegion.srcSubresource.layerCount = 1;
+
+	copyRegion.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+	copyRegion.dstSubresource.mipLevel = 0;
+	copyRegion.dstSubresource.baseArrayLayer = dstArrayLayer;
+	copyRegion.dstSubresource.layerCount = 1;
+
+	copyRegion.srcOffset = {0, 0, 0}; // 从源图像的起始点开始复制
+	copyRegion.dstOffset = {0, 0, 0}; // 复制到目标图像的起始点
+	copyRegion.extent.width = width;
+	copyRegion.extent.height = height;
+	copyRegion.extent.depth = 1; // 因为我们是在处理2D图像
+
+	vkCmdCopyImage(commandBuffer,
+	               srcImage, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+	               dstImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+	               1, &copyRegion);
 }

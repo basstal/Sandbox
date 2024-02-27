@@ -11,6 +11,7 @@ public:
 	int irradianceMapSize = 512;
 	void Cleanup();
 	void TransitionImageLayout();
+	void UpdateWriteDescriptorSet(const std::shared_ptr<DescriptorResource>& descriptorResource);
 	~Material();
 	Material(const std::shared_ptr<Device>& device, const std::shared_ptr<Image>& albedoImage, const std::shared_ptr<Image>& metallicImage, const std::shared_ptr<Image>& roughnessImage,
 	         const std::shared_ptr<Image>& aoImage, const std::shared_ptr<Image>& irradianceImage, const std::shared_ptr<CommandResource>& commandResource, const std::shared_ptr<Pipeline>& pipeline,

@@ -67,7 +67,11 @@ static void CheckVkResult(VkResult err)
 ApplicationEditor::ApplicationEditor(const std::unique_ptr<Application>& application)
 {
 	m_device = application->device;
-	renderPass = std::make_shared<RenderPass>(application->device, application->swapchain, RenderPassType::EDITOR_RENDER_PASS);
+	auto subpass = std::make_shared<Subpass>(m_device, false);
+	subpass->BeginSubpassAttachments();
+	subpass->AddColorAttachment("editor", Swapchain::COLOR_FORMAT, VK_ATTACHMENT_LOAD_OP_DONT_CARE, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
+	subpass->EndSubpassAttachments();
+	renderPass = std::make_shared<RenderPass>(application->device, subpass);
 	CreateFramebuffer(application);
 
 	// Setup Dear ImGui context
@@ -100,7 +104,7 @@ ApplicationEditor::ApplicationEditor(const std::unique_ptr<Application>& applica
 	init_info.QueueFamily = *application->device->queueFamilies.graphicsFamily;
 	init_info.Queue = application->device->graphicsQueue;
 	init_info.PipelineCache = VK_NULL_HANDLE; // TODO: PipelineCache
-	init_info.DescriptorPool = application->descriptorResource->vkDescriptorPool;
+	init_info.DescriptorPool = DescriptorResource::vkDescriptorPool;
 	init_info.Subpass = 0;
 	init_info.MinImageCount = static_cast<uint32_t>(vkImageViews.size());
 	init_info.ImageCount = static_cast<uint32_t>(application->swapchain->vkImages.size());
@@ -111,8 +115,9 @@ ApplicationEditor::ApplicationEditor(const std::unique_ptr<Application>& applica
 	ImGui_ImplVulkan_Init(&init_info);
 	editorCamera = application->editorCamera;
 	settings = application->settings;
-	grid = std::make_shared<Grid>(m_device, application->commandResource, application->pipeline);
-	transformGizmo = std::make_shared<TransformGizmo>(application->modelGameObject, m_device, application->commandResource, application->pipeline, application->descriptorResource, application->renderPass);
+	grid = std::make_shared<Grid>(m_device, application->commandResource, renderPass);
+	transformGizmo = std::make_shared<TransformGizmo>(application->modelGameObject, m_device, application->commandResource, application->mainPipeline, application->mainPipeline->descriptorResource,
+	                                                  renderPass);
 }
 
 ApplicationEditor::~ApplicationEditor()

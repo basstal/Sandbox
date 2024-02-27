@@ -3,11 +3,13 @@
 #include <cstdint>
 #include <memory>
 #include <stdexcept>
+#include <glm/ext/matrix_transform.hpp>
 #include <vulkan/vulkan_core.h>
 
+#include "Infrastructures/Math/AABB.hpp"
 #include "Rendering/Application.hpp"
 #include "Rendering/Image.hpp"
-#include "Rendering/Components/Buffer.hpp"
+#include "Rendering/Buffers/Buffer.hpp"
 
 
 RenderTexture::RenderTexture(const std::shared_ptr<Device>& device, const std::shared_ptr<CommandResource>& commandResource, bool isCubeMap, bool isHdrImage, uint32_t width, uint32_t height,
@@ -142,7 +144,6 @@ void RenderTexture::TransitionImageLayout(VkFormat format, VkImageLayout oldLayo
 		1, &barrier);
 	m_commandPool->EndSingleTimeCommands(commandBuffer);
 }
-
 
 void RenderTexture::CopyFromBuffer(VkBuffer buffer, uint32_t width, uint32_t height)
 {
