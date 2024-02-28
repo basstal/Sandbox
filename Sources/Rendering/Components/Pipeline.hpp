@@ -27,7 +27,7 @@ public:
 	         VkPolygonMode polygonMode);
 	~Pipeline();
 	VkPipelineLayout CreatePipelineLayout(const std::shared_ptr<DescriptorResource>& inDescriptorResource, VkDescriptorSetLayout descriptorSetLayout);
-	void ApplySettings(std::shared_ptr<Settings> settings);
+	void ApplySettings(std::shared_ptr<RendererSettings> settings);
 	void CreatePipeline(const std::vector<char>& vertexShader, const std::vector<char>& fragmentShader);
 	void CreateFillModeNonSolidPipeline();
 	VkPipeline CreatePipeline(const VkShaderModule& vertShaderModule, const VkShaderModule& fragShaderModule, bool fillModeNonSolid);

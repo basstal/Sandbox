@@ -8,6 +8,7 @@
 
 #include "Delegate.hpp"
 #include "TypeTraits.hpp"
+#include "FileSystem/Logger.hpp"
 
 
 class IDataBinding
@@ -195,7 +196,7 @@ std::shared_ptr<TDataBinding<AbstractData>> DataBinding::Get(const std::string& 
 	auto it = DataBindingMap.find(inName);
 	if (it == DataBindingMap.end())
 	{
-		throw std::runtime_error("No binding found with name: " + inName);
+		Logger::Fatal("No binding found with name: " + inName);
 	}
 
 	try
@@ -206,8 +207,9 @@ std::shared_ptr<TDataBinding<AbstractData>> DataBinding::Get(const std::string& 
 	}
 	catch (const std::bad_any_cast& _)
 	{
-		throw std::runtime_error("Failed to cast binding to the requested type for name: " + inName);
+		Logger::Fatal("Failed to cast binding to the requested type for name: " + inName);
 	}
+    return nullptr;
 }
 
 template <typename AbstractData>
@@ -225,7 +227,7 @@ bool DataBinding::Delete(const std::string& inName)
 		}
 		catch (const std::bad_any_cast& _)
 		{
-			throw std::runtime_error("Failed to cast binding to the requested type for name: " + inName);
+			Logger::Fatal("Failed to cast binding to the requested type for name: " + inName);
 		}
 	}
 	return false;
@@ -341,7 +343,7 @@ void TDataBinding<AbstractData>::Release()
 // {
 // 	if constexpr (is_shared_ptr<AbstractData>::value)
 // 	{
-// 		throw std::runtime_error("DataBinding::Create: AbstractData is a shared_ptr, use CreateSP instead.");
+// 		Logger::Fatal("DataBinding::Create: AbstractData is a shared_ptr, use CreateSP instead.");
 // 	}
 // 	auto entry = DataBinding::DataBindingMap.find(InName);
 // 	if (entry != DataBinding::DataBindingMap.end())
@@ -362,7 +364,7 @@ auto DataBinding::Create(std::string InName, AbstractData InData) -> std::shared
 		}
 		catch (const std::bad_any_cast& _)
 		{
-			throw std::runtime_error("Failed to cast binding to the requested type for name: " + InName);
+			Logger::Fatal("Failed to cast binding to the requested type for name: " + InName);
 		}
 	}
 	std::shared_ptr<TDataBinding<std::shared_ptr<typename extract_type<AbstractData>::type>>> CreatedDataBinding = std::make_shared<TDataBinding<std::shared_ptr<typename extract_type<
@@ -383,7 +385,7 @@ auto DataBinding::Create(std::string InName, AbstractData InData) -> std::shared
 		}
 		catch (const std::bad_any_cast& _)
 		{
-			throw std::runtime_error("Failed to cast binding to the requested type for name: " + InName);
+			Logger::Fatal("Failed to cast binding to the requested type for name: " + InName);
 		}
 	}
 	std::shared_ptr<TDataBinding<AbstractData>> CreatedDataBinding = std::make_shared<TDataBinding<AbstractData>>(InName, InData);
@@ -410,7 +412,7 @@ auto DataBinding::Create(std::string InName, AbstractData InData) -> std::shared
 // {
 // 	if constexpr (is_shared_ptr<AbstractData>::value)
 // 	{
-// 		throw std::runtime_error("DataBinding::Create: AbstractData is a shared_ptr, use CreateSP instead.");
+// 		Logger::Fatal("DataBinding::Create: AbstractData is a shared_ptr, use CreateSP instead.");
 // 	}
 // 	auto entry = DataBinding::DataBindingMap.find(InName);
 // 	if (entry != DataBinding::DataBindingMap.end())

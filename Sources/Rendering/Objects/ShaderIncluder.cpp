@@ -1,6 +1,7 @@
 #include "ShaderIncluder.hpp"
 #include "Infrastructures/FileSystem/Directory.hpp"
 #include "Infrastructures/FileSystem/File.hpp"
+#include "Infrastructures/FileSystem/Logger.hpp"
 
 glslang::TShader::Includer::IncludeResult *MakeResult(const std::string& inName, const std::string& inContent)
 {
@@ -15,13 +16,13 @@ glslang::TShader::Includer::IncludeResult *ShaderIncluder::includeLocal(const ch
 	File file(includerName);
 	if (!file.Exists())
 	{
-		throw std::runtime_error("File not found: " + std::string(includerName));
+		Logger::Fatal("File not found: " + std::string(includerName));
 	}
 	Directory directory = file.Parent();
 	File headerFile = directory.GetFile(std::string(headerName));
 	if (!headerFile.Exists())
 	{
-		throw std::runtime_error("File not found: " + std::string(headerName));
+		Logger::Fatal("File not found: " + std::string(headerName));
 	}
 	std::string headerContent = headerFile.ReadFile();
 	return MakeResult(headerName, headerContent);
@@ -31,7 +32,7 @@ glslang::TShader::Includer::IncludeResult *ShaderIncluder::includeSystem(const c
 	File file(headerName);
 	if (!file.Exists())
 	{
-		throw std::runtime_error("File not found: " + std::string(headerName));
+		Logger::Fatal("File not found: " + std::string(headerName));
 	}
 	std::string headerContent = file.ReadFile();
 	return MakeResult(headerName, headerContent);

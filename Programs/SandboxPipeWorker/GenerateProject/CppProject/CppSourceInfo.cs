@@ -4,6 +4,7 @@ public class CppSourceInfo
 {
     // ReSharper disable once NotAccessedField.Local
     public string SourcePath;
+    public string ObjectPath => Path.ChangeExtension(SourcePath, ".obj")!;
 
     // ReSharper disable once NotAccessedField.Local
     public string AdditionalIncludeDirectories;

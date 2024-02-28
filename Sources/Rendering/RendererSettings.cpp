@@ -1,4 +1,4 @@
-#include "Settings.hpp"
+#include "RendererSettings.hpp"
 #include "..\Supports\YamlGlmConverter.hpp"
 
 #include <fstream>
@@ -8,16 +8,16 @@
 #include "Infrastructures/Serialization.hpp"
 #include "Infrastructures/FileSystem/FileSystemBase.hpp"
 
-Settings::Settings()
+RendererSettings::RendererSettings()
 {
-	Settings::Load();
+	RendererSettings::Load();
 }
 
-Settings::~Settings()
+RendererSettings::~RendererSettings()
 {
 }
 
-void Settings::Save()
+void RendererSettings::Save()
 {
 	auto saveTo = GetSerializedPath();
 	auto node = Serialization::SerializeToYaml(settingsConfig);
@@ -25,23 +25,23 @@ void Settings::Save()
 	fout << node;
 }
 
-void Settings::Load()
+void RendererSettings::Load()
 {
 	auto loadFrom = GetSerializedPath();
 	if (FileSystemBase::fileExists(loadFrom))
 	{
 		auto node = YAML::LoadFile(loadFrom);
-		settingsConfig = Serialization::Deserialize<SettingsConfig>(node);
+		settingsConfig = Serialization::Deserialize<RendererPersistence>(node);
 	}
 }
 
-std::string Settings::GetSerializedPath()
+std::string RendererSettings::GetSerializedPath()
 {
 	std::string settingsDir = FileSystemBase::getSettingsDir();
 	return settingsDir + "/rendering.yaml";
 }
 
-void Settings::UpdateEditorCamera(const std::shared_ptr<Camera>& camera)
+void RendererSettings::UpdateEditorCamera(const std::shared_ptr<Camera>& camera)
 {
 	settingsConfig.EditorCameraPos = camera->position;
 	settingsConfig.EditorCameraRotationX = camera->rotationX;

@@ -11,7 +11,7 @@ private:
 
 public:
 	std::shared_ptr<Buffer> buffer;
-	VertexBuffer(const std::shared_ptr<Device>& device, const std::shared_ptr<Model>& model, const std::shared_ptr<CommandResource>& commandResource);
+	VertexBuffer(const std::shared_ptr<Device>& device, const void* inData, VkDeviceSize bufferSize, const std::shared_ptr<CommandResource>& commandResource);
 	~VertexBuffer();
 	void Cleanup();
 };

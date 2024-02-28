@@ -2,6 +2,6 @@
 
 #include <memory>
 
-#include "Application.hpp"
+#include "Renderer.hpp"
 #include "Components/DescriptorResource.hpp"
 

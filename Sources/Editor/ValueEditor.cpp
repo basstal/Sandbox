@@ -23,9 +23,9 @@ void ValueEditor::DrawFrame()
 {
 	// ImGuiIO& io = ImGui::GetIO();
 	ImGui::Begin("DebugValues"); // Create a window called "Hello, world!" and append into it.
-	DisplayMatrixInImGui(SingletonOrganizer::Get<Application>()->debugUBO.model, "model");
-	DisplayMatrixInImGui(SingletonOrganizer::Get<Application>()->debugUBO.view, "view");
-	DisplayMatrixInImGui(SingletonOrganizer::Get<Application>()->debugUBO.proj, "proj");
+	// DisplayMatrixInImGui(SingletonOrganizer::Get<Renderer>()->debugUBO.model, "model");
+	// DisplayMatrixInImGui(SingletonOrganizer::Get<Renderer>()->debugUBO.view, "view");
+	// DisplayMatrixInImGui(SingletonOrganizer::Get<Renderer>()->debugUBO.proj, "proj");
 
 	if (ImGui::Button("Reset"))
 	{

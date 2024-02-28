@@ -9,6 +9,7 @@
 #include "ShaderIncluder.hpp"
 #include "Infrastructures/String.hpp"
 #include "Infrastructures/FileSystem/File.hpp"
+#include "Infrastructures/FileSystem/Logger.hpp"
 #include "Rendering/Base/Device.hpp"
 #include "Rendering/Components/DescriptorResource.hpp"
 
@@ -82,7 +83,7 @@ void Shader::LoadUniform(const glslang::TProgram& program, VkShaderStageFlagBits
 		auto splitResult = String::Split(uniform.name, '.');
 		if (splitResult.size() <= 1)
 		{
-			throw std::runtime_error("Uniform " + uniform.name + " has no binding");
+			Logger::Fatal("Uniform " + uniform.name + " has no binding");
 		}
 		auto uniformBlockName = splitResult[0];
 		auto uniformName = String::Replace(uniform.name, uniformBlockName + ".", "");
@@ -93,7 +94,7 @@ void Shader::LoadUniform(const glslang::TProgram& program, VkShaderStageFlagBits
 			existUniformBlock->second.uniforms[uniformName] = u;
 			return;
 		}
-		throw std::runtime_error("Uniform block " + uniformBlockName + " not found for uniform " + uniform.name);
+		Logger::Fatal("Uniform block " + uniformBlockName + " not found for uniform " + uniform.name);
 	}
 	auto existUniform = m_uniforms.find(uniform.name);
 	if (existUniform != m_uniforms.end())
@@ -103,7 +104,7 @@ void Shader::LoadUniform(const glslang::TProgram& program, VkShaderStageFlagBits
 	}
 	if (!GL_DEFINE_TYPE_TO_DESCRIPTOR_TYPE.contains(uniform.glDefineType))
 	{
-		throw std::runtime_error("Uniform " + uniform.name + " has unsupported glDefineType " + std::to_string(uniform.glDefineType) + " for VkDescriptorType");
+		Logger::Fatal("Uniform " + uniform.name + " has unsupported glDefineType " + std::to_string(uniform.glDefineType) + " for VkDescriptorType");
 	}
 	u.descriptorType = GL_DEFINE_TYPE_TO_DESCRIPTOR_TYPE.at(uniform.glDefineType);
 	m_uniforms[uniform.name] = u;
@@ -159,7 +160,7 @@ void Shader::LoadUniformBlock(const glslang::TProgram& program, VkShaderStageFla
 	auto& qualifier = uniformBlock.getType()->getQualifier();
 	if (!STORAGE_QUALIFIER_TO_DESCRIPTOR_TYPE.contains(qualifier.storage))
 	{
-		throw std::runtime_error("Uniform block " + uniformBlock.name + " has unsupported storage " + std::to_string(qualifier.storage) + " for VkDescriptorType");
+		Logger::Fatal("Uniform block " + uniformBlock.name + " has unsupported storage " + std::to_string(qualifier.storage) + " for VkDescriptorType");
 	}
 	block.descriptorCount = uniformBlock.topLevelArrayStride > 0 ? uniformBlock.topLevelArrayStride : 1;
 	block.descriptorType = STORAGE_QUALIFIER_TO_DESCRIPTOR_TYPE.at(qualifier.storage);
@@ -170,7 +171,7 @@ void Shader::Initialize()
 {
 	if (!glslang::InitializeProcess())
 	{
-		throw std::runtime_error("Failed to initialize glslang process");
+		Logger::Fatal("Failed to initialize glslang process");
 	}
 }
 void Shader::Uninitialize()
@@ -182,11 +183,11 @@ bool Shader::LoadShaderForStage(const std::shared_ptr<File>& glslSource, const s
 {
 	if (!STAGE_TO_LANGUAGE.contains(stageFlag))
 	{
-		throw std::runtime_error("Stage " + std::to_string(stageFlag) + " not supported");
+		Logger::Fatal("Stage " + std::to_string(stageFlag) + " not supported");
 	}
 	if (m_shaderModules.contains(stageFlag))
 	{
-		throw std::runtime_error("Stage " + std::to_string(stageFlag) + " already loaded");
+		Logger::Fatal("Stage " + std::to_string(stageFlag) + " already loaded");
 	}
 	glslang::TProgram program;
 	glslang::TShader shader(STAGE_TO_LANGUAGE.at(stageFlag));
@@ -211,18 +212,18 @@ bool Shader::LoadShaderForStage(const std::shared_ptr<File>& glslSource, const s
 	std::string outputs;
 	if (!shader.preprocess(resource, vulkanVersion, ENoProfile, false, false, messages, &outputs, includer))
 	{
-		throw std::runtime_error("GLSL Preprocessing failed for " + shaderName + ":\n" + shader.getInfoLog() + '\n' + shader.getInfoDebugLog());
+		Logger::Fatal("GLSL Preprocessing failed for " + shaderName + ":\n" + shader.getInfoLog() + '\n' + shader.getInfoDebugLog());
 	}
 	if (!shader.parse(resource, vulkanVersion, true, messages, includer))
 	{
-		throw std::runtime_error("GLSL Parsing failed for " + shaderName + ":\n" + shader.getInfoLog() + '\n' + shader.getInfoDebugLog());
+		Logger::Fatal("GLSL Parsing failed for " + shaderName + ":\n" + shader.getInfoLog() + '\n' + shader.getInfoDebugLog());
 	}
 
 	program.addShader(&shader);
 
 	if (!program.link(messages) || !program.mapIO())
 	{
-		throw std::runtime_error("GLSL Linking failed for " + shaderName + ":\n" + program.getInfoLog() + '\n' + program.getInfoDebugLog());
+		Logger::Fatal("GLSL Linking failed for " + shaderName + ":\n" + program.getInfoLog() + '\n' + program.getInfoDebugLog());
 	}
 
 	program.buildReflection();
@@ -264,7 +265,7 @@ bool Shader::LoadShaderForStage(const std::shared_ptr<File>& glslSource, const s
 	VkShaderModule shaderModule;
 	if (vkCreateShaderModule(m_device->vkDevice, &createInfo, nullptr, &shaderModule) != VK_SUCCESS)
 	{
-		throw std::runtime_error("Failed to create shader module!");
+		Logger::Fatal("Failed to create shader module!");
 	}
 	m_shaderModules[stageFlag] = shaderModule;
 	return true;
@@ -383,7 +384,7 @@ std::shared_ptr<DescriptorResource> Shader::CreateDescriptorResource()
 		vertexInputAttributeDescription.binding = 0;
 		if (!GL_DEFINE_TYPE_TO_FORMAT.contains(attribute.glDefineType))
 		{
-			throw std::runtime_error("Attribute " + attributeName + " has unsupported glDefineType " + std::to_string(attribute.glDefineType) + " for VkFormat");
+			Logger::Fatal("Attribute " + attributeName + " has unsupported glDefineType " + std::to_string(attribute.glDefineType) + " for VkFormat");
 		}
 		vertexInputAttributeDescription.format = GL_DEFINE_TYPE_TO_FORMAT.at(attribute.glDefineType);
 		vertexInputAttributeDescription.offset = offset;

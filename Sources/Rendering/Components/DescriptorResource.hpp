@@ -1,7 +1,9 @@
 ﻿#pragma once
+#include <map>
+
 #include "Rendering/Material.hpp"
 #include "Rendering/Base/Device.hpp"
-#include "Rendering/Objects/RenderTexture.hpp"
+#include "Rendering/Objects/Framebuffer.hpp"
 #include "Rendering/Buffers/UniformBuffers.hpp"
 
 struct Uniform;

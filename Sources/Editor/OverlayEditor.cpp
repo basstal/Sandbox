@@ -1,6 +1,8 @@
 #include "OverlayEditor.hpp"
 
 #include "Infrastructures/DataBinding.hpp"
+#include "Rendering/RendererSettings.hpp"
+#include "Rendering/ViewMode.hpp"
 
 std::shared_ptr<OverlayEditor> OverlayEditor::m_instance = nullptr;
 
@@ -54,7 +56,7 @@ void OverlayEditor::DrawFrame()
 				if (ImGui::Selectable(ViewModeNames[i]))
 				{
 					m_applicationEditor->settings->settingsConfig.ViewMode = static_cast<EViewMode>(i);
-					std::shared_ptr<TDataBinding<std::shared_ptr<Settings>>> settingsBinding = DataBinding::Get<std::shared_ptr<Settings>>("Rendering/Settings");
+					std::shared_ptr<TDataBinding<std::shared_ptr<RendererSettings>>> settingsBinding = DataBinding::Get<std::shared_ptr<RendererSettings>>("Rendering/Settings");
 					settingsBinding->Trigger();
 				}
 			}

@@ -8,6 +8,7 @@
 #include "Rendering/Components/DescriptorResource.hpp"
 #include "Rendering/Components/RenderPass.hpp"
 #include "GameCore/Vertex.hpp"
+#include "Rendering/RendererSettings.hpp"
 #include "Rendering/Objects/Shader.hpp"
 
 
@@ -140,10 +141,10 @@ Pipeline::Pipeline(const std::shared_ptr<Device>& device, const std::shared_ptr<
 
 	if (vkCreateGraphicsPipelines(m_device->vkDevice, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &vkPipeline) != VK_SUCCESS)
 	{
-		throw std::runtime_error("failed to create graphics pipeline!");
+		Logger::Fatal("failed to create graphics pipeline!");
 	}
 
-	std::shared_ptr<TDataBinding<std::shared_ptr<Settings>>> settingsBinding = DataBinding::Get<std::shared_ptr<Settings>>("Rendering/Settings");
+	std::shared_ptr<TDataBinding<std::shared_ptr<RendererSettings>>> settingsBinding = DataBinding::Get<std::shared_ptr<RendererSettings>>("Rendering/Settings");
 	settingsBinding->BindMember<Pipeline, &Pipeline::ApplySettings>(this);
 }
 Pipeline::~Pipeline()
@@ -163,19 +164,19 @@ VkPipelineLayout Pipeline::CreatePipelineLayout(const std::shared_ptr<Descriptor
 	VkPipelineLayout layout;
 	if (vkCreatePipelineLayout(m_device->vkDevice, &pipelineLayoutInfo, nullptr, &layout) != VK_SUCCESS)
 	{
-		throw std::runtime_error("failed to create pipeline layout!");
+		Logger::Fatal("failed to create pipeline layout!");
 	}
 	return layout;
 }
 
-void Pipeline::ApplySettings(std::shared_ptr<Settings> settings)
+void Pipeline::ApplySettings(std::shared_ptr<RendererSettings> settings)
 {
 	m_fillModeNonSolid = settings->settingsConfig.ViewMode == Wireframe;
 }
 
 void Pipeline::CreatePipeline(const std::vector<char>& vertexShader, const std::vector<char>& fragmentShader)
 {
-	throw std::runtime_error("not implemented");
+	Logger::Fatal("not implemented");
 	// VkShaderModule vertShaderModule = CreateShaderModule(m_device, vertexShader);
 	// VkShaderModule fragShaderModule = CreateShaderModule(m_device, fragmentShader);
 	// auto vkPipeline = CreatePipeline(vertShaderModule, fragShaderModule, false);
@@ -200,7 +201,7 @@ void Pipeline::CreateFillModeNonSolidPipeline()
 
 VkPipeline Pipeline::CreatePipeline(const VkShaderModule& vertShaderModule, const VkShaderModule& fragShaderModule, bool fillModeNonSolid)
 {
-	throw std::runtime_error("not implemented");
+	Logger::Fatal("not implemented");
 	// VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
 	// vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
 	// auto bindingDescription = Vertex::GetBindingDescription();
@@ -218,6 +219,7 @@ VkPipeline Pipeline::CreatePipeline(const VkShaderModule& vertShaderModule, cons
 	//
 	//
 	// return CreatePipeline(vertShaderModule, fragShaderModule, fillModeNonSolid, vertexInputInfo, inputAssembly);
+    return nullptr;
 }
 
 VkPipeline Pipeline::CreatePipeline(const VkShaderModule& vertShaderModule, const VkShaderModule& fragShaderModule, bool fillModeNonSolid, const VkPipelineVertexInputStateCreateInfo& vertexInputInfo,
@@ -335,7 +337,7 @@ VkPipeline Pipeline::CreatePipeline(const VkShaderModule& vertShaderModule, cons
 	pipelineInfo.pDepthStencilState = &depthStencil;
 	if (vkCreateGraphicsPipelines(m_device->vkDevice, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &vkPipeline) != VK_SUCCESS)
 	{
-		throw std::runtime_error("failed to create graphics pipeline!");
+		Logger::Fatal("failed to create graphics pipeline!");
 	}
 	return vkPipeline;
 }
@@ -369,7 +371,7 @@ VkShaderModule Pipeline::CreateShaderModule(const std::shared_ptr<Device>& devic
 	VkShaderModule shaderModule;
 	if (vkCreateShaderModule(device->vkDevice, &createInfo, nullptr, &shaderModule) != VK_SUCCESS)
 	{
-		throw std::runtime_error("failed to create shader module!");
+		Logger::Fatal("failed to create shader module!");
 	}
 	return shaderModule;
 }

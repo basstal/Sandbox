@@ -2,6 +2,8 @@
 #include <iostream>
 #include <filesystem>
 #include <fstream>
+
+#include "Logger.hpp"
 #ifdef _WIN64
 #include <windows.h>
 #include "FileSystemBase.hpp"
@@ -73,7 +75,7 @@ std::vector<char> FileSystemBase::readFile(const std::string& filename)
 
 	if (!file.is_open())
 	{
-		throw std::runtime_error("failed to open file!" + filename);
+		Logger::Fatal("failed to open file!" + filename);
 	}
 
 	std::streamsize fileSize = file.tellg();
@@ -87,22 +89,22 @@ std::vector<char> FileSystemBase::readFile(const std::string& filename)
 #else // not windows
 std::string FileSystemBase::getExecutablePath()
 {
-	throw std::runtime_error("getExecutablePath not implemented!");
+	Logger::Fatal("getExecutablePath not implemented!");
 }
 std::string FileSystemBase::getBinariesDir()
 {
-	throw std::runtime_error("getBinariesDir not implemented!");
+	Logger::Fatal("getBinariesDir not implemented!");
 }
 std::string FileSystemBase::getAssetsDir()
 {
-	throw std::runtime_error("getAssetsDir not implemented!");
+	Logger::Fatal("getAssetsDir not implemented!");
 }
 void FileSystemBase::addDllSearchPath(std::string inSearchPath)
 {
-	throw std::runtime_error("addDllSearchPath not implemented!");
+	Logger::Fatal("addDllSearchPath not implemented!");
 }
 std::vector<char> FileSystemBase::readFile(const std::string& filename)
 {
-	throw std::runtime_error("readFile not implemented!");
+	Logger::Fatal("readFile not implemented!");
 }
 #endif

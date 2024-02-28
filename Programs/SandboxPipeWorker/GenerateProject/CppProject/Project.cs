@@ -405,7 +405,8 @@ public class Project
             });
         var rawFiles = new List<FileReference>
         {
-            ParsedFile!
+            ParsedFile!,
+            Sandbox.RootDirectory.GetFile(".editorconfig")
         };
         // 添加着色器源码
         rawFiles.AddRange(ProjectDirectory.GetFiles("*.frag"));

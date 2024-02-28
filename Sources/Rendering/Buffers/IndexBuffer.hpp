@@ -10,7 +10,7 @@ class IndexBuffer
 
 public:
 	std::shared_ptr<Buffer> buffer;
-	IndexBuffer(const std::shared_ptr<Device>& device, const std::shared_ptr<Model>& model, const std::shared_ptr<CommandResource>& commandResource);
+	IndexBuffer(const std::shared_ptr<Device>& device, const void* inData, VkDeviceSize bufferSize, const std::shared_ptr<CommandResource>& commandResource);
 	~IndexBuffer();
 	void Cleanup();
 };

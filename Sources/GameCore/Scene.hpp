@@ -15,11 +15,12 @@ private:
 
 public:
 	std::vector<std::shared_ptr<GameObject>> gameObjects;
-	std::string name;
+	std::string name = "default";
 	Scene();
 	~Scene() override;
 	void Update();
 	void Start();
+	void SubmitToRender();
 	void AddGameObject(std::shared_ptr<GameObject> gameObject);
 	void Load() override;
 	void Save() override;

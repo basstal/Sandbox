@@ -4,11 +4,13 @@
 #include <stdexcept>
 #include <vulkan/vulkan_core.h>
 
+#include "Swapchain.hpp"
+#include "Infrastructures/FileSystem/Logger.hpp"
 #include "Rendering/Camera.hpp"
 #include "Rendering/Light.hpp"
 #include "Rendering/Material.hpp"
 #include "Rendering/Base/Device.hpp"
-#include "Rendering/Objects/RenderTexture.hpp"
+#include "Rendering/Objects/Framebuffer.hpp"
 #include "Rendering/Buffers/UniformBuffers.hpp"
 #include "Rendering/Objects/Shader.hpp"
 
@@ -72,7 +74,7 @@ VkDescriptorSetLayout DescriptorResource::CreateDescriptorSetLayout(const std::v
 	VkDescriptorSetLayout layout;
 	if (vkCreateDescriptorSetLayout(m_device->vkDevice, &layoutInfo, nullptr, &layout) != VK_SUCCESS)
 	{
-		throw std::runtime_error("failed to create descriptor set layout!");
+		Logger::Fatal("failed to create descriptor set layout!");
 	}
 	return layout;
 }
@@ -96,22 +98,22 @@ void DescriptorResource::CreateDescriptorPool(const std::shared_ptr<Device>& dev
 	poolInfo.maxSets = DESCRIPTOR_POOL_SIZE;
 	if (vkCreateDescriptorPool(device->vkDevice, &poolInfo, nullptr, &vkDescriptorPool) != VK_SUCCESS)
 	{
-		throw std::runtime_error("failed to create descriptor pool!");
+		Logger::Fatal("failed to create descriptor pool!");
 	}
 }
 
 void DescriptorResource::CreateDescriptorSets()
 {
-	std::vector<VkDescriptorSetLayout> layouts(m_device->MAX_FRAMES_IN_FLIGHT, vkDescriptorSetLayout);
+	std::vector<VkDescriptorSetLayout> layouts(Swapchain::MAX_FRAMES_IN_FLIGHT, vkDescriptorSetLayout);
 	VkDescriptorSetAllocateInfo allocInfo{};
 	allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
 	allocInfo.descriptorPool = vkDescriptorPool;
-	allocInfo.descriptorSetCount = static_cast<uint32_t>(m_device->MAX_FRAMES_IN_FLIGHT);
+	allocInfo.descriptorSetCount = static_cast<uint32_t>(Swapchain::MAX_FRAMES_IN_FLIGHT);
 	allocInfo.pSetLayouts = layouts.data();
-	vkDescriptorSets.resize(m_device->MAX_FRAMES_IN_FLIGHT);
+	vkDescriptorSets.resize(Swapchain::MAX_FRAMES_IN_FLIGHT);
 	if (vkAllocateDescriptorSets(m_device->vkDevice, &allocInfo, vkDescriptorSets.data()) != VK_SUCCESS)
 	{
-		throw std::runtime_error("failed to allocate descriptor sets!");
+		Logger::Fatal("failed to allocate descriptor sets!");
 	}
 }
 

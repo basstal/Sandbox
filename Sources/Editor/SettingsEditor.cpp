@@ -1,6 +1,7 @@
 #include "SettingsEditor.hpp"
 
 #include "Infrastructures/DataBinding.hpp"
+#include "Rendering/RendererSettings.hpp"
 
 std::shared_ptr<SettingsEditor> SettingsEditor::m_instance = nullptr;
 
@@ -21,8 +22,8 @@ void SettingsEditor::DrawFrame()
 
 	// 2. Show a simple window that we create ourselves. We use a Begin/End pair to create a named window.
 	{
-		std::shared_ptr<TDataBinding<std::shared_ptr<Settings>>> settingsBinding = DataBinding::Get<std::shared_ptr<Settings>>("Rendering/Settings");
-		std::shared_ptr<Settings> settings = settingsBinding->GetData();
+		std::shared_ptr<TDataBinding<std::shared_ptr<RendererSettings>>> settingsBinding = DataBinding::Get<std::shared_ptr<RendererSettings>>("Rendering/Settings");
+		std::shared_ptr<RendererSettings> settings = settingsBinding->GetData();
 
 		ImGui::Begin("Rendering/Settings"); // Create a window called "Hello, world!" and append into it.
 

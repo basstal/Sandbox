@@ -29,8 +29,8 @@
 {{~end~}}
 
     <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
-  
-  
+
+
 {{~for Configuration in Configurations~}}
     <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='{{Configuration}}|{{Constants.Platform}}'">
       <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
@@ -73,16 +73,18 @@
     </ItemDefinitionGroup>
 {{~end~}}
     <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
-    
+
     <ItemGroup>
         {{~for CppSourceInfo in CppSourceInfos~}}
-        <ClCompile Include="{{CppSourceInfo.SourcePath}}" />
+        <ClCompile Include="{{CppSourceInfo.SourcePath}}">
+            <ObjectFileName>$(IntDir)/{{CppSourceInfo.ObjectPath}}</ObjectFileName>
+        </ClCompile>
         {{~end~}}
         {{~for RelativeHeaderPath in RelativeHeaderPaths~}}
         <ClInclude Include="{{RelativeHeaderPath}}" />
         {{~end~}}
     </ItemGroup>
-    
+
     <ItemGroup>
         {{~for ReferenceProject in ReferenceProjects~}}
         <ProjectReference Include="{{ReferenceProject.RelativePathToProject}}">
@@ -91,7 +93,7 @@
         </ProjectReference>
         {{~end~}}
     </ItemGroup>
-    
+
     <ItemGroup>
         {{~for RawFile in RawFiles~}}
         <None Include="{{RawFile.FullName}}" />

@@ -1,25 +1,51 @@
 ﻿#pragma once
 #define GLFW_INCLUDE_VULKAN
+#include <memory>
 #include <GLFW/glfw3.h>
-
 #include <vulkan/vulkan_core.h>
 
-#include "Rendering/Settings.hpp"
-
+class RendererSettings;
+/**
+ * \brief 包含 vulkan 的 Surface 和 GLFW 的窗口
+ */
 class Surface
 {
-private:
-	static void FramebufferResizeCallback(GLFWwindow* window, int width, int height);
-	void ApplySettings(std::shared_ptr<Settings> settings);
-	VkInstance m_vkInstance;
-	bool m_cleaned = false;
-	std::shared_ptr<Settings> m_settings;
+    /**
+     * \brief 应用配置信息
+     * \param inSettings 配置信息
+     */
+    void ApplySettings(std::shared_ptr<RendererSettings> inSettings);
+
+    /**
+     * \brief vulkan 实例
+     */
+    VkInstance m_vkInstance;
+
+    /**
+     * \brief 是否已经清理
+     */
+    bool m_cleaned = false;
 
 public:
-	bool framebufferResized = false;
-	GLFWwindow* glfwWindow;
-	VkSurfaceKHR vkSurface;
-	Surface(const VkInstance& instance, const std::shared_ptr<Settings>& settings);
-	~Surface();
-	void Cleanup();
+    /**
+     * \brief frameBuffer 大小是否被调整
+     */
+    bool framebufferResized = false;
+    /**
+     * \brief GLFW 窗口
+     */
+    GLFWwindow* glfwWindow;
+    /**
+     * \brief vulkan 的 Surface
+     */
+    VkSurfaceKHR vkSurface;
+
+    Surface(const VkInstance& instance);
+
+    ~Surface();
+
+    /**
+     * \brief 清理资源
+     */
+    void Cleanup();
 };

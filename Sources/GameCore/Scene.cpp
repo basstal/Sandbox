@@ -5,10 +5,12 @@
 #include "IComponent.hpp"
 #include "GameObject.hpp"
 #include "Infrastructures/Serialization.hpp"
+#include "Infrastructures/SingletonOrganizer.hpp"
 #include "Infrastructures/FileSystem/File.hpp"
 #include "Infrastructures/FileSystem/FileSystemBase.hpp"
 #include "Persistence/GameObjectPersistence.hpp"
 #include "Persistence/ScenePersistence.hpp"
+#include "Rendering/Renderer.hpp"
 #include "yaml-cpp/node/parse.h"
 #include "yaml-cpp/yaml.h"
 #include "Supports/YamlGlmConverter.hpp"
@@ -34,13 +36,20 @@ void Scene::Update()
 			component->Update();
 		}
 	}
+	SubmitToRender();
 }
 
 
 void Scene::Start()
 {
+	m_started = true;
 }
 
+void Scene::SubmitToRender()
+{
+	auto application = SingletonOrganizer::Get<Renderer>();
+	application->queuedRenderObjects = gameObjects;
+}
 void Scene::AddGameObject(std::shared_ptr<GameObject> gameObject)
 {
 	gameObjects.push_back(gameObject);

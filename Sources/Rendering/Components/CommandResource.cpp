@@ -4,13 +4,15 @@
 #include <stdexcept>
 #include <vulkan/vulkan_core.h>
 
+#include "Swapchain.hpp"
+#include "Infrastructures/FileSystem/Logger.hpp"
 #include "Rendering/Base/Device.hpp"
 
 
 CommandResource::CommandResource(const std::shared_ptr<Device>& device)
 {
 	m_device = device;
-	QueueFamilyIndices queueFamilyIndices = device->FindQueueFamilies();
+	QueueFamilyIndices queueFamilyIndices = device->queueFamilies;
 
 	VkCommandPoolCreateInfo poolInfo{};
 	poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
@@ -18,7 +20,7 @@ CommandResource::CommandResource(const std::shared_ptr<Device>& device)
 	poolInfo.queueFamilyIndex = *queueFamilyIndices.graphicsFamily;
 	if (vkCreateCommandPool(device->vkDevice, &poolInfo, nullptr, &vkCommandPool) != VK_SUCCESS)
 	{
-		throw std::runtime_error("failed to create command pool!");
+		Logger::Fatal("failed to create command pool!");
 	}
 }
 
@@ -63,7 +65,7 @@ void CommandResource::EndSingleTimeCommands(VkCommandBuffer commandBuffer)
 
 void CommandResource::CreateCommandBuffers()
 {
-	vkCommandBuffers.resize(m_device->MAX_FRAMES_IN_FLIGHT);
+	vkCommandBuffers.resize(Swapchain::MAX_FRAMES_IN_FLIGHT);
 	VkCommandBufferAllocateInfo allocInfo{};
 	allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
 	allocInfo.commandPool = vkCommandPool;
@@ -71,7 +73,7 @@ void CommandResource::CreateCommandBuffers()
 	allocInfo.commandBufferCount = static_cast<uint32_t>(vkCommandBuffers.size());
 	if (vkAllocateCommandBuffers(m_device->vkDevice, &allocInfo, vkCommandBuffers.data()) != VK_SUCCESS)
 	{
-		throw std::runtime_error("failed to allocate command buffers!");
+		Logger::Fatal("failed to allocate command buffers!");
 	}
 }
 
