@@ -45,17 +45,9 @@ class Swapchain
      */
     std::shared_ptr<Image> m_colorImage;
     /**
-     * \brief 交换链颜色图像视图
-     */
-    VkImageView m_colorVkImageView;
-    /**
      * \brief 交换链深度图像
      */
     std::shared_ptr<Image> m_depthImage;
-    /**
-     * \brief 交换链深度图像视图
-     */
-    VkImageView m_depthVkImageView;
 
     /**
      * \brief 是否清理
@@ -66,11 +58,11 @@ public:
     /**
      * \brief 最大同时渲染的帧数
      */
-    static constexpr size_t MAX_FRAMES_IN_FLIGHT = 2;
+    static constexpr uint32_t MAX_FRAMES_IN_FLIGHT = 2;
     /**
      * \brief 交换链颜色格式
      */
-    static constexpr VkFormat COLOR_FORMAT = VK_FORMAT_R8G8B8A8_UNORM;
+    static constexpr VkFormat COLOR_FORMAT = VK_FORMAT_B8G8R8A8_UNORM;
     /**
      * \brief 交换链颜色空间
      */
@@ -100,8 +92,16 @@ public:
      */
     std::vector<std::shared_ptr<Framebuffer>> framebuffers;
 
+    /**
+     * \brief 创建交换链
+     * \param surface 表面
+     * \param device 设备
+     */
     Swapchain(const std::shared_ptr<Surface>& surface, const std::shared_ptr<Device>& device);
 
+    /**
+     * \brief 析构函数
+     */
     ~Swapchain();
 
     /**

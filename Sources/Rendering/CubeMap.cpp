@@ -5,11 +5,16 @@
 
 #include "Buffers/Buffer.hpp"
 #include "Buffers/Image.hpp"
+#include "Buffers/UniformBuffer.hpp"
+#include "Components/DescriptorResource.hpp"
 #include "Components/Pipeline.hpp"
 #include "GameCore/Resources/Image.hpp"
 #include "Infrastructures/FileSystem/File.hpp"
 #include "Infrastructures/FileSystem/FileSystemBase.hpp"
 #include "Infrastructures/FileSystem/Logger.hpp"
+#include "Objects/Framebuffer.hpp"
+#include "Objects/Shader.hpp"
+#include "Camera.hpp"
 
 const glm::mat4 EquirectangularCaptureProjection = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f);
 const glm::mat4 EquirectangularCaptureViews[] =
@@ -27,30 +32,30 @@ CubeMap::CubeMap(const std::shared_ptr<Device>& device, const std::shared_ptr<Ga
 {
     m_device = device;
     size = inSize;
-    irradianceMap = std::make_shared<Framebuffer>(device, commandResource, false, true, imageResource->Width(), imageResource->Height(), imageResource->MipLevels());
-    irradianceMap->AssignImageData(imageResource);
+    // irradianceMap = std::make_shared<Framebuffer>(device, commandResource, false, true, imageResource->Width(), imageResource->Height(), imageResource->MipLevels());
+    // irradianceMap->AssignImageData(imageResource);
 
-    for (uint32_t i = 0; i < 6; ++i)
-    {
-        auto vkFormat = irradianceMap->vkFormat;
-        images[i] = std::make_shared<Image>(m_device, size, size, 1, VK_SAMPLE_COUNT_1_BIT, vkFormat, VK_IMAGE_TILING_OPTIMAL,
-                                            VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, false);
-        VkImageViewCreateInfo viewInfo = {};
-        viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-        viewInfo.image = images[i]->vkImage;
-        viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-        viewInfo.format = vkFormat;
-        viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-        viewInfo.subresourceRange.baseMipLevel = 0;
-        viewInfo.subresourceRange.levelCount = 1;
-        viewInfo.subresourceRange.baseArrayLayer = 0;
-        viewInfo.subresourceRange.layerCount = 1;
-        vkCreateImageView(device->vkDevice, &viewInfo, nullptr, &vkImageViewCubeMap[i]);
-    }
+    // for (uint32_t i = 0; i < 6; ++i)
+    // {
+    //     auto vkFormat = irradianceMap->vkFormat;
+    //     images[i] = std::make_shared<Image>(m_device, size, size, 1, VK_SAMPLE_COUNT_1_BIT, vkFormat, VK_IMAGE_TILING_OPTIMAL,
+    //                                         VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, false);
+    //     VkImageViewCreateInfo viewInfo = {};
+    //     viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+    //     viewInfo.image = images[i]->vkImage;
+    //     viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+    //     viewInfo.format = vkFormat;
+    //     viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    //     viewInfo.subresourceRange.baseMipLevel = 0;
+    //     viewInfo.subresourceRange.levelCount = 1;
+    //     viewInfo.subresourceRange.baseArrayLayer = 0;
+    //     viewInfo.subresourceRange.layerCount = 1;
+    //     vkCreateImageView(device->vkDevice, &viewInfo, nullptr, &vkImageViewCubeMap[i]);
+    // }
 
-    renderTexture = std::make_shared<Framebuffer>(device, commandResource, true, true, inSize, inSize, 1);
+    // renderTexture = std::make_shared<Framebuffer>(device, commandResource, true, true, inSize, inSize, 1);
     // renderTexture->TransitionImageLayout(renderTexture->vkFormat, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, 1);
-    vkRenderPass = renderPass->CreateCubeMapRenderPass();
+    // vkRenderPass = renderPass->CreateCubeMapRenderPass();
 
     // VkDescriptorSetLayoutBinding mvpLayoutBinding;
     // mvpLayoutBinding.binding = 0;
@@ -102,7 +107,7 @@ CubeMap::CubeMap(const std::shared_ptr<Device>& device, const std::shared_ptr<Ga
     shader->LoadShaderForStage(std::make_shared<File>((sourceDir / "Shaders/EquirectangularMap.vert").string()), "", VK_SHADER_STAGE_VERTEX_BIT);
     shader->LoadShaderForStage(std::make_shared<File>((sourceDir / "Shaders/EquirectangularMap.frag").string()), "", VK_SHADER_STAGE_FRAGMENT_BIT);
     // vkPipeline = pipeline->CreatePipeline(vertShaderModule, fragShaderModule, false, vertexInputInfo, inputAssembly, depthStencil, vkPipelineLayout, vkRenderPass, false);
-    pipeline = std::make_shared<Pipeline>(device, shader, renderPass, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, VK_POLYGON_MODE_FILL);
+    // pipeline = std::make_shared<Pipeline>(device, shader, renderPass, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, VK_POLYGON_MODE_FILL);
     // vkPipeline = pipeline->vkPipeline;
     // vkDestroyShaderModule(m_device->vkDevice, fragShaderModule, nullptr);
     // vkDestroyShaderModule(m_device->vkDevice, vertShaderModule, nullptr);
@@ -119,6 +124,10 @@ void CubeMap::Cleanup()
     {
         return;
     }
+    if (pipeline != nullptr)
+    {
+        pipeline->Cleanup();
+    }
     if (renderTexture != nullptr)
     {
         renderTexture->Cleanup();
@@ -127,14 +136,14 @@ void CubeMap::Cleanup()
     {
         irradianceMap->Cleanup();
     }
-    vkDestroyDescriptorSetLayout(m_device->vkDevice, vkDescriptorSetLayout, nullptr);
-    vkDestroyPipeline(m_device->vkDevice, vkPipeline, nullptr);
-    vkDestroyPipelineLayout(m_device->vkDevice, vkPipelineLayout, nullptr);
-    vkDestroyRenderPass(m_device->vkDevice, vkRenderPass, nullptr);
-    for (uint32_t i = 0; i < 6; ++i)
-    {
-        vkDestroyImageView(m_device->vkDevice, vkImageViewCubeMap[i], nullptr);
-    }
+    // vkDestroyDescriptorSetLayout(m_device->vkDevice, vkDescriptorSetLayout, nullptr);
+    // vkDestroyPipeline(m_device->vkDevice, vkPipeline, nullptr);
+    // vkDestroyPipelineLayout(m_device->vkDevice, vkPipelineLayout, nullptr);
+    // vkDestroyRenderPass(m_device->vkDevice, vkRenderPass, nullptr);
+    // for (uint32_t i = 0; i < 6; ++i)
+    // {
+    //     vkDestroyImageView(m_device->vkDevice, vkImageViewCubeMap[i], nullptr);
+    // }
     if (vertexBuffer != nullptr)
     {
         vertexBuffer->Cleanup();
@@ -142,53 +151,53 @@ void CubeMap::Cleanup()
     m_cleaned = true;
 }
 
-void CubeMap::CreateDescriptorSet(const std::shared_ptr<UniformBuffers>& uniformBuffers, const std::shared_ptr<DescriptorResource>& descriptorResource)
+void CubeMap::CreateDescriptorSet(const std::shared_ptr<UniformBuffer<MVPObject>>& uniformBuffers, const std::shared_ptr<DescriptorResource>& descriptorResource)
 {
-    std::vector<VkDescriptorSetLayout> layouts(1, vkDescriptorSetLayout);
-    VkDescriptorSetAllocateInfo allocInfo{};
-    allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-    allocInfo.descriptorPool = descriptorResource->vkDescriptorPool;
-    allocInfo.descriptorSetCount = static_cast<uint32_t>(1);
-    allocInfo.pSetLayouts = layouts.data();
-    // vkDescriptorSets.resize(m_device->MAX_FRAMES_IN_FLIGHT);
-    if (vkAllocateDescriptorSets(m_device->vkDevice, &allocInfo, &vkDescriptorSet) != VK_SUCCESS)
-    {
-        Logger::Fatal("failed to allocate descriptor sets!");
-    }
-    VkDescriptorBufferInfo mvpBufferInfo;
-    mvpBufferInfo.buffer = uniformBuffers->mvpObjectBuffers[0]->vkBuffer;
-    mvpBufferInfo.offset = 0;
-    mvpBufferInfo.range = sizeof(MVPObject);
-
-
-    VkWriteDescriptorSet mvpWrite{};
-    mvpWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-    mvpWrite.dstSet = vkDescriptorSet;
-    mvpWrite.dstBinding = 0;
-    mvpWrite.dstArrayElement = 0;
-    mvpWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-    mvpWrite.descriptorCount = 1;
-    mvpWrite.pBufferInfo = &mvpBufferInfo;
-    mvpWrite.pImageInfo = nullptr; // Optional
-    mvpWrite.pTexelBufferView = nullptr; // Optional
-
-
-    VkDescriptorImageInfo irradianceImageInfo;
-    irradianceImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-    irradianceImageInfo.imageView = irradianceMap->vkImageView;
-    irradianceImageInfo.sampler = irradianceMap->vkSampler;
-
-    VkWriteDescriptorSet irradianceMapWrite{};
-    irradianceMapWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-    irradianceMapWrite.dstSet = vkDescriptorSet;
-    irradianceMapWrite.dstBinding = 1;
-    irradianceMapWrite.dstArrayElement = 0;
-    irradianceMapWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-    irradianceMapWrite.descriptorCount = 1;
-    irradianceMapWrite.pImageInfo = &irradianceImageInfo;
-
-    std::array descriptorWrites{mvpWrite, irradianceMapWrite};
-    vkUpdateDescriptorSets(m_device->vkDevice, static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
+    // std::vector<VkDescriptorSetLayout> layouts(1, vkDescriptorSetLayout);
+    // VkDescriptorSetAllocateInfo allocInfo{};
+    // allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+    // allocInfo.descriptorPool = descriptorResource->vkDescriptorPool;
+    // allocInfo.descriptorSetCount = static_cast<uint32_t>(1);
+    // allocInfo.pSetLayouts = layouts.data();
+    // // vkDescriptorSets.resize(m_device->MAX_FRAMES_IN_FLIGHT);
+    // if (vkAllocateDescriptorSets(m_device->vkDevice, &allocInfo, &vkDescriptorSet) != VK_SUCCESS)
+    // {
+    //     Logger::Fatal("failed to allocate descriptor sets!");
+    // }
+    // VkDescriptorBufferInfo mvpBufferInfo;
+    // mvpBufferInfo.buffer = uniformBuffers->buffer->vkBuffer;
+    // mvpBufferInfo.offset = 0;
+    // mvpBufferInfo.range = sizeof(MVPObject);
+    //
+    //
+    // VkWriteDescriptorSet mvpWrite{};
+    // mvpWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+    // mvpWrite.dstSet = vkDescriptorSet;
+    // mvpWrite.dstBinding = 0;
+    // mvpWrite.dstArrayElement = 0;
+    // mvpWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    // mvpWrite.descriptorCount = 1;
+    // mvpWrite.pBufferInfo = &mvpBufferInfo;
+    // mvpWrite.pImageInfo = nullptr; // Optional
+    // mvpWrite.pTexelBufferView = nullptr; // Optional
+    //
+    //
+    // VkDescriptorImageInfo irradianceImageInfo;
+    // irradianceImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+    // irradianceImageInfo.imageView = irradianceMap->vkImageView;
+    // irradianceImageInfo.sampler = irradianceMap->vkSampler;
+    //
+    // VkWriteDescriptorSet irradianceMapWrite{};
+    // irradianceMapWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+    // irradianceMapWrite.dstSet = vkDescriptorSet;
+    // irradianceMapWrite.dstBinding = 1;
+    // irradianceMapWrite.dstArrayElement = 0;
+    // irradianceMapWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    // irradianceMapWrite.descriptorCount = 1;
+    // irradianceMapWrite.pImageInfo = &irradianceImageInfo;
+    //
+    // std::array descriptorWrites{mvpWrite, irradianceMapWrite};
+    // vkUpdateDescriptorSets(m_device->vkDevice, static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
 }
 
 VkVertexInputBindingDescription CubeMap::GetBindingDescription()
@@ -222,7 +231,7 @@ std::array<VkVertexInputAttributeDescription, 3> CubeMap::GetAttributeDescriptio
 }
 
 
-void CubeMap::RenderCube(const std::shared_ptr<CommandResource>& commandResource, const std::shared_ptr<UniformBuffers>& uniformBuffers,
+void CubeMap::RenderCube(const std::shared_ptr<CommandResource>& commandResource, const std::shared_ptr<UniformBuffer<MVPObject>>& uniformBuffers,
                          const std::shared_ptr<DescriptorResource>& descriptorResource)
 {
     if (vertexBuffer == nullptr)
@@ -302,7 +311,7 @@ void CubeMap::RenderCube(const std::shared_ptr<CommandResource>& commandResource
         }
     }
 
-    VkCommandBuffer commandBuffer = commandResource->BeginSingleTimeCommands();
+    VkCommandBuffer commandBuffer = CommandResource::BeginSingleTimeGraphicsCommands(m_device);
 
     // 设置渲染目标的视口
     VkViewport viewport = {};
@@ -335,7 +344,8 @@ void CubeMap::RenderCube(const std::shared_ptr<CommandResource>& commandResource
         vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
         // 更新视图矩阵 Uniform
-        uniformBuffers->UpdateMVP(0, EquirectangularCaptureViews[i], glm::mat4(1.0f), EquirectangularCaptureProjection);
+        // TODO:
+        // uniformBuffers->UpdateMVP(0, EquirectangularCaptureViews[i], glm::mat4(1.0f), EquirectangularCaptureProjection);
 
 
         // 绑定管线和顶点缓冲区等
@@ -353,19 +363,19 @@ void CubeMap::RenderCube(const std::shared_ptr<CommandResource>& commandResource
         vkCmdEndRenderPass(commandBuffer);
     }
 
-    commandResource->EndSingleTimeCommands(commandBuffer);
+    CommandResource::EndSingleTimeGraphicsCommands(m_device);
 }
 
 
 void CubeMap::CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize deviceSize, const std::shared_ptr<CommandResource>& commandResource)
 {
-    VkCommandBuffer commandBuffer = commandResource->BeginSingleTimeCommands();
+    VkCommandBuffer commandBuffer = CommandResource::BeginSingleTimeGraphicsCommands(m_device);
     VkBufferCopy copyRegion;
     copyRegion.srcOffset = 0; // Optional
     copyRegion.dstOffset = 0; // Optional
     copyRegion.size = deviceSize;
     vkCmdCopyBuffer(commandBuffer, srcBuffer, dstBuffer, 1, &copyRegion);
-    commandResource->EndSingleTimeCommands(commandBuffer);
+    CommandResource::EndSingleTimeGraphicsCommands(m_device);
 }
 
 void CubeMap::CopyCubeMapFace(VkCommandBuffer commandBuffer,

@@ -43,7 +43,7 @@ void OverlayEditor::DrawFrame()
 	ImGui::SetNextWindowBgAlpha(0.35f); // Transparent background
 	if (ImGui::Begin("Example: Simple overlay", &m_open, window_flags))
 	{
-		auto viewModeName = ViewModeNames[m_applicationEditor->settings->settingsConfig.ViewMode];
+		auto viewModeName = VIEW_MODE_NAMES[m_applicationEditor->settings->persistence.viewMode];
 		// Simple selection popup (if you want to show the current selection inside the Button itself,
 		// you may want to build a string using the "###" operator to preserve a constant ID with a variable label)
 		if (ImGui::Button(viewModeName))
@@ -51,11 +51,11 @@ void OverlayEditor::DrawFrame()
 		if (ImGui::BeginPopup("ViewModePopup"))
 		{
 			// ImGui::SeparatorText("Aquarium");
-			for (int i = 0; i < IM_ARRAYSIZE(ViewModeNames); i++)
+			for (int i = 0; i < IM_ARRAYSIZE(VIEW_MODE_NAMES); i++)
 			{
-				if (ImGui::Selectable(ViewModeNames[i]))
+				if (ImGui::Selectable(VIEW_MODE_NAMES[i]))
 				{
-					m_applicationEditor->settings->settingsConfig.ViewMode = static_cast<EViewMode>(i);
+					m_applicationEditor->settings->persistence.viewMode = static_cast<EViewMode>(i);
 					std::shared_ptr<TDataBinding<std::shared_ptr<RendererSettings>>> settingsBinding = DataBinding::Get<std::shared_ptr<RendererSettings>>("Rendering/Settings");
 					settingsBinding->Trigger();
 				}

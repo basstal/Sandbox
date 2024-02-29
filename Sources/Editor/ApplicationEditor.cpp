@@ -1,18 +1,24 @@
 #include "ApplicationEditor.hpp"
 
 #include <memory>
-#include <stdexcept>
 #include "IEditor.hpp"
 #include "imgui.h"
 #include "backends/imgui_impl_glfw.h"
 #include "backends/imgui_impl_vulkan.h"
 #include "Grid.hpp"
-#include "Gizmos/TransformGizmo.hpp"
 #include "Infrastructures/DataBinding.hpp"
 #include "Infrastructures/SingletonOrganizer.hpp"
+#include "Infrastructures/Timer.hpp"
+#include "Rendering/Camera.hpp"
 #include "Rendering/Renderer.hpp"
 #include "Rendering/RendererSettings.hpp"
-#include "Rendering/Objects/SyncObjects.hpp"
+#include "Rendering/Base/Device.hpp"
+#include "Rendering/Base/Surface.hpp"
+#include "Rendering/Components/CommandResource.hpp"
+#include "Rendering/Components/DescriptorResource.hpp"
+#include "Rendering/Components/RenderPass.hpp"
+#include "Rendering/Components/Subpass.hpp"
+#include "Rendering/Components/Swapchain.hpp"
 
 static bool cursorOff = false;
 static bool moveMouse = true;
@@ -20,13 +26,13 @@ static float lastX = 0.0f;
 static float lastY = 0.0f;
 static GLFWcursorposfun lastCallback = nullptr;
 
-static void SwitchCursor(Renderer& application, bool onEditorCamera)
+static void SwitchCursor(const std::shared_ptr<Renderer>& renderer, bool onEditorCamera)
 {
     if (onEditorCamera == cursorOff)
     {
         return;
     }
-    GLFWwindow* window = application.surface->glfwWindow;
+    GLFWwindow* window = renderer->surface->glfwWindow;
     if (!cursorOff)
     {
         glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
@@ -116,11 +122,13 @@ ApplicationEditor::ApplicationEditor()
     init_info.CheckVkResultFn = CheckVkResult;
     init_info.RenderPass = renderPass->vkRenderPass;
     ImGui_ImplVulkan_Init(&init_info);
-    editorCamera = application->editorCamera;
+    // editorCamera = application->mainCamera;
     settings = application->settings;
     grid = std::make_shared<Grid>(m_device, application->commandResource, renderPass);
     // transformGizmo = std::make_shared<TransformGizmo>(application->modelGameObject, m_device, application->commandResource, application->mainPipeline, application->mainPipeline->descriptorResource,
     //                                                   renderPass);
+    DataBinding::Create("CleanupSwapchain")->BindMember<ApplicationEditor, &ApplicationEditor::CleanupWhenRecreateSwapchain>(this);
+    DataBinding::Create("RecreateSwapchain")->BindMember<ApplicationEditor, &ApplicationEditor::CreateFramebuffer>(this);
 }
 
 ApplicationEditor::~ApplicationEditor()
@@ -130,6 +138,8 @@ ApplicationEditor::~ApplicationEditor()
 
 void ApplicationEditor::CreateFramebuffer()
 {
+    Logger::Debug("ApplicationEditor CreateFramebuffer");
+
     auto application = SingletonOrganizer::Get<Renderer>();
     uint32_t imageCount = static_cast<uint32_t>(application->swapchain->swapchainVkImages.size());
     // Create The Image Views
@@ -216,8 +226,13 @@ void ApplicationEditor::CleanupFramebuffers()
 // 	gizmoEditor->DrawFrame();
 // }
 
-void ApplicationEditor::DrawFrame(Renderer& application, VkCommandBuffer currentCommandBuffer, uint32_t currentFrame, std::shared_ptr<SyncObjects> syncObjects, uint32_t imageIndex)
+void ApplicationEditor::DrawFrame()
 {
+    auto renderer = SingletonOrganizer::Get<Renderer>();
+    editorCamera = renderer->mainCamera;
+    uint32_t frameFlightIndex = renderer->frameFlightIndex;
+    uint32_t imageIndex = renderer->swapchainImageIndex;
+    auto currentCommandBuffer = renderer->commandResource->vkCommandBuffers[frameFlightIndex];
     ImGuiIO& io = ImGui::GetIO();
 
     ImGui_ImplVulkan_NewFrame();
@@ -247,10 +262,10 @@ void ApplicationEditor::DrawFrame(Renderer& application, VkCommandBuffer current
     ImGui::Render();
     ImDrawData* main_draw_data = ImGui::GetDrawData();
     // const bool main_is_minimized = (main_draw_data->DisplaySize.x <= 0.0f || main_draw_data->DisplaySize.y <= 0.0f);
-    application.clearColor.r = clear_color.x * clear_color.w;
-    application.clearColor.g = clear_color.y * clear_color.w;
-    application.clearColor.b = clear_color.z * clear_color.w;
-    application.clearColor.a = clear_color.w;
+    renderer->settings->persistence.clearColor.r = clear_color.x * clear_color.w;
+    renderer->settings->persistence.clearColor.g = clear_color.y * clear_color.w;
+    renderer->settings->persistence.clearColor.b = clear_color.z * clear_color.w;
+    renderer->settings->persistence.clearColor.a = clear_color.w;
     // if (!main_is_minimized)
     // {
     VkCommandBufferBeginInfo beginInfo{};
@@ -267,7 +282,7 @@ void ApplicationEditor::DrawFrame(Renderer& application, VkCommandBuffer current
         info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
         info.renderPass = renderPass->vkRenderPass;
         info.framebuffer = vkFramebuffers[imageIndex];
-        info.renderArea.extent = application.swapchain->swapchainVkExtent2D;
+        info.renderArea.extent = renderer->swapchain->swapchainVkExtent2D;
         // std::array<VkClearValue, 2> clearValues{};
         // clearValues[0].color = {{application.clearColor.r, application.clearColor.g, application.clearColor.b, application.clearColor.a}};
         // clearValues[1].depthStencil = {1.0f, 0};
@@ -299,29 +314,30 @@ void ApplicationEditor::DrawFrame(Renderer& application, VkCommandBuffer current
     VkSubmitInfo submitInfo{};
     submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 
-    VkSemaphore waitSemaphores[] = {syncObjects->gameRenderFinishedSemaphores[currentFrame]};
+    VkSemaphore waitSemaphores[] = {renderer->gameRenderFinishedSemaphores[frameFlightIndex]};
     VkPipelineStageFlags waitStages[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
     submitInfo.waitSemaphoreCount = 1;
     submitInfo.pWaitSemaphores = waitSemaphores;
     submitInfo.pWaitDstStageMask = waitStages;
     submitInfo.commandBufferCount = 1;
     submitInfo.pCommandBuffers = &currentCommandBuffer;
-    VkSemaphore signalSemaphores[] = {syncObjects->renderFinishedSemaphores[currentFrame]};
+    VkSemaphore signalSemaphores[] = {renderer->renderFinishedSemaphores[frameFlightIndex]};
     submitInfo.signalSemaphoreCount = 1;
     submitInfo.pSignalSemaphores = signalSemaphores;
-    if (vkQueueSubmit(m_device->graphicsQueue, 1, &submitInfo, syncObjects->inFlightFences[currentFrame]) != VK_SUCCESS)
+    if (vkQueueSubmit(m_device->graphicsQueue, 1, &submitInfo, renderer->inFlightFences[frameFlightIndex]) != VK_SUCCESS)
     {
         Logger::Fatal("failed to submit editor draw command buffer!");
     }
     // }
 
-    bool isRightButtonPressed = glfwGetMouseButton(application.surface->glfwWindow, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS;
+    bool isRightButtonPressed = glfwGetMouseButton(renderer->surface->glfwWindow, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS;
     if (isRightButtonPressed)
     {
-        editorCamera->UpdatePosition(application.deltaTime, application.surface->glfwWindow);
-        application.settings->UpdateEditorCamera(editorCamera);
+        auto deltaTime = SingletonOrganizer::Get<Timer>()->GetDeltaTime();
+        editorCamera->UpdatePosition(deltaTime, renderer->surface->glfwWindow);
+        // application.settings->UpdateEditorCamera(editorCamera);
     }
-    SwitchCursor(application, isRightButtonPressed);
+    SwitchCursor(renderer, isRightButtonPressed);
 }
 
 void ApplicationEditor::CleanupWhenRecreateSwapchain()

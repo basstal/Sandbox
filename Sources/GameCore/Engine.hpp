@@ -1,6 +1,8 @@
 #pragma once
+#include <memory>
 
 class Timer;
+class Scene;
 
 /**
  * \brief 引擎类
@@ -8,6 +10,8 @@ class Timer;
 class Engine
 {
 public:
+    // TODO: remove this
+    std::shared_ptr<Scene> scene;
     /**
      * \brief 初始化引擎
      */

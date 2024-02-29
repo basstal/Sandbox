@@ -1,9 +1,10 @@
 #pragma once
+#include <string>
 #include <glm/mat4x4.hpp>
 
-#include "ApplicationEditor.hpp"
 #include "IEditor.hpp"
-#include "imgui.h"
+
+class ApplicationEditor;
 
 class ValueEditor : public IEditor
 {

@@ -8,6 +8,7 @@
 #include "Properties.hpp"
 #include "Infrastructures/FileSystem/Logger.hpp"
 #include "Rendering/Renderer.hpp"
+#include "Rendering/Base/Surface.hpp"
 
 std::vector<const char*> Device::fixedDeviceExtensions = {VK_KHR_SWAPCHAIN_EXTENSION_NAME, VK_KHR_DEDICATED_ALLOCATION_EXTENSION_NAME};
 
@@ -87,19 +88,19 @@ int Device::RateDeviceSuitability(const VkPhysicalDevice& device) const
     score += static_cast<int>(deviceProperties.limits.maxImageDimension2D);
 
     QueueFamilyIndices indices = FindQueueFamilies(device);
-    bool swapChainAdequate = false;
+    bool swapchainAdequate = false;
     bool supportDeviceExtensions = IS_DEVICE_EXTENSION_SUPPORT(device, fixedDeviceExtensions);
     if (supportDeviceExtensions)
     {
-        SwapChainSupportDetails swapChainSupport = QuerySwapChainSupport(device);
-        swapChainAdequate = !swapChainSupport.formats.empty() && !swapChainSupport.presentModes.empty();
+        SwapchainSupportDetails swapchainSupport = QuerySwapchainSupport(device);
+        swapchainAdequate = !swapchainSupport.formats.empty() && !swapchainSupport.presentModes.empty();
     }
     // should support polygon mode line
     bool supportFillModeNonSolid = deviceFeatures.fillModeNonSolid && (deviceProperties.limits.lineWidthRange[0] <= 1.0f && deviceProperties.limits.lineWidthRange[1] >= 1.0f);
     // Application can't function without geometry shaders
     bool supportGeometryShader = deviceFeatures.geometryShader;
     bool supportSamplerAnisotropy = deviceFeatures.samplerAnisotropy;
-    if (!supportGeometryShader || !supportFillModeNonSolid || !indices.isComplete() || !supportDeviceExtensions || !swapChainAdequate || !supportSamplerAnisotropy)
+    if (!supportGeometryShader || !supportFillModeNonSolid || !indices.isComplete() || !supportDeviceExtensions || !swapchainAdequate || !supportSamplerAnisotropy)
     {
         return 0;
     }
@@ -146,9 +147,9 @@ QueueFamilyIndices Device::FindQueueFamilies(const VkPhysicalDevice& device) con
 }
 
 
-SwapChainSupportDetails Device::QuerySwapChainSupport(const VkPhysicalDevice& device) const
+SwapchainSupportDetails Device::QuerySwapchainSupport(const VkPhysicalDevice& device) const
 {
-    SwapChainSupportDetails details;
+    SwapchainSupportDetails details;
 
     vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, m_surface->vkSurface, &details.capabilities);
     uint32_t formatCount;
@@ -209,7 +210,7 @@ VkSampleCountFlagBits Device::GetMaxUsableSampleCount() const
 void Device::CreateDevice()
 {
     queueFamilies = FindQueueFamilies(vkPhysicalDevice);
-    swapChainSupportDetails = QuerySwapChainSupport(vkPhysicalDevice);
+    auto swapchainSupportDetails = QuerySwapchainSupport(vkPhysicalDevice);
     std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
     std::set<uint32_t> uniqueQueueFamilies = {*queueFamilies.graphicsFamily, *queueFamilies.presentFamily};
 

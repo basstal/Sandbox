@@ -1,21 +1,27 @@
 #include "TransformGizmo.hpp"
 
-#include <iostream>
 #include <vector>
 #include <glm/detail/type_quat.hpp>
 #include <glm/ext/quaternion_trigonometric.hpp>
 
 #include "SimpleVertex.hpp"
 #include "Editor/ApplicationEditor.hpp"
+#include "GameCore/GameObject.hpp"
+#include "GameCore/Transform.hpp"
 #include "Infrastructures/CollisionDetect.hpp"
 #include "Infrastructures/DataBinding.hpp"
 #include "Infrastructures/SingletonOrganizer.hpp"
 #include "Infrastructures/FileSystem/File.hpp"
 #include "Infrastructures/FileSystem/FileSystemBase.hpp"
 #include "Infrastructures/Math/Ray.hpp"
+#include "Rendering/Camera.hpp"
 #include "Rendering/Base/Device.hpp"
+#include "Rendering/Buffers/Buffer.hpp"
+#include "Rendering/Buffers/UniformBuffer.hpp"
 #include "Rendering/Components/CommandResource.hpp"
+#include "Rendering/Components/DescriptorResource.hpp"
 #include "Rendering/Components/Pipeline.hpp"
+#include "Rendering/Objects/Shader.hpp"
 
 const float M_PI = 3.1415926f;
 const int SEGMENTS = 32;
@@ -68,7 +74,7 @@ void TransformGizmo::Cleanup()
     }
     if (vkPipeline != nullptr)
     {
-        vkDestroyPipeline(m_device->vkDevice, vkPipeline, nullptr);
+        // vkDestroyPipeline(m_device->vkDevice, vkPipeline, nullptr);
     }
     if (buffer != nullptr)
     {
@@ -179,13 +185,13 @@ void TransformGizmo::PrepareDrawData(const std::shared_ptr<Device>& device, cons
     vkUnmapMemory(device->vkDevice, bufferStaging.vkDeviceMemory);
 
     // 复制暂存缓冲到顶点缓冲
-    VkCommandBuffer commandBuffer = commandResource->BeginSingleTimeCommands();
+    VkCommandBuffer commandBuffer = CommandResource::BeginSingleTimeGraphicsCommands(m_device);
     VkBufferCopy copyRegion;
     copyRegion.srcOffset = 0; // Optional
     copyRegion.dstOffset = 0; // Optional
     copyRegion.size = bufferSize;
     vkCmdCopyBuffer(commandBuffer, bufferStaging.vkBuffer, buffer->vkBuffer, 1, &copyRegion);
-    commandResource->EndSingleTimeCommands(commandBuffer);
+    CommandResource::EndSingleTimeGraphicsCommands(m_device);
 
     std::filesystem::path sourceDir = FileSystemBase::getSourceDir();
     auto shader = std::make_shared<Shader>(m_device);
@@ -225,8 +231,8 @@ void TransformGizmo::PrepareDrawData(const std::shared_ptr<Device>& device, cons
     pipeline = std::make_shared<Pipeline>(m_device, shader, SingletonOrganizer::Get<Renderer>()->renderPass, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, VK_POLYGON_MODE_FILL);
     CreatePushConstantPipelineLayout(pipeline->descriptorResource);
 
-    uniformBuffer = std::make_shared<UniformBuffers>(m_device);
-    uniformBuffer->UpdateWriteDescriptorSet(pipeline->descriptorResource);
+    uniformBuffer = std::make_shared<UniformBuffer<MVPObject>>(m_device, pipeline->descriptorResource->nameToBinding["MVPObject"], pipeline->descriptorResource->vkDescriptorSets[0]);
+    // uniformBuffer->UpdateWriteDescriptorSet(pipeline->descriptorResource);
 }
 
 void TransformGizmo::CreatePushConstantPipelineLayout(const std::shared_ptr<DescriptorResource>& descriptorResource)
@@ -253,7 +259,7 @@ void TransformGizmo::Draw(const std::shared_ptr<Camera>& camera, const VkCommand
                           const std::shared_ptr<DescriptorResource>& descriptorResource, uint32_t currentFrame, GLFWwindow* window, const glm::mat4& inProjection)
 {
     projection = inProjection;
-    float distance = glm::length(referenceGameObject->transform->GetPosition() - camera->position);
+    float distance = glm::length(referenceGameObject->transform->GetPosition() - camera->persistence->position);
     float currentScaleFactor = distance * DISTANCE_SIZE_FACTOR; // 根据距离计算缩放因子
     auto scaleMatrix = glm::scale(modelMatrix, glm::vec3(currentScaleFactor * BASE_SIZE));
     if (abs(scaleFactor - currentScaleFactor) > 0.01f)
@@ -320,12 +326,12 @@ void TransformGizmo::UpdateGizmoAndObjectPosition(GLFWwindow* window, const std:
     glm::vec3 rayDir = ray.direction;
 
     // 假设Gizmo距离摄像机的深度为distance
-    float distance = glm::length(referenceGameObject->transform->GetPosition() - camera->position);
+    float distance = glm::length(referenceGameObject->transform->GetPosition() - camera->persistence->position);
 
     // 使用射线与深度确定的平面交点来更新Gizmo位置
     // 假设平面方程为Ax + By + Cz + D = 0，这里选择与摄像机视线垂直的平面
     glm::vec3 planeNormal = glm::normalize(camera->front); // 摄像机前向向量作为平面法线
-    float D = -glm::dot(planeNormal, camera->position + planeNormal * distance); // 计算平面方程的D值
+    float D = -glm::dot(planeNormal, camera->persistence->position + planeNormal * distance); // 计算平面方程的D值
 
     // 计算射线与平面的交点
     float denom = glm::dot(planeNormal, rayDir);

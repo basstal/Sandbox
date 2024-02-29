@@ -25,9 +25,8 @@ Framebuffer::Framebuffer(const std::shared_ptr<Device>& device, const std::share
                                     vkFormat,
                                     VK_IMAGE_TILING_OPTIMAL,
                                     usage, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-                                    isCubeMap);
-    vkImageView = Image::CreateImageView(device->vkDevice, image->vkImage, vkFormat, VK_IMAGE_ASPECT_COLOR_BIT, mipLevels, isCubeMap);
-    CreateTextureSampler(isCubeMap ? VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE : VK_SAMPLER_ADDRESS_MODE_REPEAT); // TODO: 共享纹理采样器
+                                    isCubeMap, VK_IMAGE_ASPECT_COLOR_BIT);
+    // CreateTextureSampler(isCubeMap ? VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE : VK_SAMPLER_ADDRESS_MODE_REPEAT); // TODO: 共享纹理采样器
     m_supportImageProperty.width = width;
     m_supportImageProperty.height = height;
     m_supportImageProperty.isHdrImage = isHdrImage;
@@ -99,6 +98,10 @@ void Framebuffer::Cleanup()
     {
         return;
     }
+    if (image != nullptr)
+    {
+        image->Cleanup();
+    }
     // vkDestroySampler(m_device->vkDevice, vkSampler, nullptr);
     // vkDestroyImageView(m_device->vkDevice, vkImageView, nullptr);
     // vkDestroyImage(m_device->vkDevice, vkImage, nullptr);
@@ -113,7 +116,7 @@ void Framebuffer::TransitionImageLayout(VkImageLayout oldLayout, VkImageLayout n
 
 void Framebuffer::TransitionImageLayout(VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout, uint32_t mipLevels)
 {
-    VkCommandBuffer commandBuffer = m_commandPool->BeginSingleTimeCommands();
+    VkCommandBuffer commandBuffer = CommandResource::BeginSingleTimeGraphicsCommands(m_device);
     VkImageMemoryBarrier barrier{};
     VkPipelineStageFlags sourceStage, destinationStage;
     barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
@@ -162,12 +165,12 @@ void Framebuffer::TransitionImageLayout(VkFormat format, VkImageLayout oldLayout
         0, nullptr,
         0, nullptr,
         1, &barrier);
-    m_commandPool->EndSingleTimeCommands(commandBuffer);
+    CommandResource::EndSingleTimeGraphicsCommands(m_device);
 }
 
 void Framebuffer::CopyFromBuffer(VkBuffer buffer, uint32_t width, uint32_t height)
 {
-    VkCommandBuffer commandBuffer = m_commandPool->BeginSingleTimeCommands();
+    VkCommandBuffer commandBuffer = CommandResource::BeginSingleTimeGraphicsCommands(m_device);
     VkBufferImageCopy region;
     region.bufferOffset = 0;
     region.bufferRowLength = 0;
@@ -191,7 +194,7 @@ void Framebuffer::CopyFromBuffer(VkBuffer buffer, uint32_t width, uint32_t heigh
         VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
         1,
         &region);
-    m_commandPool->EndSingleTimeCommands(commandBuffer);
+    CommandResource::EndSingleTimeGraphicsCommands(m_device);
 }
 
 
@@ -205,7 +208,7 @@ void Framebuffer::GenerateMipmaps(VkFormat imageFormat, int32_t texWidth, int32_
         Logger::Fatal("texture image format does not support linear blitting!");
     }
 
-    VkCommandBuffer commandBuffer = m_commandPool->BeginSingleTimeCommands();
+    VkCommandBuffer commandBuffer = CommandResource::BeginSingleTimeGraphicsCommands(m_device);
 
     VkImageMemoryBarrier barrier{};
     barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
@@ -286,35 +289,13 @@ void Framebuffer::GenerateMipmaps(VkFormat imageFormat, int32_t texWidth, int32_
                          0, nullptr,
                          1, &barrier);
 
-    m_commandPool->EndSingleTimeCommands(commandBuffer);
+    CommandResource::EndSingleTimeGraphicsCommands(m_device);
 }
 
-void Framebuffer::CreateTextureSampler(VkSamplerAddressMode samplerAddressMode)
-{
-    VkSamplerCreateInfo samplerInfo{};
-    samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-    samplerInfo.magFilter = VK_FILTER_LINEAR;
-    samplerInfo.minFilter = VK_FILTER_LINEAR;
-    samplerInfo.addressModeU = samplerAddressMode;
-    samplerInfo.addressModeV = samplerAddressMode;
-    samplerInfo.addressModeW = samplerAddressMode;
-    samplerInfo.anisotropyEnable = VK_TRUE;
-    VkPhysicalDeviceProperties properties{};
-    vkGetPhysicalDeviceProperties(m_device->vkPhysicalDevice, &properties);
-    samplerInfo.maxAnisotropy = properties.limits.maxSamplerAnisotropy;
-    samplerInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
-    samplerInfo.unnormalizedCoordinates = VK_FALSE;
-    samplerInfo.compareEnable = VK_FALSE;
-    samplerInfo.compareOp = VK_COMPARE_OP_ALWAYS;
-    samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
-    samplerInfo.minLod = 0.0f; // Optional
-    samplerInfo.maxLod = VK_LOD_CLAMP_NONE;
-    samplerInfo.mipLodBias = 0.0f; // Optional
-    if (vkCreateSampler(m_device->vkDevice, &samplerInfo, nullptr, &vkSampler) != VK_SUCCESS)
-    {
-        Logger::Fatal("failed to create texture sampler!");
-    }
-}
+// void Framebuffer::CreateTextureSampler(VkSamplerAddressMode samplerAddressMode)
+// {
+//
+// }
 
 
 // void Framebuffer::CreateFramebuffers(const std::shared_ptr<RenderPass>& renderPass)

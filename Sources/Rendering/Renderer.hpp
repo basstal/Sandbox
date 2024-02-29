@@ -2,8 +2,10 @@
 #include <memory>
 #include <vector>
 #include <vulkan/vulkan_core.h>
-#include <glm/vec4.hpp>
-#include <glm/mat4x4.hpp>
+
+#include "Buffers/UniformBuffer.hpp"
+
+class UniformCombinedImage;
 
 namespace GameCore
 {
@@ -20,13 +22,13 @@ class CommandResource;
 class GameObject;
 class Framebuffer;
 class Image;
-class UniformBuffers;
 class SyncObjects;
 class Material;
 class RendererSettings;
 class Camera;
 class Timer;
-class MVPObject;
+struct MVPObject;
+struct Light;
 class ApplicationEditor;
 
 /**
@@ -47,19 +49,44 @@ class Renderer
      */
     void CheckExtensionsSupport(uint32_t glfwExtensionCount, const char** glfwExtensions);
 
-    /**
-     * \brief 当前绘制帧序号
-     */
-    uint32_t m_currentFrame = 0;
 
     /**
      * \brief 是否已经清理
      */
     bool m_cleaned = false;
+    /**
+         * \brief 创建同步对象
+         * \param count 同步对象数量
+         */
+    void CreateSemaphore(uint32_t count);
+
+    /**
+     * \brief 创建围栏
+     * \param count 围栏数量
+     */
+    void CreateFence(uint32_t count);
+
+    /**
+         * \brief 重建交换链
+         */
+    void RecreateSwapchain();
+
+    /**
+         * \brief 填充命令缓冲区
+        * \param currentCommandBuffer 当前命令缓冲区
+        * \param framebuffer 当前帧缓冲区
+         */
+    void RecordCommandBuffer(VkCommandBuffer currentCommandBuffer, const std::shared_ptr<Framebuffer>& framebuffer);
 
 public:
+    /**
+     * \brief 构造函数
+     */
     Renderer();
 
+    /**
+     * \brief 析构函数
+     */
     ~Renderer();
 
     /**
@@ -86,46 +113,95 @@ public:
      * \brief 渲染通道
      */
     std::shared_ptr<RenderPass> renderPass;
-    // std::shared_ptr<DescriptorResource> descriptorResource;
+    /**
+     * \brief 主图形管线
+     */
     std::shared_ptr<Pipeline> mainPipeline;
-    std::shared_ptr<CommandResource> commandResource;
-    std::vector<std::shared_ptr<GameObject>> queuedRenderObjects;
-    // specific to usage
-    // std::shared_ptr<Shader> pbrShader;
-    std::shared_ptr<Framebuffer> renderTexture;
-    // std::shared_ptr<GameObject> modelGameObject;
-    std::shared_ptr<GameCore::Image> image;
-    // std::vector<char> vertexShader;
-    // std::vector<char> fragmentShader;
-    // std::shared_ptr<VertexBuffer> vertexBuffer;
-    // std::shared_ptr<IndexBuffer> indexBuffer;
-    std::shared_ptr<UniformBuffers> uniformBuffers;
-    std::shared_ptr<SyncObjects> syncObjects;
-    std::shared_ptr<Material> material;
-    std::shared_ptr<RendererSettings> settings;
-    std::shared_ptr<Camera> editorCamera;
-    std::shared_ptr<Timer> timer;
-    glm::vec4 clearColor = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
-    // MVPObject debugUBO;
-    glm::mat4 projection;
-    float deltaTime;
+    /**
+     * \brief 线框模式 图形管线
+     */
+    std::shared_ptr<Pipeline> nonSolidPipeline;
+    /**
+     * \brief 描述符资源
+     */
+    std::vector<std::shared_ptr<UniformBuffer<MVPObject>>> uniformMvpObjectsNonSolid;
 
+    /**
+     * \brief 命令资源
+     */
+    std::shared_ptr<CommandResource> commandResource;
+    /**
+     * \brief 渲染对象队列
+     */
+    std::vector<std::shared_ptr<GameObject>> queuedRenderObjects;
+
+    /**
+     * \brief MVP 统一缓冲区，数量与 Swapchain::MAX_FRAMES_IN_FLIGHT 相同
+     */
+    std::vector<std::shared_ptr<UniformBuffer<MVPObject>>> uniformMvpObjects;
+
+    /**
+     * \brief 统一图像采样器，数量与 Swapchain::MAX_FRAMES_IN_FLIGHT 相同
+     */
+    std::vector<std::shared_ptr<UniformCombinedImage>> combinedImages;
+
+    /**
+     * \brief 光信息 统一缓冲区
+     */
+    std::vector<std::shared_ptr<UniformBuffer<Light>>> uniformLights;
+
+    /**
+     * \brief image 可用同步对象
+     */
+    std::vector<VkSemaphore> imageAvailableSemaphores;
+    /**
+     * \brief 渲染完成同步对象
+     */
+    std::vector<VkSemaphore> renderFinishedSemaphores;
+    /**
+     * \brief 游戏渲染完成同步对象
+     */
+    std::vector<VkSemaphore> gameRenderFinishedSemaphores;
+    /**
+     * \brief flight 帧间同步对象
+     */
+    std::vector<VkFence> inFlightFences;
+
+    /**
+     * \brief 渲染器设置
+     */
+    std::shared_ptr<RendererSettings> settings;
+
+    /**
+     * \brief 主摄像机
+     */
+    std::shared_ptr<Camera> mainCamera;
+
+    /**
+     * \brief 当前可用的 Swapchain image 下标
+     */
+    uint32_t swapchainImageIndex;
+    /**
+     * \brief 当前绘制帧序号
+     */
+    uint32_t frameFlightIndex = 0;
+    /**
+     * \brief 清理资源
+     */
     void Cleanup();
 
+    /**
+     * \brief 初始化
+     */
     void Initialize();
 
-    void LoadAssets();
+    /**
+     * \brief 开始绘制一帧
+     */
+    void BeginDrawFrame();
 
-    void CreateSwapchain();
-
-    void DrawFrame(const std::shared_ptr<ApplicationEditor>& applicationEditor);
-
-    void RecreateSwapchain(const std::shared_ptr<ApplicationEditor>& editor);
-
-    void RecordCommandBuffer(VkCommandBuffer currentCommandBuffer, uint32_t imageIndex, const std::shared_ptr<ApplicationEditor>& applicationEditor);
-
-    VkDescriptorSet CreateDescriptorSet(const VkDescriptorSetLayout& descriptorSetLayout, const std::shared_ptr<UniformBuffers>& inUniformBuffers,
-                                        const std::shared_ptr<DescriptorResource>& inDescriptorResource, const std::shared_ptr<Framebuffer>& inRenderTexture);
-
-    void Draw(const glm::vec3& position, const std::shared_ptr<Framebuffer>& inRenderTexture, const VkCommandBuffer& commandBuffer);
+    /**
+     * \brief 结束绘制一帧
+     */
+    void EndDrawFrame();
 };

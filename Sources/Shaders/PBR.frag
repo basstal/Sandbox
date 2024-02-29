@@ -4,7 +4,7 @@ layout(location = 0) out vec4 FragColor;
 layout(location = 0) in vec2 TexCoords;
 layout(location = 1) in vec3 WorldPos;
 layout(location = 2) in vec3 Normal;
-layout(binding = 1) uniform sampler2D textures[4];// 0: albedoMap, 1: metallicMap, 2: roughnessMap, 3: aoMap TODO: 用不同序号的 binding 
+layout(binding = 1) uniform sampler2D textures[4];// 0: albedoMap, 1: metallicMap, 2: roughnessMap, 3: aoMap TODO: 用不同序号的 binding
 
 layout(binding = 2) uniform Light {
     vec3 position;
@@ -12,7 +12,7 @@ layout(binding = 2) uniform Light {
 }
 light;
 
-layout(binding = 3) uniform samplerCube irradianceMap;
+//layout(binding = 3) uniform samplerCube irradianceMap;
 
 layout(push_constant) uniform PushConstants {
     vec3 camPos;
@@ -108,8 +108,8 @@ void main() {
     vec3 kS = FresnelSchlickRoughness(max(dot(N, V), 0.0), F0, roughness);
     vec3 kD = 1.0 - kS;
     kD *= 1.0 - metallic;
-    vec3 irradiance = texture(irradianceMap, N).rgb;
-    vec3 diffuse = irradiance * albedo;
+//    vec3 irradiance = texture(irradianceMap, N).rgb;
+    vec3 diffuse = vec3(1.0) * albedo;
     vec3 ambient = (kD * diffuse) * ao;
 
     vec3 color = ambient + Lo;

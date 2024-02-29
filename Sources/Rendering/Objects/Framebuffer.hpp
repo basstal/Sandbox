@@ -28,7 +28,7 @@ private:
 
     void GenerateMipmaps(VkFormat imageFormat, int32_t texWidth, int32_t texHeight, uint32_t mipLevels);
 
-    void CreateTextureSampler(VkSamplerAddressMode samplerAddressMode);
+    // void CreateTextureSampler(VkSamplerAddressMode samplerAddressMode);
 
     std::shared_ptr<CommandResource> m_commandPool;
     std::shared_ptr<Device> m_device;
@@ -41,8 +41,7 @@ private:
 public:
     // VkImage vkImage;
     // VkDeviceMemory vkDeviceMemory;
-    VkImageView vkImageView;
-    VkSampler vkSampler;
+    // VkImageView vkImageView;
     VkFormat vkFormat;
     VkFramebuffer vkFramebuffer;
     std::shared_ptr<Image> image;

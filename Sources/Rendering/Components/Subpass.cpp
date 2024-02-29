@@ -6,7 +6,7 @@
 #include "Rendering/Base/Device.hpp"
 #include "Rendering/Base/Properties.hpp"
 
-static std::map<std::string, std::shared_ptr<Attachment>> attachmentMap;
+std::map<std::string, std::shared_ptr<Attachment>> Subpass::attachmentMap = {};
 
 Subpass::Subpass(const std::shared_ptr<Device>& device)
 {
@@ -75,6 +75,7 @@ void Subpass::EndSubpassAttachments()
     subpassDescriptions.push_back(vkSubpassDesccription);
 }
 
+// TODO: 这个 name 的作用暂时没想到，共享？
 void Subpass::AddColorAttachment(std::string name, VkFormat format, VkAttachmentLoadOp loadOp, VkImageLayout initialLayout, VkImageLayout finalLayout)
 {
     if (!attachmentMap.contains(name))
@@ -101,7 +102,6 @@ void Subpass::AddColorAttachment(std::string name, VkFormat format, VkAttachment
         m_referenceAttachments.push_back(static_cast<uint32_t>(attachments.size()));
         m_referenceLayouts.push_back(VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
         attachments.push_back(attachmentMap[name]);
-        // isAttachmentClearDepthStencil.push_back(false);
         m_referenceIsMSAASamples.push_back(false);
     }
     else
@@ -138,7 +138,6 @@ void Subpass::AddColorAttachmentResolver(std::string name)
         m_referenceAttachments.push_back(static_cast<uint32_t>(attachments.size()));
         m_referenceLayouts.push_back(VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
         attachments.push_back(attachmentMap[name]);
-        // isAttachmentClearDepthStencil.push_back(false);
         m_referenceIsMSAASamples.push_back(true);
     }
     else
@@ -187,7 +186,6 @@ void Subpass::AssignDepthAttachment(std::string name)
         m_referenceAttachments.push_back(static_cast<uint32_t>(attachments.size()));
         m_referenceLayouts.push_back(VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
         attachments.push_back(attachmentMap[name]);
-        // isAttachmentClearDepthStencil.push_back(true);
         m_referenceIsMSAASamples.push_back(false);
     }
     else

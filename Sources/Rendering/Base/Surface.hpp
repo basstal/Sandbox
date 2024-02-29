@@ -40,8 +40,15 @@ public:
      */
     VkSurfaceKHR vkSurface;
 
+    /**
+     * \brief 创建 Surface
+     * \param instance vulkan 实例
+     */
     Surface(const VkInstance& instance);
 
+    /**
+     * \brief 析构函数
+     */
     ~Surface();
 
     /**

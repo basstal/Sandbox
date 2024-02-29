@@ -1,8 +1,21 @@
 #pragma once
-#include "CubeMap.hpp"
-#include "Objects/Framebuffer.hpp"
+#include "IComponent.hpp"
 
-class Material
+namespace GameCore
+{
+    class Image;
+}
+
+class DescriptorResource;
+class CommandResource;
+class Pipeline;
+class RenderPass;
+class Framebuffer;
+class CubeMap;
+class Device;
+class Image;
+
+class Material : public IComponent
 {
 private:
     bool m_cleaned = false;
@@ -10,13 +23,16 @@ private:
 public:
     int irradianceMapSize = 512;
 
-    void Cleanup();
 
     void TransitionImageLayout();
 
     void UpdateWriteDescriptorSet(const std::shared_ptr<DescriptorResource>& descriptorResource);
 
-    ~Material();
+    ~Material() override;
+
+    void Update() override;
+
+    void Cleanup() override;
 
     Material(const std::shared_ptr<Device>& device, const std::shared_ptr<GameCore::Image>& albedoImage, const std::shared_ptr<GameCore::Image>& metallicImage,
              const std::shared_ptr<GameCore::Image>& roughnessImage,

@@ -1,12 +1,15 @@
 ﻿#include "Swapchain.hpp"
-
 #include <algorithm>
+#include <array>
 
 #include "Attachment.hpp"
 #include "RenderPass.hpp"
+#include "Subpass.hpp"
 #include "Infrastructures/FileSystem/Logger.hpp"
-#include "Rendering/Renderer.hpp"
+#include "Rendering/Base/Device.hpp"
+#include "Rendering/Base/Surface.hpp"
 #include "Rendering/Buffers/Image.hpp"
+#include "Rendering/Objects/Framebuffer.hpp"
 
 Swapchain::Swapchain(const std::shared_ptr<Surface>& surface, const std::shared_ptr<Device>& device)
 {
@@ -21,21 +24,21 @@ Swapchain::~Swapchain()
 
 void Swapchain::CreateSwapchain(const std::shared_ptr<Surface>& surface, const std::shared_ptr<Device>& device)
 {
-    const SwapChainSupportDetails swapChainSupport = device->swapChainSupportDetails;
+    auto swapchainSupports = device->QuerySwapchainSupport(device->vkPhysicalDevice);
 
-    uint32_t imageCount = swapChainSupport.capabilities.minImageCount + 1;
-    if (swapChainSupport.capabilities.maxImageCount > 0 && imageCount > swapChainSupport.capabilities.maxImageCount)
+    uint32_t imageCount = swapchainSupports.capabilities.minImageCount + 1;
+    if (swapchainSupports.capabilities.maxImageCount > 0 && imageCount > swapchainSupports.capabilities.maxImageCount)
     {
-        imageCount = swapChainSupport.capabilities.maxImageCount;
+        imageCount = swapchainSupports.capabilities.maxImageCount;
     }
     VkSwapchainCreateInfoKHR createInfo{};
     createInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
     createInfo.surface = surface->vkSurface;
     createInfo.minImageCount = imageCount;
-    const VkSurfaceFormatKHR surfaceFormat = ChooseSwapSurfaceFormat(swapChainSupport.formats);
+    const VkSurfaceFormatKHR surfaceFormat = ChooseSwapSurfaceFormat(swapchainSupports.formats);
     createInfo.imageFormat = surfaceFormat.format;
     createInfo.imageColorSpace = surfaceFormat.colorSpace;
-    const VkExtent2D extent = ChooseSwapExtent(surface->glfwWindow, swapChainSupport.capabilities);
+    const VkExtent2D extent = ChooseSwapExtent(surface->glfwWindow, swapchainSupports.capabilities);
     createInfo.imageExtent = extent;
     createInfo.imageArrayLayers = 1;
     createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
@@ -54,10 +57,10 @@ void Swapchain::CreateSwapchain(const std::shared_ptr<Surface>& surface, const s
         createInfo.queueFamilyIndexCount = 0; // Optional
         createInfo.pQueueFamilyIndices = nullptr; // Optional
     }
-    createInfo.preTransform = swapChainSupport.capabilities.currentTransform;
+    createInfo.preTransform = swapchainSupports.capabilities.currentTransform;
     createInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
 
-    const VkPresentModeKHR presentMode = ChooseSwapPresentMode(swapChainSupport.presentModes);
+    const VkPresentModeKHR presentMode = ChooseSwapPresentMode(swapchainSupports.presentModes);
     createInfo.presentMode = presentMode;
     createInfo.clipped = VK_TRUE;
     createInfo.oldSwapchain = VK_NULL_HANDLE;
@@ -75,6 +78,7 @@ void Swapchain::CreateSwapchain(const std::shared_ptr<Surface>& surface, const s
     {
         swapchainVkImageViews[i] = Image::CreateImageView(device->vkDevice, swapchainVkImages[i], swapchainVkFormat, VK_IMAGE_ASPECT_COLOR_BIT, 1, false);
     }
+    m_cleaned = false;
 }
 
 void Swapchain::Cleanup()
@@ -84,11 +88,21 @@ void Swapchain::Cleanup()
         return;
     }
     auto vkDevice = m_device->vkDevice;
-    vkDestroyImageView(vkDevice, m_colorVkImageView, nullptr);
-    vkDestroyImageView(vkDevice, m_depthVkImageView, nullptr);
-    for (auto imageView : swapchainVkImageViews)
+    for (auto& framebuffer : framebuffers)
     {
-        vkDestroyImageView(vkDevice, imageView, nullptr);
+        framebuffer->Cleanup();
+    }
+    if (m_colorImage != nullptr)
+    {
+        m_colorImage->Cleanup();
+    }
+    if (m_depthImage != nullptr)
+    {
+        m_depthImage->Cleanup();
+    }
+    for (auto& swapchainImageView : swapchainVkImageViews)
+    {
+        vkDestroyImageView(vkDevice, swapchainImageView, nullptr);
     }
     vkDestroySwapchainKHR(vkDevice, vkSwapchain, nullptr);
     m_cleaned = true;
@@ -101,8 +115,8 @@ void Swapchain::CreateFramebuffers(const std::shared_ptr<RenderPass>& renderPass
         Logger::Fatal("RenderPass must enable depth and msaa");
     }
     m_colorImage = std::make_shared<Image>(m_device, swapchainVkExtent2D.width, swapchainVkExtent2D.height, 1, m_device->msaaSamples, swapchainVkFormat, VK_IMAGE_TILING_OPTIMAL,
-                                           VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, false);
-    m_colorVkImageView = Image::CreateImageView(m_device->vkDevice, m_colorImage->vkImage, swapchainVkFormat, VK_IMAGE_ASPECT_COLOR_BIT, 1, false);
+                                           VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, false,
+                                           VK_IMAGE_ASPECT_COLOR_BIT);
     VkFormat depthFormat = VK_FORMAT_MAX_ENUM;
     for (const auto& attachment : renderPass->subpass->attachments)
     {
@@ -113,16 +127,15 @@ void Swapchain::CreateFramebuffers(const std::shared_ptr<RenderPass>& renderPass
         }
     }
     m_depthImage = std::make_shared<Image>(m_device, swapchainVkExtent2D.width, swapchainVkExtent2D.height, 1, m_device->msaaSamples, depthFormat,
-                                           VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, false);
-    m_depthVkImageView = Image::CreateImageView(m_device->vkDevice, m_depthImage->vkImage, depthFormat, VK_IMAGE_ASPECT_DEPTH_BIT, 1, false);
+                                           VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, false, VK_IMAGE_ASPECT_DEPTH_BIT);
     framebuffers.resize(swapchainVkImages.size());
-    const std::array shouldAttachedDepthImageViews = {
-        m_depthVkImageView
+    const std::array<VkImageView, 1> shouldAttachedDepthImageViews = {
+        m_depthImage->vkImageView
     };
     for (size_t i = 0; i < swapchainVkImages.size(); i++)
     {
-        std::array shouldAttachedColorImageViews = {
-            m_colorVkImageView,
+        std::array<VkImageView, 2> shouldAttachedColorImageViews = {
+            m_colorImage->vkImageView,
             swapchainVkImageViews[i],
         };
         std::vector<VkImageView> attachments;

@@ -1,60 +1,44 @@
 #pragma once
-#include <memory>
 #include <string>
-#include <glm/vec3.hpp>
-#include "Camera.hpp"
-#include "ViewMode.hpp"
-#include "yaml-cpp/yaml.h"
-#include <boost/hana.hpp>
+#include <yaml-cpp/yaml.h>
 
 #include "Infrastructures/ISerializable.hpp"
+#include "Persistence/RendererPersistence.hpp"
 
-struct RendererPersistence
-{
-    bool IsWindow = false;
-    int WindowPositionX = 0;
-    int WindowPositionY = 0;
-    int Width = 1920;
-    int Height = 1080;
-    // bool FillModeNonSolid = false;
-    glm::vec3 EditorCameraPos = glm::vec3(0.0f);
-    float EditorCameraRotationX = DEFAULT_ROTATION_X;
-    float EditorCameraRotationZ = DEFAULT_ROTATION_Z;
-    std::string ApplicationName = "Sandbox";
-    EViewMode ViewMode = EViewMode::Lit;
-};
-
+/**
+ * \brief 渲染器设置
+ */
 class RendererSettings : public ISerializable
 {
-private:
-    RendererPersistence persistence; // TODO: migrate to this
-
 public:
-    RendererPersistence settingsConfig;
-    // bool IsWindow = false;
-    // int WindowPositionX = 0;
-    // int WindowPositionY = 0;
-    // int Width = 1920;
-    // int Height = 1080;
-    // // bool FillModeNonSolid = false;
-    // glm::vec3 EditorCameraPos = glm::vec3(0.0f);
-    // float EditorCameraRotationX = DEFAULT_ROTATION_X;
-    // float EditorCameraRotationZ = DEFAULT_ROTATION_Z;
-    // std::string ApplicationName = "Sandbox";
-    // EViewMode ViewMode = EViewMode::Lit;
+    /**
+     * \brief 持久化数据
+     */
+    RendererPersistence persistence;
+
+    /**
+     * \brief 构造函数
+     */
     RendererSettings();
 
-    ~RendererSettings();
+    /**
+     * \brief 析构函数
+     */
+    ~RendererSettings() override;
 
+    /**
+     * \brief 序列化
+     */
     void Save() override;
 
+    /**
+     * \brief 反序列化
+     */
     void Load() override;
 
+    /**
+     * \brief 获取序列化路径
+     * \return
+     */
     std::string GetSerializedPath() override;
-
-    void UpdateEditorCamera(const std::shared_ptr<Camera>& camera);
 };
-
-// 使 Settings 与 Boost.Hana 兼容
-BOOST_HANA_ADAPT_STRUCT(RendererPersistence, IsWindow, WindowPositionX, WindowPositionY, Width, Height, EditorCameraPos, EditorCameraRotationX, EditorCameraRotationZ, ApplicationName,
-                        ViewMode);

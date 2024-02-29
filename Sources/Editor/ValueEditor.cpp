@@ -1,6 +1,11 @@
 #include "ValueEditor.hpp"
 
+#include "imgui.h"
+
+#include "ApplicationEditor.hpp"
+#include "GameCore/GameObject.hpp"
 #include "Infrastructures/SingletonOrganizer.hpp"
+#include "Rendering/Camera.hpp"
 
 std::shared_ptr<ValueEditor> ValueEditor::m_instance = nullptr;
 
@@ -30,8 +35,8 @@ void ValueEditor::DrawFrame()
 	if (ImGui::Button("Reset"))
 	{
 		m_applicationEditor->editorCamera->Reset();
-		m_applicationEditor->transformGizmo->referenceGameObject->transform->GetPosition() = glm::vec3(0.0f);
-		m_applicationEditor->transformGizmo->modelMatrix = glm::mat4(1.0f);
+		// m_applicationEditor->transformGizmo->referenceGameObject->transform->GetPosition() = glm::vec3(0.0f);
+		// m_applicationEditor->transformGizmo->modelMatrix = glm::mat4(1.0f);
 	}
 	ImGui::End();
 }

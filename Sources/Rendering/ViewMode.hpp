@@ -1,10 +1,25 @@
 #pragma once
 
+/**
+ * \brief 视图模式
+ */
 enum EViewMode
 {
-	Lit = 0,
-	Unlit,
-	Wireframe,
+    /**
+     * \brief 着色
+     */
+    Lit = 0,
+    /**
+     * \brief 无着色
+     */
+    Unlit,
+    /**
+     * \brief 线框
+     */
+    Wireframe,
 };
 
-inline const char* ViewModeNames[] = {"Lit", "Unlit", "Wireframe"};
+/**
+ * \brief 视图模式名称
+ */
+inline const char* VIEW_MODE_NAMES[] = {"Lit", "Unlit", "Wireframe"};

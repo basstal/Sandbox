@@ -1,15 +1,27 @@
 #pragma once
 #include "DescriptorResource.hpp"
 
+/**
+ * @brief 描述 attachment 的作用，
+ * 用于在创建 framebuffer 时进行 attachment 排序等操作。
+ */
 enum AttachmentUsageDescription
 {
     Color,
     DepthStencil,
 };
 
-class Attachment
+/**
+ * @brief 包含 VkAttachmentDescription 的结构体。
+ */
+struct Attachment
 {
-public:
+    /**
+     * @brief 作用
+     */
     AttachmentUsageDescription usageDescription;
-    VkAttachmentDescription vkAttachmentDescription;
+    /**
+     * @brief VkAttachmentDescription 结构体
+     */
+    VkAttachmentDescription vkAttachmentDescription = {};
 };

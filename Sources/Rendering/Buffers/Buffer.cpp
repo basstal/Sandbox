@@ -2,11 +2,13 @@
 #include "Rendering/Base/Device.hpp"
 #include "Infrastructures/SingletonOrganizer.hpp"
 #include "Rendering/Base/Properties.hpp"
+#include "Rendering/Components/CommandResource.hpp"
 
 
 Buffer::Buffer(const std::shared_ptr<Device> device, VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties)
 {
     m_device = device;
+    m_size = size;
     VkBufferCreateInfo bufferInfo{};
     bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
     bufferInfo.size = size;
@@ -36,17 +38,41 @@ Buffer::Buffer(const std::shared_ptr<Device> device, VkDeviceSize size, VkBuffer
 
 Buffer::~Buffer()
 {
-    // Cleanup();
+    Cleanup();
 }
 
 void Buffer::Cleanup()
 {
     if (!m_cleaned)
     {
-        // TODO:recover
-        // vmaDestroyBuffer(allocator, vkBuffer, allocation);
-        // vkDestroyBuffer(m_device->vkDevice, vkBuffer, nullptr);
-        // vkFreeMemory(m_device->vkDevice, vkDeviceMemory, nullptr);
+        vkDestroyBuffer(m_device->vkDevice, vkBuffer, nullptr);
+        vkFreeMemory(m_device->vkDevice, vkDeviceMemory, nullptr);
         m_cleaned = true;
     }
+}
+
+void Buffer::AssignData(const void* inData)
+{
+    auto device = m_device;
+    auto bufferSize = m_size;
+    Buffer stagingBuffer(device, bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+
+    void* data;
+    vkMapMemory(device->vkDevice, stagingBuffer.vkDeviceMemory, 0, bufferSize, 0, &data);
+    memcpy(data, inData, bufferSize);
+    vkUnmapMemory(device->vkDevice, stagingBuffer.vkDeviceMemory);
+
+    CopyBuffer(stagingBuffer.vkBuffer, vkBuffer, bufferSize);
+}
+
+
+void Buffer::CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size)
+{
+    VkCommandBuffer commandBuffer = CommandResource::BeginSingleTimeGraphicsCommands(m_device);
+    VkBufferCopy copyRegion;
+    copyRegion.srcOffset = 0; // Optional
+    copyRegion.dstOffset = 0; // Optional
+    copyRegion.size = size;
+    vkCmdCopyBuffer(commandBuffer, srcBuffer, dstBuffer, 1, &copyRegion);
+    CommandResource::EndSingleTimeGraphicsCommands(m_device);
 }

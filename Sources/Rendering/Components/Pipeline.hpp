@@ -1,42 +1,77 @@
 ﻿#pragma once
 
 #include <filesystem>
+#include <vulkan/vulkan.h>
 
-#include "Rendering/Components/DescriptorResource.hpp"
-#include "Rendering/Components/RenderPass.hpp"
-#include "Rendering/Base/Device.hpp"
-#include "Rendering/Objects/Shader.hpp"
+class Device;
+class RenderPass;
+class Shader;
+class DescriptorResource;
+class RendererSettings;
 
+/**
+ * \brief 管线类
+ */
 class Pipeline
 {
-private:
-	std::shared_ptr<Device> m_device;
-	std::shared_ptr<RenderPass> m_renderPass;
-	std::shared_ptr<Shader> m_shader;
-	bool m_cleaned = false;
-	bool m_fillModeNonSolid = false;
+    /**
+     * \brief 设备
+     */
+    std::shared_ptr<Device> m_device;
+    /**
+     * \brief 渲染通道
+     */
+    std::shared_ptr<RenderPass> m_renderPass;
+    /**
+     * \brief 着色器
+     */
+    std::shared_ptr<Shader> m_shader;
+    /**
+     * \brief 是否已清理
+     */
+    bool m_cleaned = false;
 
 public:
-	// std::vector<VkPipeline> vkPipelines;
-	VkPipeline nonSolidPipeline;
-	VkPipelineLayout vkPipelineLayout;
-	VkPipeline GraphicsPipeline();
-	std::shared_ptr<DescriptorResource> descriptorResource;
-	VkPipeline vkPipeline;
-	Pipeline(const std::shared_ptr<Device>& device, const std::shared_ptr<Shader>& shader, const std::shared_ptr<RenderPass>& renderPass, VkPrimitiveTopology primitiveTopology,
-	         VkPolygonMode polygonMode);
-	~Pipeline();
-	VkPipelineLayout CreatePipelineLayout(const std::shared_ptr<DescriptorResource>& inDescriptorResource, VkDescriptorSetLayout descriptorSetLayout);
-	void ApplySettings(std::shared_ptr<RendererSettings> settings);
-	void CreatePipeline(const std::vector<char>& vertexShader, const std::vector<char>& fragmentShader);
-	void CreateFillModeNonSolidPipeline();
-	VkPipeline CreatePipeline(const VkShaderModule& vertShaderModule, const VkShaderModule& fragShaderModule, bool fillModeNonSolid);
-	VkPipeline CreatePipeline(const VkShaderModule& vertShaderModule, const VkShaderModule& fragShaderModule, bool fillModeNonSolid, const VkPipelineVertexInputStateCreateInfo& vertexInputInfo,
-	                          const VkPipelineInputAssemblyStateCreateInfo& inputAssembly);
-	VkPipeline CreatePipeline(const VkShaderModule& vertShaderModule, const VkShaderModule& fragShaderModule, bool fillModeNonSolid, const VkPipelineVertexInputStateCreateInfo& vertexInputInfo, const
-	                          VkPipelineInputAssemblyStateCreateInfo& inputAssembly, const VkPipelineDepthStencilStateCreateInfo& depthStencil, const VkPipelineLayout& inVkPipelineLayout,
-	                          const VkRenderPass& inVkRenderPass, bool
-	                          useMultiSampling);
-	static VkShaderModule CreateShaderModule(const std::shared_ptr<Device>& device, const std::vector<char>& code);
-	void Cleanup();
+    /**
+     * \brief 图形管线布局
+     */
+    VkPipelineLayout vkPipelineLayout;
+
+    /**
+     * \brief 图形管线
+     */
+    VkPipeline vkPipeline;
+    /**
+     * \brief 管线资源描述符
+     */
+    std::shared_ptr<DescriptorResource> descriptorResource;
+
+    /**
+     * \brief 构造函数
+     * \param device    设备
+     * \param shader   着色器
+     * \param renderPass    渲染通道
+     * \param primitiveTopology   图元拓扑
+     * \param polygonMode   多边形模式
+     */
+    Pipeline(const std::shared_ptr<Device>& device, const std::shared_ptr<Shader>& shader, const std::shared_ptr<RenderPass>& renderPass, VkPrimitiveTopology primitiveTopology,
+             VkPolygonMode polygonMode);
+
+    /**
+     * \brief 析构函数
+     */
+    ~Pipeline();
+
+    /**
+     * \brief 从着色器中间文件 spv 数据创建着色器模型
+     * \param device    设备
+     * \param spvCode   spv 数据
+     * \return  着色器模型
+     */
+    static VkShaderModule CreateShaderModule(const std::shared_ptr<Device>& device, const std::vector<char>& spvCode);
+
+    /**
+     * \brief 清理资源
+     */
+    void Cleanup();
 };

@@ -2,16 +2,23 @@
 #include <array>
 #include <memory>
 
-#include "Base/Device.hpp"
-#include "Buffers/Buffer.hpp"
-#include "GameCore/Resources/Image.hpp"
-#include "Objects/Framebuffer.hpp"
+#include "Buffers/UniformBuffer.hpp"
+
+struct MVPObject;
+
+namespace GameCore
+{
+    class Image;
+}
 
 class Image;
 class Pipeline;
 class RenderPass;
 class DescriptorResource;
-class UniformBuffers;
+class CommandResource;
+class Framebuffer;
+class Buffer;
+
 
 class CubeMap
 {
@@ -48,9 +55,9 @@ public:
 
     void Cleanup();
 
-    void CreateDescriptorSet(const std::shared_ptr<UniformBuffers>& uniformBuffers, const std::shared_ptr<DescriptorResource>& descriptorResource);
+    void CreateDescriptorSet(const std::shared_ptr<UniformBuffer<MVPObject>>& uniformBuffers, const std::shared_ptr<DescriptorResource>& descriptorResource);
 
-    void RenderCube(const std::shared_ptr<CommandResource>& commandResource, const std::shared_ptr<UniformBuffers>& uniformBuffers,
+    void RenderCube(const std::shared_ptr<CommandResource>& commandResource, const std::shared_ptr<UniformBuffer<MVPObject>>& uniformBuffers,
                     const std::shared_ptr<DescriptorResource>& descriptorResource);
 
     void CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size, const std::shared_ptr<CommandResource>& commandResource);

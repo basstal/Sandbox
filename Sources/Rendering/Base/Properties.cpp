@@ -1,8 +1,6 @@
 #include "Properties.hpp"
-
 #include <set>
 #include <vector>
-
 #include "Infrastructures/FileSystem/Logger.hpp"
 
 uint32_t FIND_MEMORY_TYPE(VkPhysicalDevice physicalDevice, uint32_t typeFilter, VkMemoryPropertyFlags properties)

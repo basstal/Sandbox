@@ -4,7 +4,7 @@
 #include <vector>
 #include <vulkan/vulkan_core.h>
 
-#include "Surface.hpp"
+class Surface;
 
 /**
  * \brief vulkan 队列族索引信息
@@ -30,7 +30,7 @@ struct QueueFamilyIndices
 /**
  * \brief 交换链支持信息
  */
-struct SwapChainSupportDetails
+struct SwapchainSupportDetails
 {
     /**
      * \brief 交换链能力
@@ -68,12 +68,6 @@ class Device
      */
     VkSampleCountFlagBits GetMaxUsableSampleCount() const;
 
-    /**
-       * \brief 查询交换链支持信息
-       * \param device 物理设备
-       * \return 交换链支持信息
-       */
-    SwapChainSupportDetails QuerySwapChainSupport(const VkPhysicalDevice& device) const;
 
     /**
      * \brief 查找队列族索引信息
@@ -99,6 +93,13 @@ class Device
     bool m_cleaned = false;
 
 public:
+    /**
+       * \brief 查询交换链支持信息
+       * \param device 物理设备
+       * \return 交换链支持信息
+       */
+    SwapchainSupportDetails QuerySwapchainSupport(const VkPhysicalDevice& device) const;
+
     /**
      * \brief 固定的 vulkan 扩展，必须被支持
      */
@@ -129,13 +130,17 @@ public:
      * \brief 使用中的队列族索引信息
      */
     QueueFamilyIndices queueFamilies;
-    /**
-     * \brief 交换链支持信息
-     */
-    SwapChainSupportDetails swapChainSupportDetails;
 
+    /**
+     * \brief 构造函数
+     * \param instance vulkan 实例
+     * \param surface surface 对象
+     */
     Device(const VkInstance& instance, const std::shared_ptr<Surface>& surface);
 
+    /**
+     * \brief 析构函数
+     */
     ~Device();
 
 

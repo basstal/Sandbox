@@ -1,8 +1,6 @@
 ﻿#include "Surface.hpp"
-
 #include <memory>
 #include <vulkan/vulkan_core.h>
-
 #include "Infrastructures/DataBinding.hpp"
 #include "Infrastructures/FileSystem/Logger.hpp"
 #include "Rendering/RendererSettings.hpp"
@@ -13,8 +11,8 @@ void WindowPosCallback(GLFWwindow* window, int x, int y)
     if (currentIsWindow)
     {
         auto settings = DataBinding::Get<std::shared_ptr<RendererSettings>>("Rendering/Settings")->GetData();
-        settings->settingsConfig.WindowPositionX = x;
-        settings->settingsConfig.WindowPositionY = y;
+        settings->persistence.windowPositionX = x;
+        settings->persistence.windowPositionY = y;
     }
 }
 
@@ -30,8 +28,8 @@ void WindowSizeCallback(GLFWwindow* window, int width, int height)
     if (currentIsWindow)
     {
         auto settings = DataBinding::Get<std::shared_ptr<RendererSettings>>("Rendering/Settings")->GetData();
-        settings->settingsConfig.Width = width;
-        settings->settingsConfig.Height = height;
+        settings->persistence.width = width;
+        settings->persistence.height = height;
     }
 }
 
@@ -45,18 +43,18 @@ Surface::Surface(const VkInstance& instance)
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
     glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
     // 获取一个指向用户的主监视器的指针
-    GLFWmonitor* monitor = settings->settingsConfig.IsWindow ? nullptr : glfwGetPrimaryMonitor();
+    GLFWmonitor* monitor = settings->persistence.isWindow ? nullptr : glfwGetPrimaryMonitor();
     // 获取该监视器的视频模式，特别是为了得到屏幕的分辨率。你可以使用glfwGetVideoMode来获取当前视频模式：
-    const GLFWvidmode* mode = settings->settingsConfig.IsWindow ? nullptr : glfwGetVideoMode(monitor);
-    int width = settings->settingsConfig.IsWindow ? (int)settings->settingsConfig.Width : mode->width;
-    int height = settings->settingsConfig.IsWindow ? (int)settings->settingsConfig.Height : mode->height;
+    const GLFWvidmode* mode = settings->persistence.isWindow ? nullptr : glfwGetVideoMode(monitor);
+    int width = settings->persistence.isWindow ? (int)settings->persistence.width : mode->width;
+    int height = settings->persistence.isWindow ? (int)settings->persistence.height : mode->height;
     // 创建窗口
-    glfwWindow = glfwCreateWindow(width, height, settings->settingsConfig.ApplicationName.c_str(), monitor, nullptr);
+    glfwWindow = glfwCreateWindow(width, height, settings->persistence.applicationName.c_str(), monitor, nullptr);
     if (glfwWindow == nullptr)
     {
         Logger::Fatal("failed to create window!");
     }
-    glfwSetWindowPos(glfwWindow, (int)settings->settingsConfig.WindowPositionX, (int)settings->settingsConfig.WindowPositionY);
+    glfwSetWindowPos(glfwWindow, (int)settings->persistence.windowPositionX, (int)settings->persistence.windowPositionY);
     glfwSetWindowUserPointer(glfwWindow, this);
     glfwSetFramebufferSizeCallback(glfwWindow, FramebufferResizeCallback);
     glfwSetWindowPosCallback(glfwWindow, WindowPosCallback);
@@ -92,14 +90,14 @@ void Surface::ApplySettings(std::shared_ptr<RendererSettings> inSettings)
     }
     auto currentIsWindow = glfwGetWindowMonitor(glfwWindow) == nullptr;
 
-    if (inSettings->settingsConfig.IsWindow != currentIsWindow)
+    if (inSettings->persistence.isWindow != currentIsWindow)
     {
-        if (inSettings->settingsConfig.IsWindow)
+        if (inSettings->persistence.isWindow)
         {
             // 当前是全屏模式，切换到窗口模式
             glfwSetWindowMonitor(glfwWindow, nullptr,
-                                 (int)inSettings->settingsConfig.WindowPositionX, (int)inSettings->settingsConfig.WindowPositionY,
-                                 (int)inSettings->settingsConfig.Width, (int)inSettings->settingsConfig.Height, 0);
+                                 (int)inSettings->persistence.windowPositionX, (int)inSettings->persistence.windowPositionY,
+                                 (int)inSettings->persistence.width, (int)inSettings->persistence.height, 0);
         }
         else
         {
@@ -111,17 +109,17 @@ void Surface::ApplySettings(std::shared_ptr<RendererSettings> inSettings)
             glfwSetWindowMonitor(glfwWindow, monitor, 0, 0, mode->width, mode->height, mode->refreshRate);
         }
     }
-    if (inSettings->settingsConfig.IsWindow)
+    if (inSettings->persistence.isWindow)
     {
         int posX, posY, width, height;
         // 保存当前窗口位置和大小
         glfwGetWindowPos(glfwWindow, &posX, &posY);
         glfwGetWindowSize(glfwWindow, &width, &height);
-        if (posX != inSettings->settingsConfig.WindowPositionX || posY != inSettings->settingsConfig.WindowPositionY || width != inSettings->settingsConfig.Width || height != inSettings->
-            settingsConfig.Height)
+        if (posX != inSettings->persistence.windowPositionX || posY != inSettings->persistence.windowPositionY || width != inSettings->persistence.width || height != inSettings->
+            persistence.height)
         {
-            glfwSetWindowPos(glfwWindow, (int)inSettings->settingsConfig.WindowPositionX, (int)inSettings->settingsConfig.WindowPositionY);
-            glfwSetWindowSize(glfwWindow, (int)inSettings->settingsConfig.Width, (int)inSettings->settingsConfig.Height);
+            glfwSetWindowPos(glfwWindow, (int)inSettings->persistence.windowPositionX, (int)inSettings->persistence.windowPositionY);
+            glfwSetWindowSize(glfwWindow, (int)inSettings->persistence.width, (int)inSettings->persistence.height);
         }
     }
 }

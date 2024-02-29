@@ -38,13 +38,13 @@ void SettingsEditor::DrawFrame()
 		// 	counter++;
 		// ImGui::SameLine();
 		// ImGui::Text("counter = %d", counter);
-		auto changed = ImGui::Checkbox("IsWindow", &settings->settingsConfig.IsWindow);
-		if (settings->settingsConfig.IsWindow)
+		auto changed = ImGui::Checkbox("IsWindow", &settings->persistence.isWindow);
+		if (settings->persistence.isWindow)
 		{
-			changed = ImGui::DragInt("WindowPositionX", &settings->settingsConfig.WindowPositionX) || changed;
-			changed = ImGui::DragInt("WindowPositionY", &settings->settingsConfig.WindowPositionY) || changed;
-			changed = ImGui::DragInt("Width", &settings->settingsConfig.Width) || changed;
-			changed = ImGui::DragInt("Height", &settings->settingsConfig.Height) || changed;
+			changed = ImGui::DragInt("WindowPositionX", &settings->persistence.windowPositionX) || changed;
+			changed = ImGui::DragInt("WindowPositionY", &settings->persistence.windowPositionY) || changed;
+			changed = ImGui::DragInt("Width", &settings->persistence.width) || changed;
+			changed = ImGui::DragInt("Height", &settings->persistence.height) || changed;
 		}
 		// changed = ImGui::Checkbox("FillModeNonSolid", &settings->FillModeNonSolid) || changed;
 		if (changed)

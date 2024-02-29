@@ -5,9 +5,14 @@
 #include "Infrastructures/FileSystem/File.hpp"
 #include "Infrastructures/FileSystem/FileSystemBase.hpp"
 #include "Rendering/Renderer.hpp"
+#include "Rendering/Base/Device.hpp"
 #include "Rendering/Buffers/Buffer.hpp"
+#include "Rendering/Buffers/UniformBuffer.hpp"
 #include "Rendering/Components/CommandResource.hpp"
+#include "Rendering/Components/DescriptorResource.hpp"
 #include "Rendering/Components/Pipeline.hpp"
+#include "Rendering/Objects/Shader.hpp"
+#include "Rendering/Camera.hpp"
 
 
 std::vector<SimpleVertex> Grid::GetLineListProperties()
@@ -80,9 +85,14 @@ void Grid::Cleanup()
     {
         return;
     }
+    if (uniformBuffer != nullptr)
+    {
+        uniformBuffer->Cleanup();
+    }
+    pipeline->Cleanup();
     if (vkPipeline != nullptr)
     {
-        vkDestroyPipeline(m_device->vkDevice, vkPipeline, nullptr);
+        // vkDestroyPipeline(m_device->vkDevice, vkPipeline, nullptr);
     }
     if (buffer != nullptr)
     {
@@ -113,13 +123,13 @@ void Grid::PrepareDrawData(const std::shared_ptr<Device>& device, const std::sha
     vkUnmapMemory(vkDevice, bufferStaging.vkDeviceMemory);
 
     // 复制暂存缓冲到顶点缓冲
-    VkCommandBuffer commandBuffer = commandResource->BeginSingleTimeCommands();
+    VkCommandBuffer commandBuffer = CommandResource::BeginSingleTimeGraphicsCommands(device);
     VkBufferCopy copyRegion;
     copyRegion.srcOffset = 0; // Optional
     copyRegion.dstOffset = 0; // Optional
     copyRegion.size = bufferSize;
     vkCmdCopyBuffer(commandBuffer, bufferStaging.vkBuffer, buffer->vkBuffer, 1, &copyRegion);
-    commandResource->EndSingleTimeCommands(commandBuffer);
+    CommandResource::EndSingleTimeGraphicsCommands(device);
 
     auto shader = std::make_shared<Shader>(device);
     std::filesystem::path sourceDir = FileSystemBase::getSourceDir();
@@ -128,8 +138,8 @@ void Grid::PrepareDrawData(const std::shared_ptr<Device>& device, const std::sha
 
     pipeline = std::make_shared<Pipeline>(device, shader, SingletonOrganizer::Get<Renderer>()->renderPass, VK_PRIMITIVE_TOPOLOGY_LINE_LIST, VK_POLYGON_MODE_FILL);
 
-    uniformBuffer = std::make_shared<UniformBuffers>(device);
-    uniformBuffer->UpdateWriteDescriptorSet(pipeline->descriptorResource);
+    uniformBuffer = std::make_shared<UniformBuffer<MVPObject>>(device, pipeline->descriptorResource->nameToBinding["MVPObject"], pipeline->descriptorResource->vkDescriptorSets[0]);
+    // uniformBuffer->UpdateWriteDescriptorSet(pipeline->descriptorResource);
     // // 创建管线
     // VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
     // vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
