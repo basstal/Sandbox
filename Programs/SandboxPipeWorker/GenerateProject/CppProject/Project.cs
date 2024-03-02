@@ -440,6 +440,7 @@ public class Project
             AdditionalIncludeDirectories = string.Join(";", includeDirectoryReferences.Distinct().Select(directory => directory.FullName)),
             AdditionalOptions = string.Join(" ", new[]
             {
+                "/MP", // 启用“多处理器编译”，可能导致的问题包括：编译顺序问题：在某些情况下，如果源文件之间有复杂的依赖关系，/MP选项可能会导致编译错误，因为它改变了文件被编译的顺序。这种情况较为罕见，并且通常可以通过调整项目中的依赖关系解决。预编译头文件（PCH）的使用：当使用/MP与预编译头文件（PCH）一起时，只有当所有源文件都使用相同的PCH时，才能获得最佳的编译性能。否则，可能会看到编译速度下降，因为编译器需要重复生成PCH。
                 "/Zc:__cplusplus", // Boost.hana requires __cplusplus https://github.com/boostorg/hana/issues/516
             }),
             AdditionalDependencies = string.Join(";", additionalDependencies.Distinct().Select(file => file.FullName)),
