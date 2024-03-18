@@ -26,6 +26,12 @@ public enum ProjectType
     None,
     Cpp,
     CSharp,
-    Library,
     Folder,
+}
+
+public enum CppSubType
+{
+    None,
+    Source,
+    Library,
 }

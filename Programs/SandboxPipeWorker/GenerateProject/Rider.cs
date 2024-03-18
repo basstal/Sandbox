@@ -1,5 +1,4 @@
-﻿using SandboxPipeWorker.Common;
-using SandboxPipeWorker.GenerateProject.CppProject;
+﻿using SandboxPipeWorker.GenerateProject.CppProject;
 
 namespace SandboxPipeWorker.GenerateProject;
 

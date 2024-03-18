@@ -1,3 +1,4 @@
-type: Library
-additional_include_paths: 
+type: Cpp
+sub_type: Library
+additional_include_paths:
  - stb

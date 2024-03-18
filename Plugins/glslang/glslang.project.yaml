@@ -1,4 +1,5 @@
-type: Library
+type: Cpp
+sub_type: Library
 additional_include_paths:
   - glslang
 lib_paths:

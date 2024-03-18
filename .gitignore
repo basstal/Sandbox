@@ -466,3 +466,5 @@ Sandbox.sln
 imgui.ini
 /Assets/Settings
 /Plugins/**/CMakeLists.txt
+/Sources_backup*
+*.cap

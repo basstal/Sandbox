@@ -1,51 +1,44 @@
-#pragma once
-#include <vector>
-#include <glm/vec2.hpp>
+﻿#pragma once
+
 #include <glm/vec3.hpp>
-#include <memory>
-#include <vulkan/vulkan.h>
 
-#include "Rendering/Buffers/UniformBuffer.hpp"
+#include "Editor.hpp"
 
-struct MVPObject;
-class Device;
-class CommandResource;
-class RenderPass;
-class Pipeline;
-class DescriptorResource;
-class Buffer;
-struct SimpleVertex;
-
-class Grid
+namespace Sandbox
 {
-private:
-    std::shared_ptr<Device> m_device;
-    bool m_cleaned = false;
+    class Device;
+    class CommandBuffer;
+    class Buffer;
+    /**
+     * \brief 简单的顶点结构
+     */
+    struct SimpleVertex
+    {
+        /**
+         * \brief 顶点坐标
+         */
+        glm::vec3 position;
+        /**
+         * \brief 顶点颜色
+         */
+        glm::vec3 color;
+    };
 
-public:
-    float unitSize = 1.0f;
-    float gridSize = 10.0f;
-    glm::vec2 offset = glm::vec2(0.0f, 0.0f);
-    glm::vec2 scale = glm::vec2(1.0f, 1.0f);
-    glm::vec2 center = glm::vec2(0.0f, 0.0f);
-    glm::vec2 size = glm::vec2(100.0f, 100.0f);
-    VkPipeline vkPipeline;
-    std::shared_ptr<Buffer> buffer;
-    std::vector<SimpleVertex> lineListProperties;
+    class Grid
+    {
+    public:
+        void Prepare(const std::shared_ptr<Renderer>& renderer, const std::shared_ptr<Editor>& editor);
 
-    std::vector<SimpleVertex> GetLineListProperties();
+        void DrawGrid(const std::shared_ptr<CommandBuffer>& commandBuffer, uint32_t frameFlightIndex);
 
-    std::shared_ptr<Pipeline> pipeline;
-    std::shared_ptr<UniformBuffer<MVPObject>> uniformBuffer;
+        void Cleanup();
 
-    Grid(const std::shared_ptr<Device>& device, const std::shared_ptr<CommandResource>& commandResource, const std::shared_ptr<RenderPass>& renderPass);
+        std::shared_ptr<Buffer> lineListBuffer;
+        std::vector<Sandbox::SimpleVertex> lineListProperties;
+        std::shared_ptr<Device> device;
 
-    ~Grid();
-
-    void Cleanup();
-
-    void PrepareDrawData(const std::shared_ptr<Device>& device, const std::shared_ptr<CommandResource>& commandResource, const std::shared_ptr<RenderPass>& renderPass);
-
-    void Draw(const std::shared_ptr<Device>& device, const VkCommandBuffer& currentCommandBuffer,
-              const std::shared_ptr<DescriptorResource>& descriptorResource, uint32_t currentFrame);
-};
+    private:
+        std::shared_ptr<Editor> m_editor;
+        bool m_prepared = false;
+    };
+}

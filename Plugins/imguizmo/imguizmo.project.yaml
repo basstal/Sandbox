@@ -1,4 +1,5 @@
 type: Cpp
+sub_type: Source
 compile_environment:
   build_type: Static
   definitions:

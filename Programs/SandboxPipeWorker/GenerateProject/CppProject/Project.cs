@@ -1,4 +1,6 @@
-﻿using SandboxPipeWorker.Common;
+﻿using System.Security.Cryptography;
+using System.Text;
+using SandboxPipeWorker.Common;
 using YamlDotNet.RepresentationModel;
 
 namespace SandboxPipeWorker.GenerateProject.CppProject;
@@ -6,6 +8,7 @@ namespace SandboxPipeWorker.GenerateProject.CppProject;
 public class Project
 {
     internal static string ProjectFileExtension = ".project.yaml";
+    internal static string SearchHeaderFileRegex = ".*\\.h(pp)?";
 
     public readonly HashSet<ModuleType> CompilableModuleTypes = new()
     {
@@ -13,11 +16,41 @@ public class Project
     };
 
     public ProjectType ProjectType;
+    public CppSubType CppSubType;
     public string PrimaryProjectName;
     public CompileEnvironment PrimaryCompileEnvironment = new();
+
     public IEnumerable<Module> AllDependencies => EnumerateDependencies();
-    private string _guid = System.Guid.NewGuid().ToString();
-    public string Guid => _guid;
+
+    public string Guid
+    {
+        get
+        {
+            if (GeneratedProjectPath != null)
+            {
+                return CreateGuidFromPath(GeneratedProjectPath.FullName).ToString();
+            }
+
+            return CreateGuidFromPath(ProjectDirectory!.FullName).ToString(); // 没有对应项目文件则使用项目路径
+        }
+    }
+
+    public static Guid CreateGuidFromPath(string path)
+    {
+        // 使用 SHA1 哈希算法从路径生成哈希值
+        using (var sha1 = SHA1.Create())
+        {
+            byte[] pathBytes = Encoding.UTF8.GetBytes(path);
+            byte[] hashBytes = sha1.ComputeHash(pathBytes);
+
+            // 将哈希值的前16个字节用作 GUID 的基础
+            byte[] guidBytes = new byte[16];
+            Array.Copy(hashBytes, guidBytes, 16);
+
+            // 创建并返回一个新的 GUID 对象
+            return new Guid(guidBytes);
+        }
+    }
 
     // public static readonly Dictionary<ProjectType, string> ProjectTypeGuidMapping = new()
     // {
@@ -46,10 +79,12 @@ public class Project
     public static Dictionary<string, Project> RegisteredProjects = new Dictionary<string, Project>();
     public PrecompileEnvironment? PrecompileEnvironment;
 
+    public List<FileReference> RawFiles = new List<FileReference>();
+
     public Project(string name)
     {
         PrimaryProjectName = name;
-        ProjectType = ProjectType.None;
+        CppSubType = CppSubType.None;
     }
 
     /// <summary>
@@ -190,9 +225,9 @@ public class Project
             RegisteredProjects.Add(name, project);
         }
 
-        if (project.ProjectType != ProjectType.None)
+        if (project.CppSubType != CppSubType.None)
         {
-            throw new Exception($"Project {project.PrimaryProjectName} already parsed as {project.ProjectType} from {project.ParsedFile}!");
+            throw new Exception($"Project {project.PrimaryProjectName} already parsed as {project.CppSubType} from {project.ParsedFile}!");
         }
 
 
@@ -204,6 +239,7 @@ public class Project
 
         var root = (YamlMappingNode)yaml.Documents[0].RootNode;
         Enum.TryParse(root["type"].ToString(), out project.ProjectType);
+        Enum.TryParse(root["sub_type"].ToString(), out project.CppSubType);
         project.ParsedFile = fileReference;
         project.ProjectDirectory = fileReference.GetDirectory();
         if (ProjectTypeExtensionMapping.ContainsKey(project.ProjectType))
@@ -211,18 +247,18 @@ public class Project
             project.GeneratedProjectPath = fileReference.GetDirectory().GetFile($"{project.PrimaryProjectName}{ProjectTypeExtensionMapping[project.ProjectType]}");
         }
 
-        switch (project.ProjectType)
+        switch (project.CppSubType)
         {
-            case ProjectType.Cpp:
+            case CppSubType.Source:
                 project.ParseCppModule(root, fileReference.GetDirectory());
                 break;
-            case ProjectType.Library:
+            case CppSubType.Library:
                 project.ParseDynamicLibrary(root, fileReference.GetDirectory());
                 project.ParseStaticLibrary(root, fileReference.GetDirectory());
                 project.ParseHeaderLibrary(root, fileReference.GetDirectory());
                 break;
             default:
-                throw new Exception($"Module type {project.ProjectType} not specified!\n{fileReference.FullName}");
+                throw new Exception($"Module type {project.CppSubType} not specified!\n{fileReference.FullName}");
         }
 
         return project;
@@ -238,7 +274,14 @@ public class Project
         }
 
         PrecompileEnvironment.IncludePaths.AddRange(ReadIncludePaths(root));
-        PrecompileEnvironment.AdditionalIncludePaths.AddRange(ReadAdditionalIncludePaths(root));
+        var additionalIncludePaths = ReadAdditionalIncludePaths(root);
+
+        foreach (var additionalIncludePath in additionalIncludePaths)
+        {
+            RawFiles.AddRange(additionalIncludePath.GetFiles(SearchHeaderFileRegex, useRegex: true));
+        }
+
+        PrecompileEnvironment.AdditionalIncludePaths.AddRange(additionalIncludePaths);
     }
 
     internal void ParseStaticLibrary(YamlMappingNode root, DirectoryReference sourceDirectory)
@@ -268,7 +311,7 @@ public class Project
             foreach (var includePath in includePathsSequence)
             {
                 var rawReference = FileSystemBase.Create(includePath.ToString(), ProjectDirectory!.FullName);
-                result.AddRange(rawReference.GetFiles(".*\\.h(pp)?", useRegex: true));
+                result.AddRange(rawReference.GetFiles(SearchHeaderFileRegex, useRegex: true));
             }
         }
 
@@ -371,7 +414,7 @@ public class Project
         var dllPaths = PrimaryCompileEnvironment.ProjectDependencies.SelectMany(module => module.PrecompileEnvironment?.DllPaths ?? FileReference.EmptyList).ToList();
         cppSourceInfos.AddRange(
             PrimaryCompileEnvironment.SourceFiles.Select(file => new CppSourceInfo(file.GetRelativePath(sourceRelativeTo), additionalIncludeDirectoriesParameter)));
-        foreach (var dependency in PrimaryCompileEnvironment.ProjectDependencies.Where(project => project.ProjectType != ProjectType.None))
+        foreach (var dependency in PrimaryCompileEnvironment.ProjectDependencies.Where(project => project.CppSubType != CppSubType.None))
         {
             includeDirectoryReferences.AddRange(dependency.PrimaryCompileEnvironment.AdditionalIncludePaths);
             if (dependency.PrecompileEnvironment != null)
@@ -403,14 +446,12 @@ public class Project
                 dependProject.Guid,
                 RelativePathToProject = dependProject.GeneratedProjectPath!.GetRelativePath(ProjectDirectory.FullName)
             });
-        var rawFiles = new List<FileReference>
-        {
-            ParsedFile!,
-            Sandbox.RootDirectory.GetFile(".editorconfig")
-        };
+        RawFiles.Add(ParsedFile!);
+        RawFiles.Add(Sandbox.RootDirectory.GetFile(".editorconfig"));
         // 添加着色器源码
-        rawFiles.AddRange(ProjectDirectory.GetFiles("*.frag"));
-        rawFiles.AddRange(ProjectDirectory.GetFiles("*.vert"));
+        RawFiles.AddRange(ProjectDirectory.GetFiles("*.frag"));
+        RawFiles.AddRange(ProjectDirectory.GetFiles("*.vert"));
+
         File.WriteAllText(postBuildCommandsPath, postBuildCommands);
         var constanst = new
         {
@@ -430,6 +471,8 @@ public class Project
         };
         string primaryProjectFile = vcxprojTemplate.Render(new
         {
+            // 启用 多处理器编译
+            AllowMultiProcessorCompilation = true,
             Project = this,
             CppSourceInfos = cppSourceInfos,
             RelativeHeaderPaths = PrimaryCompileEnvironment.IncludePaths.Select(include => include.GetRelativePath(sourceRelativeTo)),
@@ -440,14 +483,18 @@ public class Project
             AdditionalIncludeDirectories = string.Join(";", includeDirectoryReferences.Distinct().Select(directory => directory.FullName)),
             AdditionalOptions = string.Join(" ", new[]
             {
-                "/MP", // 启用“多处理器编译”，可能导致的问题包括：编译顺序问题：在某些情况下，如果源文件之间有复杂的依赖关系，/MP选项可能会导致编译错误，因为它改变了文件被编译的顺序。这种情况较为罕见，并且通常可以通过调整项目中的依赖关系解决。预编译头文件（PCH）的使用：当使用/MP与预编译头文件（PCH）一起时，只有当所有源文件都使用相同的PCH时，才能获得最佳的编译性能。否则，可能会看到编译速度下降，因为编译器需要重复生成PCH。
+                "/wd4275", // 忽略 yamlcpp 的警告
+                "/wd4251", // 忽略 yamlcpp 的警告
                 "/Zc:__cplusplus", // Boost.hana requires __cplusplus https://github.com/boostorg/hana/issues/516
             }),
-            AdditionalDependencies = string.Join(";", additionalDependencies.Distinct().Select(file => file.FullName)),
+            // TODO:Only windows have Dbghelp.lib
+            AdditionalDependencies = string.Join(";", additionalDependencies.Distinct().Select(file => file.FullName)) + ";Dbghelp.lib",
             PostBuildCommandsPath = postBuildCommandsPath,
             OutputDir = outputDir,
             ReferenceProjects = referenceProjects,
-            RawFiles = rawFiles,
+            RawFiles = RawFiles.Count >= 1000 // 避免超过模板引擎 foreach 上限
+                ? RawFiles.GetRange(0, 999)
+                : RawFiles,
             Constants = constanst,
         }, member => member.Name);
         File.WriteAllText(GeneratedProjectPath!.FullName, primaryProjectFile);
@@ -468,10 +515,10 @@ public class Project
     {
         foreach (var subProject in SubProjects)
         {
-            if (subProject.ProjectType == ProjectType.Cpp)
-            {
-                subProject.GenerateVcxproj();
-            }
+            // if (subProject.ProjectType == ProjectType.Cpp)
+            // {
+            subProject.GenerateVcxproj();
+            // }
         }
     }
 }

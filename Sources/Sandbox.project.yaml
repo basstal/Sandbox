@@ -1,4 +1,5 @@
 type: Cpp
+sub_type: Source
 compile_environment:
   build_type: Main
   definitions:
@@ -14,6 +15,7 @@ compile_environment:
     - assimp
     - vulkan
     - imgui
+    - imguizmo
     - yamlcpp
     - glslang
     - hana
