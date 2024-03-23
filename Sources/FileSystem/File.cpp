@@ -36,7 +36,7 @@ bool Sandbox::File::Exists() const
     return std::filesystem::exists(path) && std::filesystem::is_regular_file(path);
 }
 
-void Sandbox::File::CreateDirectory()
+void Sandbox::File::CreateDirectory() const
 {
     std::filesystem::create_directories(path.parent_path());
 }

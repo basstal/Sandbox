@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include <memory>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -15,6 +16,8 @@ namespace Sandbox
         std::vector<std::shared_ptr<TreeViewItem>> items;
 
         virtual ~TreeViewSource() = default;
+
+        bool IsLeaf();
     };
 
     struct TreeViewItem
@@ -37,7 +40,13 @@ namespace Sandbox
 
         void Cleanup() override;
 
-    private:
+        virtual intptr_t CreateLeafId(const std::shared_ptr<TreeViewSource>& source);
+
+        virtual void ConstructImGuiTreeNodes(const std::shared_ptr<Sandbox::TreeViewSource>& target);
+
+    protected:
         bool m_cleaned = false;
+        intptr_t m_singleClicked = -1;
+        std::set<intptr_t> m_selections;
     };
 }

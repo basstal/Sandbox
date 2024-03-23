@@ -1,7 +1,9 @@
-﻿#include "Camera.hpp"
-
+﻿#include "Generated/Camera.rfks.h"
+#include "FileSystem/Directory.hpp"
 #include "glm/ext/matrix_clip_space.hpp"
 #include "glm/ext/matrix_transform.hpp"
+#include "Misc/GlmExtensions.hpp"
+#include "TestRefureku/TestProperty.hpp"
 
 /**
  * \brief 默认的相机速度
@@ -12,47 +14,51 @@ constexpr float SPEED = 2.5f;
  */
 constexpr float SENSITIVITY = 0.05f;
 
-Sandbox::Camera::Camera(glm::vec3 inWorldUp, float aspectRatio, std::shared_ptr<CameraProperty> inProperty)
+Sandbox::Camera::Camera(glm::vec3 inWorldUp, float inAspectRatio)
 {
-    inProperty->aspectRatio = aspectRatio;
+    // inProperty->aspectRatio = aspectRatio;
+    aspectRatio = inAspectRatio;
     worldUp = inWorldUp;
-    property = inProperty;
+    worldUp1 = inWorldUp;
+    // property = inProperty;
     UpdateCameraVectors();
 }
 
 glm::mat4 Sandbox::Camera::GetViewMatrix()
 {
-    return glm::lookAt(this->property->position, this->property->position + front, up);
+    auto eyePos = this->position.ToGlmVec3();
+    // LOGD("eyePos : {}", Sandbox::ToString(eyePos))
+    return glm::lookAt(eyePos, eyePos + front, up);
 }
 
 glm::mat4 Sandbox::Camera::GetProjectionMatrix()
 {
-    return glm::perspective(glm::radians(this->property->fieldOfView), this->property->aspectRatio, this->property->nearPlane, this->property->farPlane);
+    return glm::perspective(glm::radians(this->fieldOfView), this->aspectRatio, this->nearPlane, this->farPlane);
 }
 
 void Sandbox::Camera::ProcessKeyboard(ECameraMovement direction, float deltaTime)
 {
     float velocity = SPEED * deltaTime;
-    const glm::vec3 directionMapping[ECameraMovement::MAX]
+    const Vector3 directionMapping[ECameraMovement::MAX]
     {
-        front, // FORWARD
-        -front, // BACKWARD
-        -right, // LEFT
-        right, // RIGHT
-        worldUp, // UP
+        front1, // FORWARD
+        -front1, // BACKWARD
+        -right1, // LEFT
+        right1, // RIGHT
+        worldUp1, // UP
     };
-    this->property->position += directionMapping[direction] * velocity;
+    this->position += directionMapping[direction] * velocity;
 }
 
 void Sandbox::Camera::CameraYawRotate(float delta)
 {
-    this->property->rotationX += delta;
+    this->rotationX += delta;
     UpdateCameraVectors();
 }
 
 void Sandbox::Camera::CameraPitchRotate(float delta)
 {
-    this->property->rotationX += delta;
+    this->rotationX += delta;
     UpdateCameraVectors();
 }
 
@@ -61,19 +67,19 @@ void Sandbox::Camera::ProcessMouseMovement(float xOffset, float yOffset, bool co
     xOffset *= SENSITIVITY;
     yOffset *= SENSITIVITY;
 
-    this->property->rotationX += yOffset;
-    this->property->rotationZ += xOffset;
+    this->rotationX += yOffset;
+    this->rotationZ += xOffset;
 
     // Make sure that when pitch is out of bounds, screen doesn't get flipped
     if (constrainPitch)
     {
-        if (this->property->rotationX > 89.0f)
+        if (this->rotationX > 89.0f)
         {
-            this->property->rotationX = 89.0f;
+            this->rotationX = 89.0f;
         }
-        if (this->property->rotationX < -89.0f)
+        if (this->rotationX < -89.0f)
         {
-            this->property->rotationX = -89.0f;
+            this->rotationX = -89.0f;
         }
     }
 
@@ -83,23 +89,27 @@ void Sandbox::Camera::ProcessMouseMovement(float xOffset, float yOffset, bool co
 
 void Sandbox::Camera::Reset()
 {
-    property->position = glm::vec3(0.0f);
-    property->rotationX = 0.0f;
-    property->rotationZ = 0.0f;
+    position = Vector3(0.0f);
+    rotationX = 0.0f;
+    rotationZ = 0.0f;
     UpdateCameraVectors();
 }
 
 void Sandbox::Camera::UpdateCameraVectors()
 {
-    auto rotationX = this->property->rotationX;
-    auto rotationZ = this->property->rotationZ;
+    auto rx = glm::radians(this->rotationX);
+    auto rz = glm::radians(this->rotationZ);
+    auto cosrx = cos(rx);
     // Calculate the new Front vector
-    front.x = sin(glm::radians(rotationZ)) * cos(glm::radians(rotationX));
-    front.y = cos(glm::radians(rotationZ)) * cos(glm::radians(rotationX));
-    front.z = sin(glm::radians(rotationX));
+    front.x = sin(rz) * cosrx;
+    front.y = cos(rz) * cosrx;
+    front.z = sin(rx);
     front = glm::normalize(front);
+    front1 = front;
 
     // Assuming WorldUp is glm::vec3(0, 0, 1) since Z is up
     right = glm::normalize(glm::cross(front, worldUp)); // Recalculate the Right vector
+    right1 = right;
     up = glm::normalize(glm::cross(right, front)); // Recalculate the Up vector, it should be noted that cross product order is changed to maintain the right-hand rule
+    up1 = up;
 }

@@ -20,6 +20,7 @@
 #include "Misc/GlmExtensions.hpp"
 #include "Misc/Math.hpp"
 #include "Misc/Ray.hpp"
+#include "TestRefureku/TestProperty.hpp"
 #include "VulkanRHI/Renderer.hpp"
 #include "VulkanRHI/Core/Buffer.hpp"
 #include "VulkanRHI/Core/CommandBuffer.hpp"
@@ -169,47 +170,47 @@ void Sandbox::TransformGizmo::UpdateGizmoBoundingBoxes(const glm::mat4& modelToW
 
 void Sandbox::TransformGizmo::DrawGizmo(const std::shared_ptr<CommandBuffer>& commandBuffer, uint32_t frameFlightIndex)
 {
-    if (m_referenceGameObject == nullptr)
-    {
-        return;
-    }
-    constexpr float BASE_SIZE = .25f; // 基础尺寸
-    constexpr float DISTANCE_SIZE_FACTOR = 0.25f;
-    uint32_t dynamicAlignment = m_editor->GetUniformDynamicAlignment(sizeof(glm::mat4));
-
-    auto translate = m_referenceGameObject->transform->GetModelTranslate();
-    float distance = glm::length(m_referenceGameObject->transform->position - m_editor->camera->property->position);
-    float currentScaleFactor = distance * DISTANCE_SIZE_FACTOR; // 根据距离计算缩放因子
-    glm::mat4 distanceScaledMatrix = glm::scale(translate, glm::vec3(currentScaleFactor * BASE_SIZE));
-    if (std::abs(currentScaleFactor - m_previousScaleFactor) > 0.01f || m_previousScaleFactor == 0.0f)
-    {
-        m_previousScaleFactor = currentScaleFactor;
-        UpdateGizmoBoundingBoxes(distanceScaledMatrix);
-    }
-    m_editor->models[frameFlightIndex]->model[2] = distanceScaledMatrix;
-    {
-        // TODO:看 descriptorset 用哪个，这里写死了下标
-        commandBuffer->BindPipeline(m_editor->pipelineGizmo, m_editor->descriptorSets[frameFlightIndex], {2 * dynamicAlignment});
-        commandBuffer->BindVertexBuffers(m_vertexBuffer);
-        commandBuffer->Draw(static_cast<uint32_t>(m_vertices.size()));
-    }
-    // 绘制 包围盒
-    {
-        // 默认大小，因为顶点已经计算过模型到世界坐标
-        commandBuffer->BindPipeline(m_editor->pipelineLineList, m_editor->descriptorSets[frameFlightIndex], {2 * dynamicAlignment});
-        commandBuffer->BindVertexBuffers(m_gizmoBoundingBoxes[0]->vertexBuffer);
-        commandBuffer->BindIndexBuffer(m_gizmoBoundingBoxes[0]->indexBuffer);
-        commandBuffer->DrawIndexed(static_cast<uint32_t>(m_gizmoBoundingBoxes[0]->GetIndices().size()));
-
-        if (cameraRay)
-        {
-            // 获取射线起点和方向
-            commandBuffer->BindPipeline(m_editor->pipelineLineList, m_editor->descriptorSets[frameFlightIndex], {dynamicAlignment});
-            commandBuffer->BindVertexBuffers(cameraRay->vertexBuffer);
-            commandBuffer->BindIndexBuffer(cameraRay->indexBuffer);
-            commandBuffer->DrawIndexed(static_cast<uint32_t>(cameraRay->GetIndices().size()));
-        }
-    }
+    // if (m_referenceGameObject == nullptr)
+    // {
+    //     return;
+    // }
+    // constexpr float BASE_SIZE = .25f; // 基础尺寸
+    // constexpr float DISTANCE_SIZE_FACTOR = 0.25f;
+    // uint32_t dynamicAlignment = m_editor->GetUniformDynamicAlignment(sizeof(glm::mat4));
+    //
+    // auto translate = m_referenceGameObject->transform->GetModelTranslate();
+    // float distance = glm::length(m_referenceGameObject->transform->position - m_editor->camera->position.vec);
+    // float currentScaleFactor = distance * DISTANCE_SIZE_FACTOR; // 根据距离计算缩放因子
+    // glm::mat4 distanceScaledMatrix = glm::scale(translate, glm::vec3(currentScaleFactor * BASE_SIZE));
+    // if (std::abs(currentScaleFactor - m_previousScaleFactor) > 0.01f || m_previousScaleFactor == 0.0f)
+    // {
+    //     m_previousScaleFactor = currentScaleFactor;
+    //     UpdateGizmoBoundingBoxes(distanceScaledMatrix);
+    // }
+    // m_editor->models[frameFlightIndex]->model[2] = distanceScaledMatrix;
+    // {
+    //     // TODO:看 descriptorset 用哪个，这里写死了下标
+    //     commandBuffer->BindPipeline(m_editor->pipelineGizmo, m_editor->descriptorSets[frameFlightIndex], {2 * dynamicAlignment});
+    //     commandBuffer->BindVertexBuffers(m_vertexBuffer);
+    //     commandBuffer->Draw(static_cast<uint32_t>(m_vertices.size()));
+    // }
+    // // 绘制 包围盒
+    // {
+    //     // 默认大小，因为顶点已经计算过模型到世界坐标
+    //     commandBuffer->BindPipeline(m_editor->pipelineLineList, m_editor->descriptorSets[frameFlightIndex], {2 * dynamicAlignment});
+    //     commandBuffer->BindVertexBuffers(m_gizmoBoundingBoxes[0]->vertexBuffer);
+    //     commandBuffer->BindIndexBuffer(m_gizmoBoundingBoxes[0]->indexBuffer);
+    //     commandBuffer->DrawIndexed(static_cast<uint32_t>(m_gizmoBoundingBoxes[0]->GetIndices().size()));
+    //
+    //     if (cameraRay)
+    //     {
+    //         // 获取射线起点和方向
+    //         commandBuffer->BindPipeline(m_editor->pipelineLineList, m_editor->descriptorSets[frameFlightIndex], {dynamicAlignment});
+    //         commandBuffer->BindVertexBuffers(cameraRay->vertexBuffer);
+    //         commandBuffer->BindIndexBuffer(cameraRay->indexBuffer);
+    //         commandBuffer->DrawIndexed(static_cast<uint32_t>(cameraRay->GetIndices().size()));
+    //     }
+    // }
 }
 
 void Sandbox::TransformGizmo::SetTarget(const std::shared_ptr<GameObject>& target)
@@ -258,36 +259,36 @@ void Sandbox::TransformGizmo::UpdateInputs(GLFWwindow* window, const std::shared
 
 void Sandbox::TransformGizmo::UpdateGizmoAndObjectPosition(GLFWwindow* window, const std::shared_ptr<Camera>& camera)
 {
-    auto ray = CursorPositionToWorldRay(window, camera->GetViewMatrix(), camera->GetProjectionMatrix()); // 获取射线起点和方向
-    glm::vec3 rayOrigin = ray.origin;
-    glm::vec3 rayDir = ray.direction;
-    Logger::Debug("UpdateGizmoAndObjectPosition rayOrigin {}, rayDir {}", ToString(rayOrigin), ToString(rayDir));
-
-    // 假设Gizmo距离摄像机的深度为distance
-    float distance = glm::length(m_referenceGameObject->transform->position - camera->property->position);
-
-    // 使用射线与深度确定的平面交点来更新Gizmo位置
-    // 假设平面方程为Ax + By + Cz + D = 0，这里选择与摄像机视线垂直的平面
-    glm::vec3 planeNormal = glm::normalize(camera->front); // 摄像机前向向量作为平面法线
-    float D = -glm::dot(planeNormal, camera->property->position + planeNormal * distance); // 计算平面方程的D值
-
-    // 计算射线与平面的交点
-    float denom = glm::dot(planeNormal, rayDir);
-    if (abs(denom) > FLT_EPSILON)
-    {
-        // 确保不是平行（避免除以零）
-        float t = -(glm::dot(planeNormal, rayOrigin) + D) / denom;
-        glm::vec3 intersectionPoint = rayOrigin + rayDir * t;
-
-        // 计算移动量
-        glm::vec3 movement = intersectionPoint - m_referenceGameObject->transform->position;
-        // 根据激活的Gizmo轴选择移动方向
-        glm::vec3 axis = m_gizmoActiveX ? AXIS_X : m_gizmoActiveY ? AXIS_Y : AXIS_Z;
-
-        // 计算沿着Gizmo轴的移动量
-        float movementAmount = glm::dot(movement, axis);
-        auto movementAlongAxis = movementAmount * axis;
-        // 更新Gizmo和关联对象的位置
-        m_referenceGameObject->transform->position += movementAlongAxis;
-    }
+    // auto ray = CursorPositionToWorldRay(window, camera->GetViewMatrix(), camera->GetProjectionMatrix()); // 获取射线起点和方向
+    // glm::vec3 rayOrigin = ray.origin;
+    // glm::vec3 rayDir = ray.direction;
+    // Logger::Debug("UpdateGizmoAndObjectPosition rayOrigin {}, rayDir {}", ToString(rayOrigin), ToString(rayDir));
+    //
+    // // 假设Gizmo距离摄像机的深度为distance
+    // float distance = glm::length(m_referenceGameObject->transform->position - camera->position.vec);
+    //
+    // // 使用射线与深度确定的平面交点来更新Gizmo位置
+    // // 假设平面方程为Ax + By + Cz + D = 0，这里选择与摄像机视线垂直的平面
+    // glm::vec3 planeNormal = glm::normalize(camera->front); // 摄像机前向向量作为平面法线
+    // float D = -glm::dot(planeNormal, camera->position.vec + planeNormal * distance); // 计算平面方程的D值
+    //
+    // // 计算射线与平面的交点
+    // float denom = glm::dot(planeNormal, rayDir);
+    // if (abs(denom) > FLT_EPSILON)
+    // {
+    //     // 确保不是平行（避免除以零）
+    //     float t = -(glm::dot(planeNormal, rayOrigin) + D) / denom;
+    //     glm::vec3 intersectionPoint = rayOrigin + rayDir * t;
+    //
+    //     // 计算移动量
+    //     glm::vec3 movement = intersectionPoint - m_referenceGameObject->transform->position;
+    //     // 根据激活的Gizmo轴选择移动方向
+    //     glm::vec3 axis = m_gizmoActiveX ? AXIS_X : m_gizmoActiveY ? AXIS_Y : AXIS_Z;
+    //
+    //     // 计算沿着Gizmo轴的移动量
+    //     float movementAmount = glm::dot(movement, axis);
+    //     auto movementAlongAxis = movementAmount * axis;
+    //     // 更新Gizmo和关联对象的位置
+    //     m_referenceGameObject->transform->position += movementAlongAxis;
+    // }
 }

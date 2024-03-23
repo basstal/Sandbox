@@ -66,6 +66,13 @@
             <OptimizeReferences>true</OptimizeReferences>
             {{~end~}}
         </Link>
+        {{~if Project.PrimaryProjectName == "Sandbox"~}}
+        <PostBuildEvent>
+          <Command>
+            PowerShell -ExecutionPolicy Bypass -File "{{PostBuildCommandsPath}}"
+          </Command>
+        </PostBuildEvent>
+        {{~end~}}
     </ItemDefinitionGroup>
 {{~end~}}
     <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

@@ -26,5 +26,7 @@ namespace Sandbox
         std::filesystem::path path;
 
         static Directory GetAssetsDirectory();
+
+        static Directory GetLibraryDirectory();
     };
 }

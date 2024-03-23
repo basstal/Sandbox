@@ -23,7 +23,7 @@ namespace Sandbox
 
         bool Exists() const;
 
-        void CreateDirectory();
+        void CreateDirectory() const;
 
         std::filesystem::path path;
     };

@@ -1,19 +1,14 @@
 ﻿#pragma once
 #include <memory>
+#include <string>
 #include <vector>
+
 
 namespace Sandbox
 {
     class Transform;
-}
-
-namespace Sandbox
-{
     class IComponent;
-}
 
-namespace Sandbox
-{
     template <typename T>
     concept DerivedFromIComponent = std::is_base_of_v<IComponent, T>;
 
@@ -21,6 +16,8 @@ namespace Sandbox
     {
     public:
         std::shared_ptr<Transform> transform;
+        std::string name;
+        std::vector<std::shared_ptr<GameObject>> children;
 
         GameObject();
 

@@ -8,6 +8,8 @@
 #include "IImGuiWindow.hpp"
 #include "ImGuiExamples.hpp"
 #include "TransformGizmo.hpp"
+#include "Engine/Camera.hpp"
+#include "FileSystem/Directory.hpp"
 #include "ImGuiWindows/ContentBrowser.hpp"
 #include "ImGuiWindows/DemoWindow.hpp"
 #include "ImGuiWindows/Viewport.hpp"
@@ -218,8 +220,17 @@ void Sandbox::ImGuiRenderer::DrawMenuBar()
             for (auto& window : windows)
             {
                 ImGui::Checkbox(window->name.c_str(), &window->isOpen);
-                LOGD("window->isOpen : {}", std::to_string(window->isOpen));
+                // LOGD("window->isOpen : {}", std::to_string(window->isOpen))
             }
+            ImGui::EndMenu();
+        }
+
+        if (ImGui::BeginMenu("Tests"))
+        {
+            // if (ImGui::MenuItem("Test Save Camera"))
+            // {
+            //     m_editor->camera->SaveToFile(Directory::GetLibraryDirectory().GetFile("EditorCamera.yaml"));
+            // }
             ImGui::EndMenu();
         }
         ImGui::EndMainMenuBar();

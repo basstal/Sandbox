@@ -16,7 +16,6 @@ void Sandbox::ContentBrowser::Prepare()
     root = assignRoot;
 }
 
-
 std::vector<std::shared_ptr<Sandbox::TreeViewItem>> Sandbox::ContentBrowser::ScanAndConstructContentBrowserTreeViewItems(const std::shared_ptr<Directory>& directory)
 {
     std::vector<std::shared_ptr<TreeViewItem>> items;
@@ -46,81 +45,14 @@ std::vector<std::shared_ptr<Sandbox::TreeViewItem>> Sandbox::ContentBrowser::Sca
 
 void Sandbox::ContentBrowser::Tick(float deltaTime)
 {
-    IImGuiWindow::Tick(deltaTime);
+    Sandbox::TreeView::Tick(deltaTime);
 }
 
 void Sandbox::ContentBrowser::OnGui()
 {
-    m_singleClicked = -1;
-    ConstructImGuiTreeNodes(root);
-    if (m_singleClicked != -1)
-    {
-        // Update selection state
-        // (process outside of tree loop to avoid visual inconsistencies during the clicking frame)
-        if (ImGui::GetIO().KeyCtrl)
-        {
-            m_selections.emplace(m_singleClicked); // CTRL+click to toggle
-        }
-        else
-        {
-            //if (!(selection_mask & (1 << node_clicked))) // Depending on selection behavior you want, may want to preserve selection when clicking on item that is part of the selection
-            m_selections.clear();
-            m_selections.emplace(m_singleClicked); // Click to single-select
-        }
-    }
+    TreeView::OnGui();
 }
 
-intptr_t Sandbox::ContentBrowser::CreateLeafId(const std::shared_ptr<AssetFileTreeViewSource>& file)
-{
-    if (file == nullptr)
-    {
-        return -1;
-    }
-    return reinterpret_cast<intptr_t>(file.get());
-}
-
-void Sandbox::ContentBrowser::ConstructImGuiTreeNodes(const std::shared_ptr<Sandbox::TreeViewSource>& target)
-{
-    if (target == nullptr)
-    {
-        return;
-    }
-    auto file = std::dynamic_pointer_cast<AssetFileTreeViewSource>(target);
-    if (file)
-    {
-        static ImGuiTreeNodeFlags baseFlags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick | ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_Leaf |
-            ImGuiTreeNodeFlags_NoTreePushOnOpen; // ImGuiTreeNodeFlags_Bullet;
-        auto leafId = CreateLeafId(file);
-        auto nodeFlags = m_selections.contains(leafId) ? baseFlags | ImGuiTreeNodeFlags_Selected : baseFlags;
-        ImGui::TreeNodeEx(reinterpret_cast<void*>(leafId), nodeFlags, file->name.c_str()); // NOLINT(clang-diagnostic-format-security, performance-no-int-to-ptr)
-        if (ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen())
-        {
-            m_singleClicked = leafId;
-        }
-        if (ImGui::BeginDragDropSource())
-        {
-            // TODO:待完善
-            ImGui::SetDragDropPayload("_TREENODE", NULL, 0);
-            ImGui::Text("This is a drag and drop source");
-            ImGui::EndDragDropSource();
-        }
-    }
-    else if (target == root) // root 不展示
-    {
-        for (auto& item : target->items)
-        {
-            ConstructImGuiTreeNodes(item->source);
-        }
-    }
-    else if (ImGui::TreeNode(target->name.c_str()))
-    {
-        for (auto& item : target->items)
-        {
-            ConstructImGuiTreeNodes(item->source);
-        }
-        ImGui::TreePop();
-    }
-}
 
 void Sandbox::ContentBrowser::Cleanup()
 {

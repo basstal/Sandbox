@@ -41,15 +41,6 @@ namespace Sandbox
 
         void OnGui() override;
 
-        intptr_t CreateLeafId(const std::shared_ptr<AssetFileTreeViewSource>& file);
-
-        void ConstructImGuiTreeNodes(const std::shared_ptr<Sandbox::TreeViewSource>& target);
-
         void Cleanup() override;
-
-    private:
-        intptr_t m_singleClicked = -1;
-        bool m_cleaned = false;
-        std::set<intptr_t> m_selections;
     };
 }

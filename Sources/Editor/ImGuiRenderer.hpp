@@ -42,8 +42,6 @@ namespace Sandbox
 
         void RegisterWindow(const std::shared_ptr<IImGuiWindow>& inWindow);
 
-        void UnregisterWindow(const std::shared_ptr<IImGuiWindow>& inWindow);
-
         void Tick(float deltaTime);
 
         std::shared_ptr<RenderPass> renderPass;

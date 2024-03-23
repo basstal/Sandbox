@@ -79,7 +79,7 @@ std::vector<std::shared_ptr<Sandbox::ImageView>> Sandbox::Swapchain::CreateImage
     subresource.arrayLayer = 1;
     for (size_t i = 0; i < vkImages.size(); i++)
     {
-        LOGI("{}", PtrToHexString(vkImages[i]))
+        // LOGI("{}", PtrToHexString(vkImages[i]))
         resultImageViews[i] = std::make_shared<ImageView>(m_device, vkImages[i], subresource, VK_IMAGE_VIEW_TYPE_2D, format);
     }
     return resultImageViews;

@@ -11,6 +11,7 @@
 #include "Platform/GlfwCallbackBridge.hpp"
 #include "Misc/DataBinding.hpp"
 #include "Platform/Window.hpp"
+#include "TestRefureku/TestProperty.hpp"
 #include "VulkanRHI/Renderer.hpp"
 #include "VulkanRHI/Common/ShaderSource.hpp"
 #include "VulkanRHI/Core/DescriptorSet.hpp"
@@ -23,6 +24,7 @@
 #include "VulkanRHI/Rendering/PipelineState.hpp"
 #include "VulkanRHI/Rendering/UniformBuffer.hpp"
 
+static Sandbox::File editorCameraFile = Sandbox::Directory::GetLibraryDirectory().GetFile("EditorCamera.yaml");
 
 void Sandbox::Editor::Prepare(const std::shared_ptr<Renderer>& renderer, const std::shared_ptr<Timer>& timer, const std::vector<std::shared_ptr<Models>>& inModels,
                               const std::shared_ptr<Window>& inWindow)
@@ -38,11 +40,13 @@ void Sandbox::Editor::Prepare(const std::shared_ptr<Renderer>& renderer, const s
     models = inModels;
     auto& extent2D = renderer->swapchain->vkExtent2D;
     auto aspectRatio = static_cast<float>(extent2D.width) / static_cast<float>(extent2D.height);
-    auto cameraProperty = std::make_shared<CameraProperty>();
+    const glm::vec3 DEFAULT_WORLD_UP = glm::vec3(0.0f, 0.0f, 1.0f);
     // TODO:将 camera 移到 viewport 内
-    camera = std::make_shared<Camera>(glm::vec3(0.0f, 0.0f, 1.0f), aspectRatio, cameraProperty);
+    camera = std::make_shared<Camera>(DEFAULT_WORLD_UP, aspectRatio);
+    camera->LoadFromFile(editorCameraFile);
+    camera->UpdateCameraVectors();
     imGuiRenderer->viewport->mainCamera = camera;
-    renderer->pipeline->pipelineState->pushConstantsInfo.data = &camera->property->position;
+    renderer->pipeline->pipelineState->pushConstantsInfo.data = &camera->position;
 
     grid = std::make_shared<Grid>();
     grid->Prepare(m_renderer, shared_from_this());
@@ -56,6 +60,7 @@ void Sandbox::Editor::Prepare(const std::shared_ptr<Renderer>& renderer, const s
 
 void Sandbox::Editor::Cleanup()
 {
+    camera->SaveToFile(editorCameraFile);
     imGuiRenderer->Cleanup();
     CleanupOnGui();
 }

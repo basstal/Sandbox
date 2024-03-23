@@ -74,7 +74,7 @@ void Sandbox::Viewport::OnGui()
     // LOGD(ray->ToString())
     // if (m_editor->transformGizmo->cameraRay)
     // {
-    //     m_editor->transformGizmo->cameraRay->origin = m_editor->camera->property->position;
+    //     m_editor->transformGizmo->cameraRay->origin = m_editor->camera->position;
     //     LOGD("camera front : {}", Sandbox::ToString(m_editor->camera->front))
     //     m_editor->transformGizmo->cameraRay->direction = ray->direction;
     // }

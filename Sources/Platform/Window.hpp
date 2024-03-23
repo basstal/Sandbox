@@ -1,6 +1,5 @@
 ﻿#pragma once
 #include <memory>
-#include <boost/hana.hpp>
 
 #include "GLFW/glfw3.h"
 
@@ -50,9 +49,9 @@ namespace Sandbox
     };
 }
 
-BOOST_HANA_ADAPT_STRUCT(Sandbox::WindowSerializedProperties,
-                        isWindow,
-                        windowPositionX,
-                        windowPositionY,
-                        width,
-                        height);
+// BOOST_HANA_ADAPT_STRUCT(Sandbox::WindowSerializedProperties,
+//                         isWindow,
+//                         windowPositionX,
+//                         windowPositionY,
+//                         width,
+//                         height);

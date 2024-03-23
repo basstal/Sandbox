@@ -1,0 +1,88 @@
+[CodeGenManagerSettings]
+# List of supported extensions
+supportedFileExtensions = [".h", ".hpp"]
+
+# Files contained in the directories of this list will be parsed
+toProcessDirectories = [
+#	'''Path/To/Directory/To/Parse'''
+    "D:/Documents/GitHub/Sandbox/Sources/TestRefureku",
+    "D:/Documents/GitHub/Sandbox/Sources/Math"
+]
+
+# Files to parse which are not included in any directory of toParseDirectories
+toProcessFiles = [
+    "D:/Documents/GitHub/Sandbox/Sources/Engine/Camera.hpp",
+    "D:/Documents/GitHub/Sandbox/Sources/Serialization/ISerializable.hpp",
+]
+
+# Files contained in the directories of this list will be ignored
+ignoredDirectories = [
+#	'''Path/To/Output/Dir'''
+    "D:/Documents/GitHub/Sandbox/Sources/Generated"
+]
+
+# Files not to parse which are not included in any directory of ignoredDirectories
+ignoredFiles = []
+
+
+[CodeGenUnitSettings]
+# Generated files will be located here
+outputDirectory = "D:/Documents/GitHub/Sandbox/Sources/Generated"
+
+generatedHeaderFileNamePattern = "##FILENAME##.rfkh.h"
+generatedSourceFileNamePattern = "##FILENAME##.rfks.h"
+classFooterMacroPattern = "##CLASSFULLNAME##_GENERATED"
+headerFileFooterMacroPattern = "File_##FILENAME##_GENERATED"
+
+# Uncomment if you use Refureku on a dynamic library (.dll/.so/.dylib)
+# Define the export macro so that Refureku can export relevant generated code
+# exportSymbolMacroName = "EXAMPLE_IMPORT_EXPORT_MACRO"
+
+
+[ParsingSettings]
+# Used c++ version (supported values are: 17, 20)
+cppVersion = 20
+
+# Include directories of the project
+projectIncludeDirectories = [
+#	'''Path/To/RefurekuLibrary/Include''',
+#	'''Path/To/Your/Project/Include'''
+    "D:/Documents/GitHub/Sandbox/Plugins/refureku/Refureku/Refureku/Library/Include/Public",
+    "D:/Documents/GitHub/Sandbox/Sources",
+    "D:/Documents/GitHub/Sandbox/Plugins/glm-0.9.9.8/glm",
+    "D:/Documents/GitHub/Sandbox/Plugins/yaml-cpp-0.8.0/yaml-cpp/include",
+]
+
+# Must be one of "msvc", "clang++", "g++"
+compilerExeName = "msvc"
+
+# Abort parsing on first encountered error
+shouldAbortParsingOnFirstError = true
+
+# Should all entities be parsed whether they are annotated or not
+shouldParseAllNamespaces = false
+shouldParseAllClasses = false
+shouldParseAllStructs = false
+shouldParseAllVariables = false
+shouldParseAllFields = false
+shouldParseAllFunctions = false
+shouldParseAllMethods = false
+shouldParseAllEnums = false
+shouldParseAllEnumValues = true
+
+shouldLogDiagnostic = true
+
+propertySeparator = ","
+subPropertySeparator = ","
+subPropertyStartEncloser = "("
+subPropertyEndEncloser = ")"
+
+namespaceMacroName = "NAMESPACE"
+classMacroName = "CLASS"
+structMacroName = "STRUCT"
+variableMacroName = "VARIABLE"
+fieldMacroName = "FIELD"
+functionMacroName = "FUNCTION"
+methodMacroName = "METHOD"
+enumMacroName = "ENUM"
+enumValueMacroName = "ENUMVALUE"

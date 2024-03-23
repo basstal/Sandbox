@@ -9,13 +9,13 @@ compile_environment:
     - .
   cpp_version: Default
   dependencies:
-    - glfw
-    - glm
-    - stb
-    - assimp
-    - vulkan
-    - imgui
-    - imguizmo
-    - yamlcpp
-    - glslang
-    - hana
+    - glfw      # 平台窗口和输入
+    - glm       # 数学库
+    - stb       # 图片加载
+    - assimp    # 模型加载
+    - vulkan    # 渲染引擎底层
+    - imgui     # gui
+    - imguizmo  # gizmo
+    - yamlcpp   # 写配置/序列化文件
+    - glslang   # 用来反射 shader 填充 shaderModule
+    - refureku  # 类似 UE 的反射系统，用来对类型反射字段做序列化

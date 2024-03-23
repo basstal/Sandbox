@@ -66,3 +66,9 @@ Sandbox::Directory Sandbox::Directory::GetAssetsDirectory()
     std::filesystem::path executablePath = std::filesystem::path::path(GetExecutablePath());
     return Directory(executablePath.parent_path().parent_path().append("Assets").string());
 }
+
+Sandbox::Directory Sandbox::Directory::GetLibraryDirectory()
+{
+    std::filesystem::path executablePath = std::filesystem::path::path(GetExecutablePath());
+    return Directory(executablePath.parent_path().parent_path().append("Library").string());
+}

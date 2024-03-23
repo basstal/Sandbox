@@ -31,7 +31,7 @@ Sandbox::CommandBuffer::CommandBuffer(const std::shared_ptr<Device>& device, con
     {
         Logger::Fatal("failed to allocate command buffers!");
     }
-    LOGI("{}\n{}", PtrToHexString(vkCommandBuffer), GetCallStack())
+    // LOGI("{}\n{}", PtrToHexString(vkCommandBuffer), GetCallStack())
 }
 
 Sandbox::CommandBuffer::~CommandBuffer()
