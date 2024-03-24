@@ -44,6 +44,7 @@ NAMESPACE()
         if (!file.Exists())
         {
             LOGW("Cant LoadFromFile : file {} not exists", file.path.string())
+            return;
         }
         auto node = YAML::LoadFile(file.path.string());
         auto success = DeserializeFromYaml(node);
@@ -102,6 +103,10 @@ NAMESPACE()
                 LOGD("value : {}", std::to_string(value))
                 userData->node[field.getName()] = value;
             }
+            else if (fieldType.match(rfk::getType<bool>()))
+            {
+                userData->node[field.getName()] = field.get<bool, T>(*userData->instancePtr);
+            }
             else if (classArcheType != nullptr)
             {
                 rfk::Method const* serializeToYaml = classArcheType->getMethodByName("SerializeToYaml", rfk::EMethodFlags::Default, true);
@@ -158,6 +163,12 @@ NAMESPACE()
             {
                 auto value = userData->node->operator[](field.getName()).as<float>();
                 LOGD("value : {}", std::to_string(value))
+                field.set(*userData->instancePtr, value);
+            }
+            else if (fieldType.match(rfk::getType<bool>()))
+            {
+                auto value = userData->node->operator[](field.getName()).as<bool>();
+                // LOGD("value : {}", std::to_string(value))
                 field.set(*userData->instancePtr, value);
             }
             else if (classArcheType != nullptr)

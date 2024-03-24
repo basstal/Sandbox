@@ -6,6 +6,9 @@ public class CompileEnvironment
 {
     public CppVersion CppVersion = CppVersion.Default;
     public List<string> Definitions = new List<string>();
+    /**
+    * 源文件的直接头文件依赖
+    */
     public List<FileReference> IncludePaths = new List<FileReference>();
     public List<DirectoryReference> AdditionalIncludePaths = new List<DirectoryReference>();
     public List<FileReference> SourceFiles = new List<FileReference>();

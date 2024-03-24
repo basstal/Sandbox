@@ -461,11 +461,16 @@ Output/
 
 # 生成的文件
 PostBuildCommands.ps1
+PreBuildCommands.ps1
 Sandbox.sln
 *.vcxproj
 imgui.ini
 /Assets/Settings
 /Plugins/**/CMakeLists.txt
+/Plugins/**/*.txt
 /Sources_backup*
 *.cap
 /Library
+/CMakeLists.txt
+/Sources/CMakeLists.txt
+/BuildProject/whiterice_workspace/*.json

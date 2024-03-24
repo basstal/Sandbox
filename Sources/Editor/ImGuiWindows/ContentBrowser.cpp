@@ -7,6 +7,7 @@
 void Sandbox::ContentBrowser::Prepare()
 {
     name = "ContentBrowser";
+    TreeView::Prepare();
     auto assignRoot = std::make_shared<AssetDirectoryTreeViewSource>();
     auto rootDirectory = Directory::GetAssetsDirectory();
     assignRoot->name = "Root";
@@ -56,9 +57,5 @@ void Sandbox::ContentBrowser::OnGui()
 
 void Sandbox::ContentBrowser::Cleanup()
 {
-    if (m_cleaned)
-    {
-        return;
-    }
-    m_cleaned = true;
+    TreeView::Cleanup();
 }

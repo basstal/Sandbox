@@ -198,7 +198,7 @@ public class Module
 
     public static IEnumerable<DirectoryReference> EnumerateBaseDirectories()
     {
-        yield return Sandbox.RootDirectory.Combine("Sources");
-        yield return Sandbox.RootDirectory.Combine("Plugins");
+        yield return Sandbox.RootDirectory.GetDirectory("Sources");
+        yield return Sandbox.RootDirectory.GetDirectory("Plugins");
     }
 }

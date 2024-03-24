@@ -7,6 +7,7 @@ bool Sandbox::TreeViewSource::IsLeaf()
 
 void Sandbox::TreeView::Prepare()
 {
+    IImGuiWindow::Prepare();
 }
 
 void Sandbox::TreeView::OnGui()
@@ -41,6 +42,7 @@ void Sandbox::TreeView::Cleanup()
     {
         return;
     }
+    IImGuiWindow::Cleanup();
     m_cleaned = true;
 }
 

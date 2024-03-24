@@ -72,6 +72,11 @@
             PowerShell -ExecutionPolicy Bypass -File "{{PostBuildCommandsPath}}"
           </Command>
         </PostBuildEvent>
+        <PreBuildEvent>
+          <Command>
+            PowerShell -ExecutionPolicy Bypass -File "{{PreBuildCommandsPath}}"
+          </Command>
+        </PreBuildEvent>
         {{~end~}}
     </ItemDefinitionGroup>
 {{~end~}}

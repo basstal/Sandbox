@@ -70,7 +70,7 @@ public class FileReference : FileSystemBase, IEquatable<FileReference>, ICompara
 
     public override FileReference[] GetFiles(string pattern, bool recursive = true, bool useRegex = false)
     {
-        // TODO: pattern match 
+        // TODO: pattern match
 
         return new[] { this };
     }
@@ -78,5 +78,10 @@ public class FileReference : FileSystemBase, IEquatable<FileReference>, ICompara
     public override bool Exists()
     {
         return File.Exists(FullName);
+    }
+
+    public string ReadAllText()
+    {
+        return File.ReadAllText(FullName);
     }
 }

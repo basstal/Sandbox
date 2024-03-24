@@ -1,0 +1,8 @@
+
+syntax = "proto3";
+
+message WhitericeExtensions {
+    string          refureku_generator         = 1;
+    string          refureku_generator_setting = 2;
+    // repeated string copy_dlls                  = 3;
+}

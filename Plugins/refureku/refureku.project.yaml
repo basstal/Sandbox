@@ -4,7 +4,7 @@ additional_include_paths:
   - Refureku/Refureku/Library/Include/Public
   - Refureku/Refureku/Generator/ThirdParty/Kodgen/Kodgen/Include
 dll_paths:
-  - Bin/Debug/Refureku.dll
+  - Refureku/build/Bin/Debug/Refureku.dll
 lib_paths:
-  - Lib/Debug/kodgen.lib
-  - Lib/Debug/Refureku.lib
+  - Refureku/build/Lib/Debug/kodgen.lib
+  - Refureku/build/Lib/Debug/Refureku.lib

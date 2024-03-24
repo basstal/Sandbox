@@ -6,20 +6,20 @@ public class Rider : IProjectGenerator
 {
     public bool GenerateProjectFiles(PlatformProjectGeneratorCollection platformProjectGeneratorCollection)
     {
-        Project rootProject = new Project("Sandbox");
+        Project rootProject = new Project(Sandbox.PrimaryProjectName);
 
-        Project sourceFolder = new Project("Sources");
-        sourceFolder.ProjectDirectory = Sandbox.RootDirectory.Combine("Sources");
+        VcxProject sourceFolder = new VcxProject("Sources");
+        sourceFolder.ProjectDirectory = Sandbox.RootDirectory.GetDirectory("Sources");
         sourceFolder.ProjectType = ProjectType.Folder;
         rootProject.AddProject(sourceFolder);
 
         Project programFolder = new Project("Programs");
-        programFolder.ProjectDirectory = Sandbox.RootDirectory.Combine("Programs");
+        programFolder.ProjectDirectory = Sandbox.RootDirectory.GetDirectory("Programs");
         programFolder.ProjectType = ProjectType.Folder;
         rootProject.AddProject(programFolder);
 
-        Project pluginFolder = new Project("Plugins");
-        pluginFolder.ProjectDirectory = Sandbox.RootDirectory.Combine("Plugins");
+        VcxProject pluginFolder = new VcxProject("Plugins");
+        pluginFolder.ProjectDirectory = Sandbox.RootDirectory.GetDirectory("Plugins");
         pluginFolder.ProjectType = ProjectType.Folder;
         rootProject.AddProject(pluginFolder);
 
@@ -29,11 +29,11 @@ public class Rider : IProjectGenerator
         sourceFolder.GenerateSubProjects();
         pluginFolder.GenerateSubProjects();
 
-        Project sandboxPipeWorker = new Project("SandboxPipeWorker");
+        VcxProject sandboxPipeWorker = new VcxProject("SandboxPipeWorker");
         sandboxPipeWorker.ProjectType = ProjectType.CSharp;
-        sandboxPipeWorker.ProjectDirectory = programFolder.ProjectDirectory.Combine("SandboxPipeWorker");
+        sandboxPipeWorker.ProjectDirectory = programFolder.ProjectDirectory.GetDirectory("SandboxPipeWorker");
         sandboxPipeWorker.GeneratedProjectPath = sandboxPipeWorker.ProjectDirectory.GetFile(
-            $"{sandboxPipeWorker.PrimaryProjectName}{Project.ProjectTypeExtensionMapping[sandboxPipeWorker.ProjectType]}");
+            $"{sandboxPipeWorker.PrimaryProjectName}{VcxProject.ProjectTypeExtensionMapping[sandboxPipeWorker.ProjectType]}");
         programFolder.AddProject(sandboxPipeWorker);
 
         WritePrimaryProjectFile(rootProject);
@@ -42,7 +42,7 @@ public class Rider : IProjectGenerator
 
     public bool WritePrimaryProjectFile(Project project)
     {
-        string txtTemplate = File.ReadAllText("ScribanTemplates/sln.scriban");
+        string txtTemplate = Sandbox.SourceDirectory.GetFile("ScribanTemplates/sln.scriban").ReadAllText();
         var template = Scriban.Template.Parse(txtTemplate);
         var projects = project.EnumerateSubProjects().ToList();
         string primaryProjectFile = template.Render(new
@@ -54,7 +54,7 @@ public class Rider : IProjectGenerator
                 "Debug", "Release"
             },
         }, member => member.Name);
-        File.WriteAllText(Sandbox.RootDirectory.GetFile("Sandbox.sln").FullName, primaryProjectFile);
+        File.WriteAllText(Sandbox.RootDirectory.GetFile($"{project.Name}.sln").FullName, primaryProjectFile);
         return true;
     }
 }

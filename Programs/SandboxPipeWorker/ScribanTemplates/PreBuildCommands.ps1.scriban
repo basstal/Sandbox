@@ -1,0 +1,29 @@
+{{$ErrorCode = 1}}
+
+try {
+    # RunPythonScript.ps1
+    $pythonScriptPath = "{{Project.ProjectDirectory.FullName}}/../BuildProject/run_refureku_generator.py"
+
+    # 执行Python脚本
+    $result = python $pythonScriptPath 2>&1
+
+    # 检查执行结果
+    if ($result -match "error:") {
+        Write-Error "Python脚本执行发现错误: "
+        Write-Error $result
+        exit {{$ErrorCode++}}
+    } elseif ($result -match "命令执行失败") {
+        Write-Error "Python脚本报告命令执行失败: "
+        Write-Error $result
+        exit {{$ErrorCode++}}
+    } elseif ($result -match "未找到程序") {
+        Write-Error "Python脚本报告未找到程序: "
+        Write-Error $result
+        exit {{$ErrorCode++}}
+    } else {
+        Write-Host "Python脚本执行成功，未检测到错误信息。" -ForegroundColor Green
+    }
+} catch {
+    Write-Error "发生其他错误: $_"
+    exit {{$ErrorCode++}}
+}

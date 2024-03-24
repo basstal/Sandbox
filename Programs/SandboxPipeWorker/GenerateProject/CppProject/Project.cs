@@ -17,23 +17,13 @@ public class Project
 
     public ProjectType ProjectType;
     public CppSubType CppSubType;
+    // TODO:替换为 Name
     public string PrimaryProjectName;
+    public string Name => PrimaryProjectName;
     public CompileEnvironment PrimaryCompileEnvironment = new();
-
-    public IEnumerable<Module> AllDependencies => EnumerateDependencies();
-
-    public string Guid
-    {
-        get
-        {
-            if (GeneratedProjectPath != null)
-            {
-                return CreateGuidFromPath(GeneratedProjectPath.FullName).ToString();
-            }
-
-            return CreateGuidFromPath(ProjectDirectory!.FullName).ToString(); // 没有对应项目文件则使用项目路径
-        }
-    }
+    public static Type ProjectInstanceType = typeof(Project);
+    private IEnumerable<Module>? _AllDependencies;
+    public IEnumerable<Module> AllDependencies => _AllDependencies ??= EnumerateDependencies();
 
     public static Guid CreateGuidFromPath(string path)
     {
@@ -59,24 +49,15 @@ public class Project
     //     { ProjectType.Folder, "2150E333-8FDC-42A3-9474-1A3956D46DE8" },
     // };
 
-    public static readonly Dictionary<ProjectType, string> ProjectTypeExtensionMapping = new()
-    {
-        {
-            ProjectType.Cpp, ".vcxproj"
-        },
-        {
-            ProjectType.CSharp, ".csproj"
-        },
-    };
+
 
     // public string SlnProjectTypeGuid => ProjectTypeGuidMapping[ProjectType];
     public FileReference? ParsedFile;
     public DirectoryReference? ProjectDirectory;
 
-    public FileReference? GeneratedProjectPath;
     public List<Project> SubProjects = new();
 
-    public static Dictionary<string, Project> RegisteredProjects = new Dictionary<string, Project>();
+    public static Dictionary<string, Project?> RegisteredProjects = new Dictionary<string, Project?>();
     public PrecompileEnvironment? PrecompileEnvironment;
 
     public List<FileReference> RawFiles = new List<FileReference>();
@@ -215,19 +196,40 @@ public class Project
         }
     }
 
-    public static Project Parser(FileReference fileReference)
+    public static Project GetProject(FileReference fileReference)
     {
         var name = fileReference.GetFileNameWithoutExtension(ProjectFileExtension);
         Project project;
         if (!RegisteredProjects.TryGetValue(name, out project!))
         {
-            project = new Project(name);
+            var instance = Activator.CreateInstance(ProjectInstanceType, name);
+            if (instance == null || instance.GetType() != ProjectInstanceType)
+            {
+                throw new Exception($"Type {ProjectInstanceType} is not a Project!");
+            }
+
+            project = (Project)instance;
             RegisteredProjects.Add(name, project);
         }
 
-        if (project.CppSubType != CppSubType.None)
+        if (project == null || project.GetType() != ProjectInstanceType)
         {
-            throw new Exception($"Project {project.PrimaryProjectName} already parsed as {project.CppSubType} from {project.ParsedFile}!");
+            throw new Exception($"Project is null or project is not {ProjectInstanceType}");
+        }
+
+        return project;
+    }
+
+    public virtual void PostProcessParse(FileReference fileReference)
+    {
+
+    }
+
+    public bool TryParse(FileReference fileReference)
+    {
+        if (CppSubType != CppSubType.None)
+        {
+            throw new Exception($"Project {PrimaryProjectName} already parsed as {CppSubType} from {ParsedFile}!");
         }
 
 
@@ -238,30 +240,28 @@ public class Project
         }
 
         var root = (YamlMappingNode)yaml.Documents[0].RootNode;
-        Enum.TryParse(root["type"].ToString(), out project.ProjectType);
-        Enum.TryParse(root["sub_type"].ToString(), out project.CppSubType);
-        project.ParsedFile = fileReference;
-        project.ProjectDirectory = fileReference.GetDirectory();
-        if (ProjectTypeExtensionMapping.ContainsKey(project.ProjectType))
-        {
-            project.GeneratedProjectPath = fileReference.GetDirectory().GetFile($"{project.PrimaryProjectName}{ProjectTypeExtensionMapping[project.ProjectType]}");
-        }
+        Enum.TryParse(root["type"].ToString(), out ProjectType);
+        Enum.TryParse(root["sub_type"].ToString(), out CppSubType);
+        ParsedFile = fileReference;
+        ProjectDirectory = fileReference.GetDirectory();
 
-        switch (project.CppSubType)
+
+        switch (CppSubType)
         {
             case CppSubType.Source:
-                project.ParseCppModule(root, fileReference.GetDirectory());
+                ParseCppModule(root, fileReference.GetDirectory());
                 break;
             case CppSubType.Library:
-                project.ParseDynamicLibrary(root, fileReference.GetDirectory());
-                project.ParseStaticLibrary(root, fileReference.GetDirectory());
-                project.ParseHeaderLibrary(root, fileReference.GetDirectory());
+                ParseDynamicLibrary(root, fileReference.GetDirectory());
+                ParseStaticLibrary(root, fileReference.GetDirectory());
+                ParseHeaderLibrary(root, fileReference.GetDirectory());
                 break;
             default:
-                throw new Exception($"Module type {project.CppSubType} not specified!\n{fileReference.FullName}");
+                throw new Exception($"Module type {CppSubType} not specified!\n{fileReference.FullName}");
         }
 
-        return project;
+        PostProcessParse(fileReference);
+        return true;
     }
 
 
@@ -326,7 +326,7 @@ public class Project
         {
             foreach (var additionalIncludePath in additionalIncludePathsSequence)
             {
-                result.Add(ProjectDirectory!.Combine(additionalIncludePath.ToString()));
+                result.Add(ProjectDirectory!.GetDirectory(additionalIncludePath.ToString()));
             }
         }
 
@@ -384,16 +384,19 @@ public class Project
                 foreach (var dependency in dependenciesSequence)
                 {
                     var dependencyName = dependency.ToString();
-                    if (RegisteredProjects.TryGetValue(dependencyName, out var dependProject))
+                    if (!RegisteredProjects.TryGetValue(dependencyName, out var dependProject) || dependProject == null)
                     {
-                        PrimaryCompileEnvironment.ProjectDependencies.Add(dependProject);
-                    }
-                    else
-                    {
-                        dependProject = new Project(dependencyName);
+                        var objectInstance = Activator.CreateInstance(ProjectInstanceType, dependencyName);
+                        if (objectInstance == null || !(objectInstance is Project projectInstance))
+                        {
+                            throw new Exception($"Type {ProjectInstanceType} is not a Project!");
+                        }
+
+                        dependProject = projectInstance;
                         RegisteredProjects.Add(dependencyName, dependProject);
-                        PrimaryCompileEnvironment.ProjectDependencies.Add(dependProject);
                     }
+
+                    PrimaryCompileEnvironment.ProjectDependencies.Add(dependProject);
                 }
             }
 
@@ -401,103 +404,21 @@ public class Project
         }
     }
 
-    public void GenerateVcxproj()
+
+    public string GenerateCommands(string outputDir, List<FileReference> dllPaths, string fileName)
     {
-        string content = File.ReadAllText("ScribanTemplates/vcxproj.scriban");
-        var vcxprojTemplate = Scriban.Template.Parse(content);
-        var cppSourceInfos = new List<CppSourceInfo>();
-        var sourceRelativeTo = ProjectDirectory!.FullName;
-
-        var includeDirectoryReferences = PrimaryCompileEnvironment.AdditionalIncludePaths.ToList();
-        var additionalIncludeDirectoriesParameter = string.Join(";", includeDirectoryReferences.Select(directory => directory.FullName));
-        var additionalDependencies = PrimaryCompileEnvironment.ProjectDependencies.SelectMany(module => module.PrecompileEnvironment?.LibPaths ?? FileReference.EmptyList).ToList();
-        var dllPaths = PrimaryCompileEnvironment.ProjectDependencies.SelectMany(module => module.PrecompileEnvironment?.DllPaths ?? FileReference.EmptyList).ToList();
-        cppSourceInfos.AddRange(
-            PrimaryCompileEnvironment.SourceFiles.Select(file => new CppSourceInfo(file.GetRelativePath(sourceRelativeTo), additionalIncludeDirectoriesParameter)));
-        foreach (var dependency in PrimaryCompileEnvironment.ProjectDependencies.Where(project => project.CppSubType != CppSubType.None))
-        {
-            includeDirectoryReferences.AddRange(dependency.PrimaryCompileEnvironment.AdditionalIncludePaths);
-            if (dependency.PrecompileEnvironment != null)
-            {
-                includeDirectoryReferences.AddRange(dependency.PrecompileEnvironment.AdditionalIncludePaths);
-            }
-
-            // var dependencyAdditionalIncludeDirectoriesParameter = string.Join(";", dependencyDirectoryReferences.Select(directory => directory.FullName));
-            // dependency.PrimaryCompileEnvironment.SourceFiles.ForEach(file => cppSourceInfos.Add(new CppSourceInfo(file.GetRelativePath(sourceRelativeTo), dependencyAdditionalIncludeDirectoriesParameter)));
-            additionalDependencies.AddRange(
-                dependency.PrimaryCompileEnvironment.ProjectDependencies.SelectMany(module => module.PrecompileEnvironment?.LibPaths ?? FileReference.EmptyList));
-            dllPaths.AddRange(dependency.PrimaryCompileEnvironment.ProjectDependencies.SelectMany(module => module.PrecompileEnvironment?.DllPaths ?? FileReference.EmptyList));
-        }
-
-        var outputDir = Sandbox.RootDirectory.Combine("Output").FullName;
-        var postBuildCommandsTemplate = Scriban.Template.Parse(File.ReadAllText("ScribanTemplates/PostBuildCommands.ps1.scriban"));
-        string postBuildCommands = postBuildCommandsTemplate.Render(new
+        var templateContents = Sandbox.SourceDirectory.GetFile($"ScribanTemplates/{fileName}.ps1.scriban").ReadAllText();
+        var commandsTemplate = Scriban.Template.Parse(templateContents);
+        string buildCommands = commandsTemplate.Render(new
         {
             Project = this,
             OutputDir = outputDir,
             CopyDllPaths = dllPaths.Select(file => file.FullName),
             VulkanSdk = Environment.GetEnvironmentVariable("VULKAN_SDK") // TODO: Vulkan SDK from environment variable
         }, member => member.Name);
-        var postBuildCommandsPath = ProjectDirectory.GetFile("PostBuildCommands.ps1").FullName;
-        var referenceProjects = PrimaryCompileEnvironment.ProjectDependencies.Where(dependProject => dependProject.ProjectType == ProjectType.Cpp)
-            .Select(dependProject => new
-            {
-                dependProject.PrimaryProjectName,
-                dependProject.Guid,
-                RelativePathToProject = dependProject.GeneratedProjectPath!.GetRelativePath(ProjectDirectory.FullName)
-            });
-        RawFiles.Add(ParsedFile!);
-        RawFiles.Add(Sandbox.RootDirectory.GetFile(".editorconfig"));
-        // 添加着色器源码
-        RawFiles.AddRange(ProjectDirectory.GetFiles("*.frag"));
-        RawFiles.AddRange(ProjectDirectory.GetFiles("*.vert"));
-
-        File.WriteAllText(postBuildCommandsPath, postBuildCommands);
-        var constanst = new
-        {
-            Platform = "x64",
-            BuildTypeMapping = new Dictionary<BuildType, string>()
-            {
-                {
-                    BuildType.Main, "Application"
-                },
-                {
-                    BuildType.Static, "StaticLibrary"
-                },
-                {
-                    BuildType.Dynamic, "DynamicLibrary"
-                },
-            }
-        };
-        string primaryProjectFile = vcxprojTemplate.Render(new
-        {
-            // 启用 多处理器编译
-            AllowMultiProcessorCompilation = true,
-            Project = this,
-            CppSourceInfos = cppSourceInfos,
-            RelativeHeaderPaths = PrimaryCompileEnvironment.IncludePaths.Select(include => include.GetRelativePath(sourceRelativeTo)),
-            Configurations = new[]
-            {
-                "Debug", "Release"
-            },
-            AdditionalIncludeDirectories = string.Join(";", includeDirectoryReferences.Distinct().Select(directory => directory.FullName)),
-            AdditionalOptions = string.Join(" ", new[]
-            {
-                "/wd4275", // 忽略 yamlcpp 的警告
-                "/wd4251", // 忽略 yamlcpp 的警告
-                "/Zc:__cplusplus", // Boost.hana requires __cplusplus https://github.com/boostorg/hana/issues/516
-            }),
-            // TODO:Only windows have Dbghelp.lib
-            AdditionalDependencies = string.Join(";", additionalDependencies.Distinct().Select(file => file.FullName)) + ";Dbghelp.lib",
-            PostBuildCommandsPath = postBuildCommandsPath,
-            OutputDir = outputDir,
-            ReferenceProjects = referenceProjects,
-            RawFiles = RawFiles.Count >= 1000 // 避免超过模板引擎 foreach 上限
-                ? RawFiles.GetRange(0, 999)
-                : RawFiles,
-            Constants = constanst,
-        }, member => member.Name);
-        File.WriteAllText(GeneratedProjectPath!.FullName, primaryProjectFile);
+        var writeToPath = ProjectDirectory!.GetFile($"{fileName}.ps1").FullName;
+        File.WriteAllText(writeToPath, buildCommands);
+        return writeToPath;
     }
 
     public void ScanSubProjects()
@@ -505,20 +426,13 @@ public class Project
         var subProjectFiles = ProjectDirectory!.SearchFiles($"*{ProjectFileExtension}");
         foreach (var subProjectFile in subProjectFiles)
         {
-            Project subProject = Parser(subProjectFile);
-            AddProject(subProject);
-            subProject.AddModules();
+            Project subProject = GetProject(subProjectFile);
+            if (subProject.TryParse(subProjectFile))
+            {
+                AddProject(subProject);
+                subProject.AddModules();
+            }
         }
     }
 
-    public void GenerateSubProjects()
-    {
-        foreach (var subProject in SubProjects)
-        {
-            // if (subProject.ProjectType == ProjectType.Cpp)
-            // {
-            subProject.GenerateVcxproj();
-            // }
-        }
-    }
 }

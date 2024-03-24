@@ -1,21 +1,24 @@
 ﻿#pragma once
 #include <string>
+#include <imgui.h>
+#include <Generated/IImGuiWindow.rfkh.h>
 
-#include "imgui.h"
-
+#include "Serialization/ISerializable.hpp"
 
 namespace Sandbox
+NAMESPACE()
 {
-    class IImGuiWindow
+    class CLASS() IImGuiWindow : public ISerializable<IImGuiWindow>
     {
     public:
         std::string name = "DEFAULT";
+        FIELD()
         bool isOpen = false;
         ImGuiWindowFlags flags = 0;
 
         virtual ~IImGuiWindow() = default;
 
-        virtual void Prepare() = 0;
+        virtual void Prepare();
 
         virtual void OnGuiBegin();
 
@@ -23,6 +26,12 @@ namespace Sandbox
 
         virtual void Tick(float deltaTime);
 
-        virtual void Cleanup() = 0;
+        virtual void Cleanup();
+
+        virtual File GetConfigCachePath() const;
+
+        Sandbox_IImGuiWindow_GENERATED
     };
 }
+
+File_IImGuiWindow_GENERATED

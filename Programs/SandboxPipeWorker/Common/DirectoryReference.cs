@@ -48,7 +48,7 @@ public class DirectoryReference : FileSystemBase, IEquatable<DirectoryReference>
     {
     }
 
-    public DirectoryReference Combine(params string[] fragments)
+    public DirectoryReference GetDirectory(params string[] fragments)
     {
         string combinedPath = FullName;
         foreach (string fragment in fragments)

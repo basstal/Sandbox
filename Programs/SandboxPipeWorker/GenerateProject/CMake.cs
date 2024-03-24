@@ -7,27 +7,30 @@ public class CMake : IProjectGenerator
 {
     public bool GenerateProjectFiles(PlatformProjectGeneratorCollection platformProjectGeneratorCollection)
     {
-        Project project = new Project("Sandbox");
-        project.AddModules();
-        // TODO:替换绝对路径
-        project.AddSourceFile(new FileReference("Source/Main.cpp"));
+        CMakeProject project = new CMakeProject($"{Sandbox.PrimaryProjectName}Root");
+        project.ProjectDirectory = Sandbox.RootDirectory;
+        project.ProjectType = ProjectType.Folder;
+        project.ScanSubProjects();
+        project.GenerateSubProjects();
+
         WritePrimaryProjectFile(project);
         return true;
     }
 
     public bool WritePrimaryProjectFile(Project project)
     {
-        string cmakeListsTxtTemplate = File.ReadAllText("ScribanTemplates/CMakeLists.txt.scriban");
+        string cmakeListsTxtTemplate = Sandbox.SourceDirectory.GetFile("ScribanTemplates/CMakeLists.txt.scriban").ReadAllText();
         var template = Scriban.Template.Parse(cmakeListsTxtTemplate);
-        string primaryProjectFile = template.Render(project, member => member.Name);
-        File.WriteAllText(Sandbox.RootDirectory.GetFile("CMakeLists.txt").FullName, primaryProjectFile);
-        foreach (var entry in Module.RegisteredModules)
+        var projects = project.EnumerateSubProjects().ToList();
+        var subDirectories = projects.Select(p => p.ProjectDirectory!.GetRelativePath(Sandbox.RootDirectory.FullName)).ToList();
+        string primaryProjectFile = template.Render(new
         {
-            var moduleProjectFile = template.Render(entry.Value, member => member.Name);
-            File.WriteAllText(entry.Value.ParsedFile!.GetDirectory().GetFile("CMakeLists.txt").FullName,
-                moduleProjectFile);
-        }
-
+            SubDirectories = subDirectories,
+            Projects = projects,
+            Project = project,
+            IsPrimaryProject = true,
+        }, member => member.Name);
+        File.WriteAllText(Sandbox.RootDirectory.GetFile("CMakeLists.txt").FullName, primaryProjectFile);
         return true;
     }
 }

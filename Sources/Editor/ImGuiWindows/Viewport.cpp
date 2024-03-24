@@ -40,7 +40,7 @@ void Sandbox::Viewport::OnCursorPosition(GLFWwindow* window, double xPos, double
 
 Sandbox::Viewport::Viewport(const std::shared_ptr<Renderer>& inRenderer)
 {
-    name = "viewport";
+    name = "Viewport";
     flags = ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse;
     m_renderer = inRenderer;
     presentSampler = std::make_shared<Sampler>(m_renderer->device, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE);
@@ -50,6 +50,7 @@ Sandbox::Viewport::Viewport(const std::shared_ptr<Renderer>& inRenderer)
 
 void Sandbox::Viewport::Prepare()
 {
+    IImGuiWindow::Prepare();
     OnRecreateFramebuffer();
 }
 
@@ -156,6 +157,7 @@ void Sandbox::Viewport::DisableCameraMovement()
 
 void Sandbox::Viewport::Cleanup()
 {
+    IImGuiWindow::Cleanup();
     presentSampler->Cleanup();
 
     for (auto& presentDescriptorSet : presentDescriptorSets)

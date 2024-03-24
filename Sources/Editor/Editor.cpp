@@ -24,7 +24,7 @@
 #include "VulkanRHI/Rendering/PipelineState.hpp"
 #include "VulkanRHI/Rendering/UniformBuffer.hpp"
 
-static Sandbox::File editorCameraFile = Sandbox::Directory::GetLibraryDirectory().GetFile("EditorCamera.yaml");
+static Sandbox::File editorCameraConfigCache = Sandbox::Directory::GetLibraryDirectory().GetFile("EditorCamera.yaml");
 
 void Sandbox::Editor::Prepare(const std::shared_ptr<Renderer>& renderer, const std::shared_ptr<Timer>& timer, const std::vector<std::shared_ptr<Models>>& inModels,
                               const std::shared_ptr<Window>& inWindow)
@@ -43,7 +43,7 @@ void Sandbox::Editor::Prepare(const std::shared_ptr<Renderer>& renderer, const s
     const glm::vec3 DEFAULT_WORLD_UP = glm::vec3(0.0f, 0.0f, 1.0f);
     // TODO:将 camera 移到 viewport 内
     camera = std::make_shared<Camera>(DEFAULT_WORLD_UP, aspectRatio);
-    camera->LoadFromFile(editorCameraFile);
+    camera->LoadFromFile(editorCameraConfigCache);
     camera->UpdateCameraVectors();
     imGuiRenderer->viewport->mainCamera = camera;
     renderer->pipeline->pipelineState->pushConstantsInfo.data = &camera->position;
@@ -60,7 +60,7 @@ void Sandbox::Editor::Prepare(const std::shared_ptr<Renderer>& renderer, const s
 
 void Sandbox::Editor::Cleanup()
 {
-    camera->SaveToFile(editorCameraFile);
+    camera->SaveToFile(editorCameraConfigCache);
     imGuiRenderer->Cleanup();
     CleanupOnGui();
 }

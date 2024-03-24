@@ -1,11 +1,11 @@
 ﻿#pragma once
 #include <string>
-
+#include <filesystem>
 namespace Sandbox
 {
     class FileSystemBase
     {
     public:
-        static std::string GetExecutablePath();
+        static std::filesystem::path GetProjectRoot();
     };
 }
