@@ -1,12 +1,6 @@
-﻿#include "ShaderModule.hpp"
+﻿#include "pch.hpp"
 
-#include <map>
-#include <glslang/Public/ShaderLang.h>
-#include <glslang/Public/ResourceLimits.h>
-#include <glslang/Include/Types.h>
-#include <glslang/SPIRV/SpvTools.h>
-#include <glslang/SPIRV/GlslangToSpv.h>
-#include <glslang/MachineIndependent/gl_types.h>
+#include "ShaderModule.hpp"
 
 #include "Device.hpp"
 #include "FileSystem/Logger.hpp"

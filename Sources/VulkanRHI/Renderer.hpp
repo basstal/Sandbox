@@ -1,6 +1,5 @@
 ﻿#pragma once
 #include <memory>
-#include <memory>
 #include <queue>
 #include <vector>
 
@@ -37,7 +36,7 @@ namespace Sandbox
     class Renderer
     {
     public:
-        void Prepare(const std::shared_ptr<Window>& window);
+        void Prepare(const std::shared_ptr<Window> &window);
 
         /**
          * \brief 离线绘制 3D 场景
@@ -49,9 +48,9 @@ namespace Sandbox
          */
         void Preset();
 
-        void RecordCommandBuffer(std::shared_ptr<CommandBuffer>& commandBuffer);
+        void RecordCommandBuffer(std::shared_ptr<CommandBuffer> &commandBuffer);
 
-        void UpdateUniforms(std::shared_ptr<CommandBuffer>& commandBuffer);
+        void UpdateUniforms(std::shared_ptr<CommandBuffer> &commandBuffer);
 
         void Cleanup();
 
@@ -99,9 +98,9 @@ namespace Sandbox
          */
         uint32_t frameFlightIndex = 0;
 
-        Event<const std::shared_ptr<CommandBuffer>&, uint32_t> onBeforeRendererDraw;
-        Event<const std::shared_ptr<CommandBuffer>&, uint32_t> onAfterRendererDraw;
-        Event<const std::shared_ptr<CommandBuffer>&, uint32_t> onOtherDrawCommands;
+        Event<const std::shared_ptr<CommandBuffer> &, uint32_t> onBeforeRendererDraw;
+        Event<const std::shared_ptr<CommandBuffer> &, uint32_t> onAfterRendererDraw;
+        Event<const std::shared_ptr<CommandBuffer> &, uint32_t> onOtherDrawCommands;
 
         std::shared_ptr<ViewAndProjection> viewAndProjection;
         Event<uint32_t> onOtherCommandBuffer;

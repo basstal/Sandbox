@@ -1,7 +1,6 @@
-﻿#include "Device.hpp"
+﻿#include "pch.hpp"
 
-#include <map>
-#include <set>
+#include "Device.hpp"
 
 #include "Instance.hpp"
 #include "Surface.hpp"

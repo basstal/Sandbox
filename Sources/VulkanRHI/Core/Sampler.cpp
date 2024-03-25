@@ -1,4 +1,6 @@
-﻿#include "Sampler.hpp"
+﻿#include "pch.hpp"
+
+#include "Sampler.hpp"
 
 #include "Device.hpp"
 #include "FileSystem/Logger.hpp"

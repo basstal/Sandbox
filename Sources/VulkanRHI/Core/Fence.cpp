@@ -1,4 +1,6 @@
-﻿#include "Fence.hpp"
+﻿#include "pch.hpp"
+
+#include "Fence.hpp"
 
 #include "Device.hpp"
 #include "FileSystem/Logger.hpp"

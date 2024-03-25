@@ -24,6 +24,7 @@ public class Project
     public static Type ProjectInstanceType = typeof(Project);
     private IEnumerable<Module>? _AllDependencies;
     public IEnumerable<Module> AllDependencies => _AllDependencies ??= EnumerateDependencies();
+    public FileReference PrecompileHeader;
 
     public static Guid CreateGuidFromPath(string path)
     {
@@ -336,7 +337,7 @@ public class Project
     internal List<FileReference> ReadSourcePaths(YamlMappingNode yamlMappingNode)
     {
         var result = new List<FileReference>();
-        if (yamlMappingNode.Children.ContainsKey("source_paths") && yamlMappingNode["source_paths"] is YamlSequenceNode sourcePaths)
+        if (yamlMappingNode.TryGetArray("source_paths", out var sourcePaths))
         {
             foreach (var sourcePath in sourcePaths)
             {
@@ -401,6 +402,11 @@ public class Project
             }
 
             PrimaryCompileEnvironment.SourceFiles.AddRange(ReadSourcePaths(compileEnvironmentMapping));
+
+            if (compileEnvironmentMapping.TryGetValue("precompile_header", out var precompileHeader))
+            {
+                PrecompileHeader = sourceDirectory.GetFile(precompileHeader.ToString());
+            }
         }
     }
 

@@ -1,4 +1,6 @@
-﻿#include "FileSystemBase.hpp"
+﻿#include "pch.hpp"
+
+#include "FileSystemBase.hpp"
 
 #ifdef _WIN64
 #include <windows.h>

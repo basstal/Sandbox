@@ -1,4 +1,6 @@
-﻿#include "Surface.hpp"
+﻿#include "pch.hpp"
+
+#include "Surface.hpp"
 
 #include "Instance.hpp"
 #include "FileSystem/Logger.hpp"

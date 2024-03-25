@@ -1,4 +1,6 @@
-﻿#include "GlmExtensions.hpp"
+﻿#include "pch.hpp"
+
+#include "GlmExtensions.hpp"
 
 #include <sstream>
 

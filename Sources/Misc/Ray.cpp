@@ -1,4 +1,6 @@
-﻿#include "Ray.hpp"
+﻿#include "pch.hpp"
+
+#include "Ray.hpp"
 #include "GlmExtensions.hpp"
 #include "Editor/Grid.hpp"
 #include "VulkanRHI/Core/Buffer.hpp"

@@ -1,4 +1,6 @@
-﻿#include "Buffer.hpp"
+﻿#include "pch.hpp"
+
+#include "Buffer.hpp"
 
 #include "Device.hpp"
 #include "FileSystem/Logger.hpp"

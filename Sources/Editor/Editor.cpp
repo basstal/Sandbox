@@ -1,4 +1,6 @@
-﻿#include "Editor.hpp"
+﻿#include "pch.hpp"
+
+#include "Editor.hpp"
 
 #include "Grid.hpp"
 #include "ImGuiRenderer.hpp"

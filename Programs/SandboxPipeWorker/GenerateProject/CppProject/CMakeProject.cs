@@ -81,19 +81,19 @@ public class CMakeProject : Project
         RawFiles.AddRange(ProjectDirectory.GetFiles("*.frag"));
         RawFiles.AddRange(ProjectDirectory.GetFiles("*.vert"));
 
-        var constanst = new
+        var constants = new
         {
             Platform = "x64",
             BuildTypeMapping = new Dictionary<BuildType, string>()
             {
                 {
-                    BuildType.Main, "Application"
+                    BuildType.Application, "TODO" // cmake use add_executable as Application build
                 },
                 {
-                    BuildType.Static, "StaticLibrary"
+                    BuildType.Static, "STATIC"
                 },
                 {
-                    BuildType.Dynamic, "DynamicLibrary"
+                    BuildType.Dynamic, "SHARED"
                 },
             }
         };
@@ -130,7 +130,7 @@ public class CMakeProject : Project
             RawFiles = RawFiles.Count >= 1000 // 避免超过模板引擎 foreach 上限
                 ? RawFiles.GetRange(0, 999)
                 : RawFiles,
-            Constants = constanst,
+            Constants = constants,
         }, member => member.Name);
         File.WriteAllText(ProjectDirectory.GetFile("CMakeLists.txt").FullName, primaryProjectFile);
     }

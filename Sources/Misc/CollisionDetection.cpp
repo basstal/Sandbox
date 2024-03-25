@@ -1,8 +1,9 @@
-﻿#include "CollisionDetection.hpp"
+﻿#include "pch.hpp"
+
+#include "CollisionDetection.hpp"
 
 #include "BoundingBox.hpp"
 #include "Ray.hpp"
-#include "glm/common.hpp"
 
 bool Sandbox::IntersectRayBoundingBox(const Ray& ray, const BoundingBox& boundingBox, float& factor, glm::vec3& intersectPoint)
 {

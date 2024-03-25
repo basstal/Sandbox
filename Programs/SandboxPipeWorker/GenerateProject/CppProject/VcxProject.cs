@@ -89,13 +89,13 @@ public class VcxProject : Project
         RawFiles.AddRange(ProjectDirectory.GetFiles("*.frag"));
         RawFiles.AddRange(ProjectDirectory.GetFiles("*.vert"));
 
-        var constanst = new
+        var constants = new
         {
             Platform = "x64",
             BuildTypeMapping = new Dictionary<BuildType, string>()
             {
                 {
-                    BuildType.Main, "Application"
+                    BuildType.Application, "Application"
                 },
                 {
                     BuildType.Static, "StaticLibrary"
@@ -137,7 +137,7 @@ public class VcxProject : Project
             RawFiles = RawFiles.Count >= 1000 // 避免超过模板引擎 foreach 上限
                 ? RawFiles.GetRange(0, 999)
                 : RawFiles,
-            Constants = constanst,
+            Constants = constants,
         }, member => member.Name);
         File.WriteAllText(GeneratedProjectPath!.FullName, primaryProjectFile);
     }

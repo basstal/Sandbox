@@ -1,3 +1,5 @@
+#include "pch.hpp"
+
 #include "IImGuiWindow.hpp"
 
 #include "FileSystem/Directory.hpp"

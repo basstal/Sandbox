@@ -1,6 +1,6 @@
-﻿#include "TransformGizmo.hpp"
+﻿#include "pch.hpp"
 
-#include <vector>
+#include "TransformGizmo.hpp"
 
 #include "Grid.hpp"
 #include "ImGuiExamples.hpp"
@@ -9,11 +9,6 @@
 #include "Engine/EntityComponent/GameObject.hpp"
 #include "Engine/EntityComponent/Components/Transform.hpp"
 #include "FileSystem/Logger.hpp"
-#include "GLFW/glfw3.h"
-#include "glm/fwd.hpp"
-#include "glm/detail/type_quat.hpp"
-#include "glm/ext/quaternion_trigonometric.hpp"
-#include "glm/gtc/type_ptr.hpp"
 #include "Platform/GlfwCallbackBridge.hpp"
 #include "Misc/BoundingBox.hpp"
 #include "Misc/CollisionDetection.hpp"

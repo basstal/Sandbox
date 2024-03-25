@@ -1,7 +1,7 @@
-﻿#include "BoundingBox.hpp"
+﻿#include "pch.hpp"
+
+#include "BoundingBox.hpp"
 #include "Editor/Grid.hpp"
-#include <glm/vec4.hpp>
-#include <glm/mat4x4.hpp>
 
 #include "VulkanRHI/Core/Buffer.hpp"
 

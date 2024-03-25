@@ -1,7 +1,8 @@
-﻿#include "Instance.hpp"
+﻿#include "pch.hpp"
+
+#include "Instance.hpp"
 
 #include "FileSystem/Logger.hpp"
-#include "GLFW/glfw3.h"
 
 
 static void CheckExtensionsSupport(uint32_t extensionsCount, const char** extensions)

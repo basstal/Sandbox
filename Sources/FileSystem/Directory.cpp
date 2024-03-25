@@ -1,4 +1,6 @@
-﻿#include "Directory.hpp"
+﻿#include "pch.hpp"
+
+#include "Directory.hpp"
 
 #include "File.hpp"
 

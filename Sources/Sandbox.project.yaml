@@ -2,6 +2,7 @@ type: Cpp
 sub_type: Source
 compile_environment:
   build_type: Main
+  precompile_header: pch.hpp
   definitions:
   include_paths:
     - .

@@ -1,7 +1,8 @@
-﻿#include "Window.hpp"
+﻿#include "pch.hpp"
+
+#include "Window.hpp"
 
 #include "FileSystem/Logger.hpp"
-#include "GLFW/glfw3.h"
 #include "Platform/GlfwCallbackBridge.hpp"
 
 #ifdef _WIN64

@@ -1,4 +1,6 @@
-﻿#include "DataBinding.hpp"
+﻿#include "pch.hpp"
+
+#include "DataBinding.hpp"
 
 Sandbox::IDataBinding::IDataBinding(std::string InName):
     Name(InName)

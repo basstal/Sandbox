@@ -1,4 +1,6 @@
-﻿#include "GameObject.hpp"
+﻿#include "pch.hpp"
+
+#include "GameObject.hpp"
 
 #include "IComponent.hpp"
 #include "Components/Transform.hpp"

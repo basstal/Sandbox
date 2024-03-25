@@ -1,4 +1,6 @@
-﻿#include "Semaphore.hpp"
+﻿#include "pch.hpp"
+
+#include "Semaphore.hpp"
 
 #include "Device.hpp"
 #include "FileSystem/Logger.hpp"

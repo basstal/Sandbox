@@ -1,6 +1,7 @@
-﻿#include "ContentBrowser.hpp"
+﻿#include "pch.hpp"
 
-#include "imgui.h"
+#include "ContentBrowser.hpp"
+
 #include "FileSystem/Directory.hpp"
 #include "FileSystem/File.hpp"
 

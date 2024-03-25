@@ -1,6 +1,7 @@
-﻿#include "Transform.hpp"
+﻿#include "pch.hpp"
 
-#include "glm/gtc/quaternion.hpp"
+#include "Transform.hpp"
+
 
 void Sandbox::Transform::Cleanup()
 {

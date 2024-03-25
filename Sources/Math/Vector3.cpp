@@ -1,4 +1,6 @@
-﻿#include "Generated/Vector3.rfks.h"
+﻿#include "pch.hpp"
+
+#include "Generated/Vector3.rfks.h"
 
 Sandbox::Vector3::Vector3()
 {

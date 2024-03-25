@@ -1,6 +1,7 @@
-﻿#include "Image.hpp"
+﻿#include "pch.hpp"
 
-#include <cassert>
+#include "Image.hpp"
+
 
 #include "Device.hpp"
 #include "FileSystem/Logger.hpp"

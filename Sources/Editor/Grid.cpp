@@ -1,8 +1,6 @@
-﻿#include "Grid.hpp"
+﻿#include "pch.hpp"
 
-#include <memory>
-#include <vector>
-#include <glm/vec2.hpp>
+#include "Grid.hpp"
 
 #include "Editor.hpp"
 #include "Engine/Camera.hpp"

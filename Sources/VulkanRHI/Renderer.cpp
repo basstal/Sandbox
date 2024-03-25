@@ -1,8 +1,6 @@
-﻿#include "Renderer.hpp"
+﻿#include "pch.hpp"
 
-#include <memory>
-#include <glslang/SPIRV/GlslangToSpv.h>
-
+#include "Renderer.hpp"
 
 #include "Common/ShaderSource.hpp"
 #include "Common/SubpassComponents.hpp"

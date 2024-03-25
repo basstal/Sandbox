@@ -1,6 +1,7 @@
-﻿#include "String.hpp"
+﻿#include "pch.hpp"
 
-#include <sstream>
+#include "String.hpp"
+
 
 std::vector<std::string> Sandbox::String::Split(const std::string& source, const char& seperator)
 {

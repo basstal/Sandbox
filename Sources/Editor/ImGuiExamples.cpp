@@ -1,9 +1,7 @@
-﻿#include "ImGuiExamples.hpp"
+﻿#include "pch.hpp"
 
-#include "imgui.h"
-#include "ImGuizmo.h"
-#include "imgui_internal.h"
-#include "glm/gtc/type_ptr.hpp"
+#include "ImGuiExamples.hpp"
+
 
 typedef void (*ImGuiDemoMarkerCallback1)(const char* file, int line, const char* section, void* user_data);
 

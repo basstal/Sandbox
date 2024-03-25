@@ -1,4 +1,6 @@
-﻿#include "Texture.hpp"
+﻿#include "pch.hpp"
+
+#include "Texture.hpp"
 
 #include "FileSystem/Logger.hpp"
 #include "VulkanRHI/Core/Device.hpp"

@@ -1,6 +1,7 @@
-﻿#include "Image.hpp"
-#define STB_IMAGE_IMPLEMENTATION
-#include "stb_image.h"
+﻿#include "pch.hpp"
+
+#include "Image.hpp"
+
 #include "FileSystem/File.hpp"
 #include "FileSystem/Logger.hpp"
 

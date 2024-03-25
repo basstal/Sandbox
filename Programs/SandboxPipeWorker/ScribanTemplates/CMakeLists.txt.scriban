@@ -1,8 +1,4 @@
 ﻿# {{this}}
-{{BuildTypeMapping = {
-    "Static": "STATIC",
-    "Dynamic": "SHARED"
-}~}}
 
 cmake_minimum_required(VERSION 3.10)
 
@@ -35,11 +31,11 @@ set(CMAKE_CXX_STANDARD {{Project.PrimaryCompileEnvironment.CppVersion | string.r
 find_package({{FindPackage}} REQUIRED)
 {{~end~}}
 
-{{~if Project.PrimaryCompileEnvironment.BuildType == "Main"~}}
+{{~if Project.PrimaryCompileEnvironment.BuildType == "Application"~}}
 # 源文件
 add_executable({{Project.Name}}
 {{~else~}}
-add_library({{Project.Name}} {{BuildTypeMapping[Project.PrimaryCompileEnvironment.BuildType]}}
+add_library({{Project.Name}} {{Constants.BuildTypeMapping[Project.PrimaryCompileEnvironment.BuildType]}}
 {{~end~}}
 {{for SourceFile in Project.PrimaryCompileEnvironment.SourceFiles~}} ${CMAKE_SOURCE_DIR}/{{SourceFile.RelativeEnginePath}}
 {{end~}}
@@ -65,12 +61,19 @@ target_include_directories({{Project.Name}} PRIVATE
 {{end~}}
 )
 
+{{~if Project.PrimaryCompileEnvironment.Definitions.size > 0~}}
 # 添加编译定义
 target_compile_definitions({{Project.Name}} PRIVATE
 {{~for Definition in Project.PrimaryCompileEnvironment.Definitions~}}
 {{Definition}}
 {{~end~}}
 )
+{{~end~}}
+
+{{~if Project.PrecompileHeader ~}}
+# 启用预编译头文件
+target_precompile_headers({{Project.Name}} PRIVATE ${CMAKE_SOURCE_DIR}/{{Project.PrecompileHeader.RelativeEnginePath}})
+{{~end~}}
 
 {{~else if Project.CppSubType == "Library"~}}
 

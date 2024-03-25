@@ -1,7 +1,7 @@
-﻿#include "GlfwCallbackBridge.hpp"
+﻿#include "pch.hpp"
 
-#include "imgui_internal.h"
-#include "backends/imgui_impl_glfw.h"
+#include "GlfwCallbackBridge.hpp"
+
 #include "FileSystem/Logger.hpp"
 #include "Misc/Ray.hpp"
 #include "Platform/Window.hpp"

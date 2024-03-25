@@ -1,6 +1,6 @@
-﻿#include "RenderPass.hpp"
+﻿#include "pch.hpp"
 
-#include <cassert>
+#include "RenderPass.hpp"
 
 #include "Device.hpp"
 #include "FileSystem/Logger.hpp"

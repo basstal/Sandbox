@@ -1,4 +1,6 @@
-﻿#include "CommandPool.hpp"
+﻿#include "pch.hpp"
+
+#include "CommandPool.hpp"
 
 #include "Device.hpp"
 #include "FileSystem/Logger.hpp"

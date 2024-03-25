@@ -1,8 +1,7 @@
-﻿#include "ImGuiRenderer.hpp"
-#include <imgui.h>
-#include <memory>
-#include <backends/imgui_impl_vulkan.h>
-#include <backends/imgui_impl_glfw.h>
+﻿#include "pch.hpp"
+
+#include "ImGuiRenderer.hpp"
+
 
 #include "Editor.hpp"
 #include "IImGuiWindow.hpp"

@@ -1,4 +1,6 @@
-﻿#include "Hierarchy.hpp"
+﻿#include "pch.hpp"
+
+#include "Hierarchy.hpp"
 
 #include "Engine/EntityComponent/GameObject.hpp"
 #include "Engine/EntityComponent/Scene.hpp"

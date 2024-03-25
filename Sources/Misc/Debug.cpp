@@ -1,12 +1,10 @@
-﻿#include "Debug.hpp"
+﻿#include "pch.hpp"
 
-#include <sstream>
-#include <string>
+#include "Debug.hpp"
 
 #ifdef _WIN64
 #include <windows.h>
 #include <dbghelp.h>
-#include <stdio.h>
 #endif
 
 std::string Sandbox::GetCallStack()

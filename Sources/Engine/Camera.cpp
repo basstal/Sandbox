@@ -1,7 +1,8 @@
-﻿#include "Generated/Camera.rfks.h"
+﻿#include "pch.hpp"
+
+#include "Generated/Camera.rfks.h"
 #include "FileSystem/Directory.hpp"
-#include "glm/ext/matrix_clip_space.hpp"
-#include "glm/ext/matrix_transform.hpp"
+
 #include "Misc/GlmExtensions.hpp"
 #include "TestRefureku/TestProperty.hpp"
 

@@ -1,8 +1,7 @@
-﻿#include "Model.hpp"
+﻿#include "pch.hpp"
 
-#include "assimp/Importer.hpp"
-#include "assimp/postprocess.h"
-#include "assimp/scene.h"
+#include "Model.hpp"
+
 #include "FileSystem/Logger.hpp"
 
 Sandbox::Model::Model(const std::string& path)

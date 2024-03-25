@@ -15,5 +15,9 @@ class CMakeProcess(whiterice.ITable):
         return super().make(cook)
 
     def build(self, cook: whiterice.Cook) -> int:
-        cook.exec.execute_straight("cmake", ["--build", "."], work_dir=self.build_dir)
+        env_copy = os.environ.copy()
+        env_copy["UseMultiToolTask"] = 'true' # 参考 https://zhuanlan.zhihu.com/p/667591876 和 https://devblogs.microsoft.com/cppblog/improved-parallelism-in-msbuild/
+        cook.exec.execute_straight(
+            "cmake", ["--build", "."], work_dir=self.build_dir, env=env_copy
+        )
         return super().build(cook)

@@ -1,6 +1,7 @@
-﻿#include "File.hpp"
+﻿#include "pch.hpp"
 
-#include <fstream>
+#include "File.hpp"
+
 
 #include "Directory.hpp"
 

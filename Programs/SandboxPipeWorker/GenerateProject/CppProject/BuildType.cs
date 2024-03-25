@@ -3,7 +3,7 @@ namespace SandboxPipeWorker.GenerateProject.CppProject;
 public enum BuildType
 {
     None,
-    Main,
+    Application,
     Static,
     Dynamic
 }

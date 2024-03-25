@@ -1,4 +1,6 @@
-﻿#include "Logger.hpp"
+﻿#include "pch.hpp"
+
+#include "Logger.hpp"
 
 
 std::ofstream Sandbox::Logger::m_fileStream = {};

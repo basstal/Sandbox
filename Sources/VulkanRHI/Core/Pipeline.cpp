@@ -1,4 +1,6 @@
-﻿#include "Pipeline.hpp"
+﻿#include "pch.hpp"
+
+#include "Pipeline.hpp"
 
 #include "Device.hpp"
 #include "PipelineLayout.hpp"

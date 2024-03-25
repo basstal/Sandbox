@@ -1,4 +1,6 @@
-﻿#include "Timer.hpp"
+﻿#include "pch.hpp"
+
+#include "Timer.hpp"
 
 
 Sandbox::Timer::Timer()

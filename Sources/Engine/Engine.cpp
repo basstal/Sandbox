@@ -1,6 +1,6 @@
-﻿#include "Engine.hpp"
-#include <exception>
-#include <iostream>
+﻿#include "pch.hpp"
+
+#include "Engine.hpp"
 
 #include "Camera.hpp"
 #include "Image.hpp"
@@ -16,8 +16,6 @@
 #include "EntityComponent/Components/Transform.hpp"
 #include "FileSystem/Directory.hpp"
 #include "FileSystem/File.hpp"
-#include "GLFW/glfw3.h"
-#include "glm/ext/matrix_transform.hpp"
 #include "Platform/GlfwCallbackBridge.hpp"
 #include "Misc/DataBinding.hpp"
 #include "Misc/Memory.hpp"

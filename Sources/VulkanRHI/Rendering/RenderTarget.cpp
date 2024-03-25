@@ -1,4 +1,6 @@
-﻿#include "RenderTarget.hpp"
+﻿#include "pch.hpp"
+
+#include "RenderTarget.hpp"
 
 #include "RenderAttachments.hpp"
 #include "VulkanRHI/Common/SubpassComponents.hpp"

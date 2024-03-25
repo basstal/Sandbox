@@ -1,4 +1,6 @@
-﻿#include "ShaderSource.hpp"
+﻿#include "pch.hpp"
+
+#include "ShaderSource.hpp"
 
 #include "FileSystem/File.hpp"
 

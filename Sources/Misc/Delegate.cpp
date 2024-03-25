@@ -1,4 +1,6 @@
-﻿#include "Delegate.hpp"
+﻿#include "pch.hpp"
+
+#include "Delegate.hpp"
 
 // 初始化静态成员变量
 uint64_t Sandbox::DelegateHandle::currentId = 0;
