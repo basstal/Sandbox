@@ -20,3 +20,6 @@
 [submodule "Plugins/boost/hana"]
 	path = Plugins/boost/hana
 	url = https://github.com/boostorg/hana
+[submodule "Plugins/refureku/Refureku"]
+	path = Plugins/refureku/Refureku
+	url = https://github.com/jsoysouvanh/Refureku

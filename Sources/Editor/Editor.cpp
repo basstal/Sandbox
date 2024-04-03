@@ -2,19 +2,17 @@
 
 #include "Editor.hpp"
 
-#include "Grid.hpp"
-#include "ImGuiRenderer.hpp"
-#include "TransformGizmo.hpp"
 #include "Engine/Camera.hpp"
 #include "Engine/Timer.hpp"
 #include "FileSystem/Directory.hpp"
 #include "FileSystem/File.hpp"
+#include "Grid.hpp"
+#include "ImGuiRenderer.hpp"
 #include "ImGuiWindows/Viewport.hpp"
-#include "Platform/GlfwCallbackBridge.hpp"
 #include "Misc/DataBinding.hpp"
+#include "Platform/GlfwCallbackBridge.hpp"
 #include "Platform/Window.hpp"
-#include "TestRefureku/TestProperty.hpp"
-#include "VulkanRHI/Renderer.hpp"
+#include "TransformGizmo.hpp"
 #include "VulkanRHI/Common/ShaderSource.hpp"
 #include "VulkanRHI/Core/DescriptorSet.hpp"
 #include "VulkanRHI/Core/Device.hpp"
@@ -23,6 +21,7 @@
 #include "VulkanRHI/Core/ShaderModule.hpp"
 #include "VulkanRHI/Core/Surface.hpp"
 #include "VulkanRHI/Core/Swapchain.hpp"
+#include "VulkanRHI/Renderer.hpp"
 #include "VulkanRHI/Rendering/PipelineState.hpp"
 #include "VulkanRHI/Rendering/UniformBuffer.hpp"
 
@@ -38,10 +37,9 @@ void Sandbox::Editor::Prepare(const std::shared_ptr<Renderer>& renderer, const s
     imGuiRenderer = std::make_shared<ImGuiRenderer>();
     imGuiRenderer->Prepare(m_renderer, shared_from_this());
 
-
     models = inModels;
-    auto& extent2D = renderer->swapchain->vkExtent2D;
-    auto aspectRatio = static_cast<float>(extent2D.width) / static_cast<float>(extent2D.height);
+    auto& resolution = renderer->resolution;
+    auto aspectRatio = static_cast<float>(resolution.width) / static_cast<float>(resolution.height);
     const glm::vec3 DEFAULT_WORLD_UP = glm::vec3(0.0f, 0.0f, 1.0f);
     // TODO:将 camera 移到 viewport 内
     camera = std::make_shared<Camera>(DEFAULT_WORLD_UP, aspectRatio);
@@ -66,7 +64,6 @@ void Sandbox::Editor::Cleanup()
     imGuiRenderer->Cleanup();
     CleanupOnGui();
 }
-
 
 void Sandbox::Editor::CleanupOnGui()
 {
@@ -117,8 +114,8 @@ void Sandbox::Editor::PrepareOnGui()
             {0, {uniformMvpObjects[i]->vpUbo->GetDescriptorBufferInfo()}},
             {1, {uniformMvpObjects[i]->modelsUbo->GetDescriptorBufferInfo(dynamicAlignment)}},
         };
-        auto descriptorSet = std::make_shared<DescriptorSet>(device, m_renderer->descriptorPool, pipelineLayout->descriptorSetLayout, bufferInfoMapping,
-                                                             BindingMap<VkDescriptorImageInfo>());
+        auto descriptorSet =
+            std::make_shared<DescriptorSet>(device, m_renderer->descriptorPool, pipelineLayout->descriptorSetLayout, bufferInfoMapping, BindingMap<VkDescriptorImageInfo>());
         descriptorSets.push_back(descriptorSet);
     }
 }
@@ -145,7 +142,6 @@ void Sandbox::Editor::Update()
     float deltaTime = m_timer->GetDeltaTime();
     imGuiRenderer->Tick(deltaTime);
 }
-
 
 void Sandbox::Editor::UpdateInputs(const std::shared_ptr<GlfwCallbackBridge>& glfwInputBridge)
 {

@@ -19,11 +19,11 @@
 #include "Core/Swapchain.hpp"
 #include "Engine/Camera.hpp"
 
+#include "Engine/EntityComponent/Components/Mesh.hpp"
+#include "Engine/Light.hpp"
 #include "FileSystem/Directory.hpp"
 #include "FileSystem/File.hpp"
 #include "FileSystem/Logger.hpp"
-#include "Engine/Light.hpp"
-#include "Engine/EntityComponent/Components/Mesh.hpp"
 #include "Platform/Window.hpp"
 #include "Rendering/RenderAttachments.hpp"
 #include "Rendering/RenderTarget.hpp"
@@ -31,6 +31,7 @@
 
 void Sandbox::Renderer::Prepare(const std::shared_ptr<Window>& window)
 {
+    resolution = VkExtent2D(1920, 1080);
     instance = std::make_shared<Instance>(VK_API_VERSION_1_0, "Sandbox");
     surface = std::make_shared<Surface>(instance, window);
     std::vector<const char*> deviceExtensions = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
@@ -40,11 +41,10 @@ void Sandbox::Renderer::Prepare(const std::shared_ptr<Window>& window)
     swapchain = std::make_shared<Swapchain>(device, surface);
     // NOTE:构造 renderpass 所需数据
     std::vector<Attachment> attachments = {
-        Attachment{VK_FORMAT_R8G8B8A8_UNORM, device->GetMaxUsableSampleCount(), VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL},
-        Attachment{
-            VK_FORMAT_D32_SFLOAT, device->GetMaxUsableSampleCount(), VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_IMAGE_LAYOUT_UNDEFINED,
-            VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL
-        },
+        Attachment{VK_FORMAT_R8G8B8A8_UNORM, device->GetMaxUsableSampleCount(), VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, VK_IMAGE_LAYOUT_UNDEFINED,
+                   VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL},
+        Attachment{VK_FORMAT_D32_SFLOAT, device->GetMaxUsableSampleCount(), VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_IMAGE_LAYOUT_UNDEFINED,
+                   VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL},
         Attachment{VK_FORMAT_R8G8B8A8_UNORM, VK_SAMPLE_COUNT_1_BIT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL},
     };
     std::vector<LoadStoreInfo> loadStoreInfos = {
@@ -87,7 +87,6 @@ void Sandbox::Renderer::Prepare(const std::shared_ptr<Window>& window)
     swapchain->onAfterRecreateSwapchain.BindMember<Sandbox::Renderer, &Renderer::OnAfterRecreateSwapchain>(this);
 }
 
-
 void Sandbox::Renderer::Cleanup()
 {
     if (m_cleaned)
@@ -125,7 +124,6 @@ void Sandbox::Renderer::Cleanup()
     m_cleaned = true;
 }
 
-
 Sandbox::ESwapchainStatus Sandbox::Renderer::AcquireNextImage()
 {
     // fences[frameFlightIndex]->WaitForFence();
@@ -159,20 +157,20 @@ void Sandbox::Renderer::RecordCommandBuffer(std::shared_ptr<CommandBuffer>& comm
     VkClearDepthStencilValue clearDepthStencil = {1.0f, 0};
     // 绘制场景
     {
-        commandBuffer->BeginRenderPass(renderPass, framebuffer, swapchain->vkExtent2D, clearColor, clearDepthStencil);
+        commandBuffer->BeginRenderPass(renderPass, framebuffer, resolution, clearColor, clearDepthStencil);
 
         VkViewport viewport;
         viewport.x = 0.0f;
         viewport.y = 0.0f;
-        viewport.width = static_cast<float>(swapchain->vkExtent2D.width);
-        viewport.height = static_cast<float>(swapchain->vkExtent2D.height);
+        viewport.width = static_cast<float>(resolution.width);
+        viewport.height = static_cast<float>(resolution.height);
         viewport.minDepth = 0.0f;
         viewport.maxDepth = 1.0f;
         commandBuffer->SetViewport(0, std::vector<VkViewport>{viewport});
 
         VkRect2D scissor;
         scissor.offset = {0, 0};
-        scissor.extent = swapchain->vkExtent2D;
+        scissor.extent = resolution;
         commandBuffer->SetScissor(0, std::vector<VkRect2D>{scissor});
 
         onBeforeRendererDraw.Trigger(commandBuffer, frameFlightIndex);
@@ -195,8 +193,7 @@ void Sandbox::Renderer::RecordCommandBuffer(std::shared_ptr<CommandBuffer>& comm
 
     onOtherDrawCommands.Trigger(commandBuffer, frameFlightIndex);
     // 在这里要保证游戏场景的 renderpass 输出完毕并且 image layout 也转换为纹理采样所需的 image，因为这里会 submit 并等待其他的 viewport 的渲染
-    commandBuffer->TransitionImageLayout(renderAttachments[imageIndex]->resolveImage, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-                                         VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+    commandBuffer->TransitionImageLayout(renderAttachments[imageIndex]->resolveImage, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
     commandBuffer->End();
 }
 
@@ -222,7 +219,7 @@ void Sandbox::Renderer::OnAfterRecreateSwapchain()
     {
         renderAttachments[i] != nullptr ? renderAttachments[i]->Cleanup() : void();
         renderTargets[i] != nullptr ? renderTargets[i]->Cleanup() : void();
-        renderAttachments[i] = std::make_shared<RenderAttachments>(device, renderPass, swapchain->vkExtent2D, nullptr);
-        renderTargets[i] = std::make_shared<RenderTarget>(device, renderPass, swapchain->vkExtent2D, renderAttachments[i]);
+        renderAttachments[i] = std::make_shared<RenderAttachments>(device, renderPass, resolution, nullptr);
+        renderTargets[i] = std::make_shared<RenderTarget>(device, renderPass, resolution, renderAttachments[i]);
     }
 }

@@ -1,9 +1,9 @@
 ﻿#include "pch.hpp"
 
 #include "Buffer.hpp"
-
 #include "Device.hpp"
 #include "FileSystem/Logger.hpp"
+#include "Misc/Debug.hpp"
 
 Sandbox::Buffer::Buffer(const std::shared_ptr<Device>& device, VkDeviceSize inSize, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties)
 {
@@ -21,6 +21,7 @@ Sandbox::Buffer::Buffer(const std::shared_ptr<Device>& device, VkDeviceSize inSi
     {
         Logger::Fatal("failed to create buffer!");
     }
+    // LOGI("{}\n{}", PtrToHexString(vkBuffer), GetCallStack())
 
     VkMemoryRequirements memRequirements;
     vkGetBufferMemoryRequirements(device->vkDevice, vkBuffer, &memRequirements);
@@ -34,6 +35,7 @@ Sandbox::Buffer::Buffer(const std::shared_ptr<Device>& device, VkDeviceSize inSi
     {
         Logger::Fatal("failed to allocate buffer memory!");
     }
+
     vkBindBufferMemory(device->vkDevice, vkBuffer, vkDeviceMemory, 0);
 }
 

@@ -1,10 +1,9 @@
 ﻿#include "pch.hpp"
 
-#include "Generated/Camera.rfks.h"
 #include "FileSystem/Directory.hpp"
+#include "Generated/Camera.rfks.h"
 
 #include "Misc/GlmExtensions.hpp"
-#include "TestRefureku/TestProperty.hpp"
 
 /**
  * \brief 默认的相机速度
@@ -32,20 +31,16 @@ glm::mat4 Sandbox::Camera::GetViewMatrix()
     return glm::lookAt(eyePos, eyePos + front, up);
 }
 
-glm::mat4 Sandbox::Camera::GetProjectionMatrix()
-{
-    return glm::perspective(glm::radians(this->fieldOfView), this->aspectRatio, this->nearPlane, this->farPlane);
-}
+glm::mat4 Sandbox::Camera::GetProjectionMatrix() { return glm::perspective(glm::radians(this->fieldOfView), this->aspectRatio, this->nearPlane, this->farPlane); }
 
 void Sandbox::Camera::ProcessKeyboard(ECameraMovement direction, float deltaTime)
 {
     float velocity = SPEED * deltaTime;
-    const Vector3 directionMapping[ECameraMovement::MAX]
-    {
-        front1, // FORWARD
-        -front1, // BACKWARD
-        -right1, // LEFT
-        right1, // RIGHT
+    const Vector3 directionMapping[ECameraMovement::MAX]{
+        front1,   // FORWARD
+        -front1,  // BACKWARD
+        -right1,  // LEFT
+        right1,   // RIGHT
         worldUp1, // UP
     };
     this->position += directionMapping[direction] * velocity;

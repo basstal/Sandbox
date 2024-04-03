@@ -4,8 +4,7 @@
 #include "glm/vec3.hpp"
 #include "Serialization/ISerializable.hpp"
 
-namespace Sandbox
-NAMESPACE()
+namespace Sandbox NAMESPACE()
 {
     class CLASS() Vector3 : public ISerializable<Vector3>
     {
@@ -17,12 +16,15 @@ NAMESPACE()
         FIELD()
         float z = 0.0f;
 
-
         Vector3();
 
         Vector3(float scalar);
 
         Vector3(const glm::vec3& inGlmVec3);
+
+        // 移动构造函数：从glm::vec3移动（实际上和复制构造一样，因为glm::vec3没有动态资源）
+        Vector3(glm::vec3&& inGlmVec3);
+
 
         Vector3 operator-() const;
 

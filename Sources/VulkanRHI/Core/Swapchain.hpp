@@ -2,64 +2,64 @@
 #include <memory>
 #include <vector>
 
-#include "vulkan/vulkan_core.h"
 #include "Misc/Event.hpp"
+#include "vulkan/vulkan_core.h"
 
-namespace Sandbox
+namespace Sandbox {
+class Semaphore;
+class Surface;
+class Device;
+class Window;
+class ImageView;
+
+enum ESwapchainStatus
 {
-    class Semaphore;
-    class Surface;
-    class Device;
-    class Window;
-    class ImageView;
+    Continue,
+    Recreate,
+    Failure
+};
 
-    enum ESwapchainStatus
-    {
-        Continue,
-        Recreate,
-        Failure
-    };
+class Swapchain
+{
+  public:
+    Swapchain(const std::shared_ptr<Device>& device, const std::shared_ptr<Surface>& surface);
 
-    class Swapchain
-    {
-    public:
-        Swapchain(const std::shared_ptr<Device>& device, const std::shared_ptr<Surface>& surface);
+    ~Swapchain();
 
-        ~Swapchain();
+    void Create(const std::shared_ptr<Device>& device, const std::shared_ptr<Surface>& surface);
 
-        void Create(const std::shared_ptr<Device>& device, const std::shared_ptr<Surface>& surface);
+    std::vector<std::shared_ptr<ImageView>> CreateImageViews(VkFormat format);
 
-        std::vector<std::shared_ptr<ImageView>> CreateImageViews(VkFormat format);
+    VkSurfaceFormatKHR ChooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats);
 
-        VkSurfaceFormatKHR ChooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats);
+    void ParseCapabilities(const std::shared_ptr<Window>& window, const VkSurfaceCapabilitiesKHR& capabilities, uint32_t& imageCount, VkExtent2D& actualExtent);
 
-        void ParseCapabilities(const std::shared_ptr<Window>& window, const VkSurfaceCapabilitiesKHR& capabilities, uint32_t& imageCount, VkExtent2D& actualExtent);
+    VkPresentModeKHR ChooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes);
 
-        VkPresentModeKHR ChooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes);
+    void Cleanup();
 
-        void Cleanup();
+    ESwapchainStatus AcquireNextImageIndex(const std::shared_ptr<Semaphore>& semaphore);
 
-        ESwapchainStatus AcquireNextImageIndex(const std::shared_ptr<Semaphore>& semaphore);
+    void Recreate();
 
-        void Recreate();
+    ESwapchainStatus Preset(const std::vector<std::shared_ptr<Semaphore>>& inPresentWaitSemaphores);
 
-        ESwapchainStatus Preset(const std::vector<std::shared_ptr<Semaphore>>& inPresentWaitSemaphores);
+    VkSwapchainKHR vkSwapchainKhr;
 
-        VkSwapchainKHR vkSwapchainKhr;
+    std::vector<VkImage> vkImages;
 
-        std::vector<VkImage> vkImages;
+    std::vector<std::shared_ptr<ImageView>> imageViews;
 
-        std::vector<std::shared_ptr<ImageView>> imageViews;
+    VkExtent2D imageExtent;
 
-        VkExtent2D vkExtent2D;
+    uint32_t acquiredNextImageIndex;
 
-        uint32_t acquiredNextImageIndex;
+    Event<void> onBeforeRecreateSwapchain;
+    Event<void> onAfterRecreateSwapchain;
 
-        Event<void> onBeforeRecreateSwapchain;
-        Event<void> onAfterRecreateSwapchain;
-    private:
-        bool m_cleaned = false;
-        std::shared_ptr<Surface> m_surface;
-        std::shared_ptr<Device> m_device;
-    };
-}
+  private:
+    bool m_cleaned = false;
+    std::shared_ptr<Surface> m_surface;
+    std::shared_ptr<Device> m_device;
+};
+} // namespace Sandbox

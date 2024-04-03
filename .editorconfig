@@ -1,5 +1,5 @@
-# 对所有文件应用规则
-[*]
+# 除 cpp 和 cs 相关源文件以外的所有文件应用规则
+[*.{appxmanifest,asax,ascx,aspx,axaml,build,ccm,cginc,compute,cshtml,cu,cuh,cxx,cxxm,dtd,fs,fsi,fsscript,fsx,fx,fxh,hlsl,hlsli,hlslinc,ino,ipp,ixx,master,ml,mli,mpp,mq4,mq5,mqh,mxx,nuspec,paml,razor,resw,resx,shader,skin,tpp,usf,ush,uxml,vb,xaml,xamlx,xoml,xsd}]
 charset = utf-8 # 文件字符集为 UTF-8
 end_of_line = lf # 使用 LF 作为行结束符
 insert_final_newline = true # 确保文件以一个空行结束
@@ -36,7 +36,7 @@ resharper_default_internal_modifier = implicit
 resharper_for_built_in_types = use_var_when_evident
 resharper_function_declaration_return_type_style = on_single_line
 resharper_function_definition_return_type_style = on_single_line
-resharper_instance_members_qualify_declared_in = 
+resharper_instance_members_qualify_declared_in =
 resharper_keep_blank_lines_in_declarations = 2
 resharper_keep_existing_initializer_arrangement = false
 resharper_line_break_after_colon_in_member_initializer_lists = line_break
@@ -57,7 +57,6 @@ resharper_wrap_chained_binary_expressions = chop_if_long
 resharper_wrap_enumeration_style = chop_always
 resharper_wrap_object_and_collection_initializer_style = chop_always
 
-[*.{appxmanifest,asax,ascx,aspx,axaml,build,c,c++,c++m,cc,ccm,cginc,compute,cp,cpp,cppm,cs,cshtml,cu,cuh,cxx,cxxm,dtd,fs,fsi,fsscript,fsx,fx,fxh,h,hh,hlsl,hlsli,hlslinc,hpp,hxx,inc,inl,ino,ipp,ixx,master,ml,mli,mpp,mq4,mq5,mqh,mxx,nuspec,paml,razor,resw,resx,shader,skin,tpp,usf,ush,uxml,vb,xaml,xamlx,xoml,xsd}]
 indent_style = space
 indent_size = 4
 tab_width = 4

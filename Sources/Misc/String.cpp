@@ -1,9 +1,46 @@
-﻿#include "pch.hpp"
+#include "pch.hpp"
 
 #include "String.hpp"
+#include "Generated/String.rfks.h"
 
+Sandbox::String::String(const std::string &inString)
+{
+    m_string = inString;
+    Sync();
+}
 
-std::vector<std::string> Sandbox::String::Split(const std::string& source, const char& seperator)
+Sandbox::String::String(const char *string)
+{
+    m_string = string;
+    Sync();
+}
+
+Sandbox::String::String(const Sandbox::String &other)
+{
+    m_string = other.m_string;
+    Sync();
+}
+
+Sandbox::String::String(Sandbox::String &&other) noexcept
+{
+    m_string = std::move(other.m_string);
+    Sync();
+}
+
+Sandbox::String &Sandbox::String::operator=(const char *inString)
+{
+    m_string = inString;
+    Sync();
+    return *this;
+}
+
+void Sandbox::String::Construct(const std::string &inString)
+{
+    m_string = inString;
+    Sync();
+}
+
+std::vector<std::string> Sandbox::String::Split(const std::string &source, const char &seperator)
 {
     std::vector<std::string> reuslt;
     std::istringstream istringstream(source);
@@ -16,8 +53,7 @@ std::vector<std::string> Sandbox::String::Split(const std::string& source, const
     return reuslt;
 }
 
-
-std::string Sandbox::String::Replace(const std::string& source, const std::string& from, const std::string& to)
+std::string Sandbox::String::Replace(const std::string &source, const std::string &from, const std::string &to)
 {
     std::string result = source;
     size_t start_pos = 0;
@@ -27,4 +63,16 @@ std::string Sandbox::String::Replace(const std::string& source, const std::strin
         start_pos += to.length();
     }
     return result;
+}
+
+std::string Sandbox::String::ToStdString()
+{
+    return m_string;
+}
+
+void Sandbox::String::Sync()
+{
+    auto cStr = m_string.c_str();
+    rawString = new char[m_string.size() + 1];
+    strcpy_s(rawString, m_string.size() + 1, cStr);
 }

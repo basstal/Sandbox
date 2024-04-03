@@ -1,3 +1,5 @@
+import os
+import shutil
 import whiterice
 
 import pyutils.simplelogger as logger
@@ -5,6 +7,11 @@ import pyutils.simplelogger as logger
 
 class RefurekuGenerator(whiterice.ITable):
     def make(self, cook: whiterice.Cook) -> int:
+        # 清理 Generated 目录
+        generated_dir = os.path.join(cook.config.project, "Sources/Generated")
+        shutil.rmtree(generated_dir, ignore_errors=True)
+
+        # 运行 rufureku generator
         result = cook.exec.execute_straight(
             cook.config_ext.refureku_generator,
             cook.config_ext.refureku_generator_setting,

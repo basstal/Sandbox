@@ -31,17 +31,17 @@ Sandbox::RenderAttachments::RenderAttachments(const std::shared_ptr<Device>& dev
                     break;
                 }
             }
-            depthImage = std::make_shared<Image>(device, extent3D, depthFormat, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-                                                 depthSamples);
+            depthImage = std::make_shared<Image>(device, extent3D, depthFormat, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, depthSamples);
             depthImageView = std::make_shared<ImageView>(depthImage, VK_IMAGE_VIEW_TYPE_2D);
             attachments.push_back(depthImageView->vkImageView);
         }
     }
     if (inResolveImageView == nullptr)
     {
-        resolveImage = std::make_shared<Image>(device, extent3D, VK_FORMAT_R8G8B8A8_UNORM,
-                                               VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT,
-                                               VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VK_SAMPLE_COUNT_1_BIT);
+        resolveImage =
+            std::make_shared<Image>(device, extent3D, VK_FORMAT_R8G8B8A8_UNORM,
+                                    VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT,
+                                    VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VK_SAMPLE_COUNT_1_BIT);
         resolveImageView = std::make_shared<ImageView>(resolveImage, VK_IMAGE_VIEW_TYPE_2D);
         attachments.push_back(resolveImageView->vkImageView);
     }
@@ -51,10 +51,7 @@ Sandbox::RenderAttachments::RenderAttachments(const std::shared_ptr<Device>& dev
     }
 }
 
-Sandbox::RenderAttachments::~RenderAttachments()
-{
-    Cleanup();
-}
+Sandbox::RenderAttachments::~RenderAttachments() { Cleanup(); }
 
 void Sandbox::RenderAttachments::Cleanup()
 {

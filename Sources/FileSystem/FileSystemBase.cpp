@@ -30,13 +30,13 @@ std::filesystem::path Sandbox::FileSystemBase::GetProjectRoot()
     GetModuleFileName(NULL, path, MAX_PATH);
     std::filesystem::path executablePath = std::filesystem::path::path(LPWSTRToString(path));
     // ** TODO:这里会因为构建系统不同而导致层级不同，需要想办法解决这个问题
-    return executablePath.parent_path().parent_path().parent_path().parent_path();
+    return executablePath.parent_path().parent_path();
 #else
     char path[MAX_PATH];
     GetModuleFileName(NULL, path, MAX_PATH);
     std::filesystem::path executablePath = std::filesystem::path::path(std::string(path));
     // ** TODO:这里会因为构建系统不同而导致层级不同，需要想办法解决这个问题
-    return executablePath.parent_path().parent_path().parent_path().parent_path();
+    return executablePath.parent_path().parent_path();
 #endif
 }
 #else

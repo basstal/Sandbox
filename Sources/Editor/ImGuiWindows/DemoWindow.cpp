@@ -2,6 +2,7 @@
 
 #include "DemoWindow.hpp"
 
+Sandbox::DemoWindow::DemoWindow() { name = "DemoWindow"; }
 
 void Sandbox::DemoWindow::OnGuiBegin()
 {
@@ -9,16 +10,8 @@ void Sandbox::DemoWindow::OnGuiBegin()
     OnGui();
 }
 
-void Sandbox::DemoWindow::Prepare()
-{
-    name = "DemoWindow";
-}
+void Sandbox::DemoWindow::Prepare() {}
 
-void Sandbox::DemoWindow::OnGui()
-{
-    ImGui::ShowDemoWindow(&isOpen);
-}
+void Sandbox::DemoWindow::OnGui() { ImGui::ShowDemoWindow(&isOpen); }
 
-void Sandbox::DemoWindow::Cleanup()
-{
-}
+void Sandbox::DemoWindow::Cleanup() {}

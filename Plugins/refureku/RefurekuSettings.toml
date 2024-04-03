@@ -5,8 +5,11 @@ supportedFileExtensions = [".h", ".hpp"]
 # Files contained in the directories of this list will be parsed
 toProcessDirectories = [
 #	'''Path/To/Directory/To/Parse'''
-    "D:/Documents/GitHub/Sandbox/Sources/TestRefureku",
-    "D:/Documents/GitHub/Sandbox/Sources/Math"
+    "D:/Documents/GitHub/Sandbox/Sources/Math",
+    "D:/Documents/GitHub/Sandbox/Sources/Engine/EntityComponent",
+    "D:/Documents/GitHub/Sandbox/Sources/DataStructure",
+    "D:/Documents/GitHub/Sandbox/Sources/Serialization",
+    "D:/Documents/GitHub/Sandbox/Sources/Platform",
 ]
 
 # Files to parse which are not included in any directory of toParseDirectories
@@ -14,6 +17,8 @@ toProcessFiles = [
     "D:/Documents/GitHub/Sandbox/Sources/Engine/Camera.hpp",
     "D:/Documents/GitHub/Sandbox/Sources/Serialization/ISerializable.hpp",
     "D:/Documents/GitHub/Sandbox/Sources/Editor/IImGuiWindow.hpp",
+    "D:/Documents/GitHub/Sandbox/Sources/Engine/EntityComponent/Scene.hpp",
+    "D:/Documents/GitHub/Sandbox/Sources/Misc/String.hpp",
 ]
 
 # Files contained in the directories of this list will be ignored
@@ -72,7 +77,7 @@ shouldParseAllMethods = false
 shouldParseAllEnums = false
 shouldParseAllEnumValues = true
 
-shouldLogDiagnostic = true
+shouldLogDiagnostic = false
 
 propertySeparator = ","
 subPropertySeparator = ","

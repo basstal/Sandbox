@@ -1,57 +1,52 @@
 ﻿#pragma once
+#include <GLFW/glfw3.h>
+
 #include <memory>
 
-#include "GLFW/glfw3.h"
+#include "Generated/Window.rfkh.h"
+#include "Serialization/ISerializable.hpp"
 
+namespace Sandbox NAMESPACE() {
+class GlfwCallbackBridge;
 
-namespace Sandbox
+class CLASS() Window : public std::enable_shared_from_this<Window>, public ISerializable<Window>
 {
-    class GlfwCallbackBridge;
+  public:
+    void Prepare();
 
-    struct WindowSerializedProperties
-    {
-        /**
+    void Cleanup();
+
+    GLFWwindow* glfwWindow;
+    // clang-format off
+    /**
      * \brief 是否是窗口模式
      */
-        bool isWindow = true;
-        /**
-         * \brief 窗口位置 X
-         */
-        int windowPositionX = 0;
-        /**
-         * \brief 窗口位置 Y
-         */
-        int windowPositionY = 0;
-        /**
-         * \brief 窗口宽度
-         */
-        int width = 1920;
-        /**
-         * \brief 窗口高度
-         */
-        int height = 1080;
-    };
+    FIELD() bool isWindow = true;
+    /**
+     * \brief 窗口位置 X
+     */
+    FIELD() int positionX = 0;
+    /**
+     * \brief 窗口位置 Y
+     */
+    FIELD() int positionY = 0;
+    /**
+     * \brief 窗口宽度
+     */
+    FIELD() int width = 1920;
+    /**
+     * \brief 窗口高度
+     */
+    FIELD() int height = 1080;
+    // clang-format on
 
-    class Window : public std::enable_shared_from_this<Window>
-    {
-    public:
-        void Prepare();
+    // std::shared_ptr<WindowSerializedProperties> property;
+    std::shared_ptr<GlfwCallbackBridge> callbackBridge;
 
-        void Cleanup();
+  private:
+    bool m_cleaned = false;
+    Sandbox_Window_GENERATED
+};
+} // namespace Sandbox NAMESPACE()
 
-        GLFWwindow* glfwWindow;
-
-        std::shared_ptr<WindowSerializedProperties> property;
-        std::shared_ptr<GlfwCallbackBridge> callbackBridge;
-
-    private:
-        bool m_cleaned = false;
-    };
-}
-
-// BOOST_HANA_ADAPT_STRUCT(Sandbox::WindowSerializedProperties,
-//                         isWindow,
-//                         windowPositionX,
-//                         windowPositionY,
-//                         width,
-//                         height);
+File_Window_GENERATED

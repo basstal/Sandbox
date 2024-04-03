@@ -2,7 +2,7 @@
 
 #include "TreeView.hpp"
 
-bool Sandbox::TreeViewSource::IsLeaf()
+bool Sandbox::TreeViewItem::IsLeaf()
 {
     return items.size() == 0;
 }
@@ -48,30 +48,31 @@ void Sandbox::TreeView::Cleanup()
     m_cleaned = true;
 }
 
-intptr_t Sandbox::TreeView::CreateLeafId(const std::shared_ptr<TreeViewSource>& source)
+intptr_t Sandbox::TreeView::CreateLeafId(const std::shared_ptr<TreeViewItem>& item)
 {
-    if (source == nullptr)
+    if (item == nullptr)
     {
         return -1;
     }
-    return reinterpret_cast<intptr_t>(source.get());
+    return reinterpret_cast<intptr_t>(item.get());
 }
 
 
-void Sandbox::TreeView::ConstructImGuiTreeNodes(const std::shared_ptr<Sandbox::TreeViewSource>& target)
+void Sandbox::TreeView::ConstructImGuiTreeNodes(const std::shared_ptr<Sandbox::TreeViewItem>& target)
 {
     if (target == nullptr)
     {
         return;
     }
-    auto source = std::dynamic_pointer_cast<TreeViewSource>(target);
-    if (source->IsLeaf())
+    auto treeViewItem = std::dynamic_pointer_cast<TreeViewItem>(target);
+    if (treeViewItem->IsLeaf())
     {
-        static ImGuiTreeNodeFlags baseFlags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick | ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_Leaf |
-            ImGuiTreeNodeFlags_NoTreePushOnOpen; // ImGuiTreeNodeFlags_Bullet;
-        auto leafId = CreateLeafId(source);
+        static ImGuiTreeNodeFlags baseFlags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick | ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_Leaf
+                                              |
+                                              ImGuiTreeNodeFlags_NoTreePushOnOpen; // ImGuiTreeNodeFlags_Bullet;
+        auto leafId = CreateLeafId(treeViewItem);
         auto nodeFlags = m_selections.contains(leafId) ? baseFlags | ImGuiTreeNodeFlags_Selected : baseFlags;
-        ImGui::TreeNodeEx(reinterpret_cast<void*>(leafId), nodeFlags, source->name.c_str()); // NOLINT(clang-diagnostic-format-security, performance-no-int-to-ptr)
+        ImGui::TreeNodeEx(reinterpret_cast<void*>(leafId), nodeFlags, treeViewItem->source->name.c_str()); // NOLINT(clang-diagnostic-format-security, performance-no-int-to-ptr)
         if (ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen())
         {
             m_singleClicked = leafId;
@@ -88,14 +89,14 @@ void Sandbox::TreeView::ConstructImGuiTreeNodes(const std::shared_ptr<Sandbox::T
     {
         for (auto& item : target->items)
         {
-            ConstructImGuiTreeNodes(item->source);
+            ConstructImGuiTreeNodes(item);
         }
     }
-    else if (ImGui::TreeNode(target->name.c_str()))
+    else if (ImGui::TreeNode(target->source->name.c_str()))
     {
         for (auto& item : target->items)
         {
-            ConstructImGuiTreeNodes(item->source);
+            ConstructImGuiTreeNodes(item);
         }
         ImGui::TreePop();
     }

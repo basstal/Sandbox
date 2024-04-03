@@ -35,6 +35,9 @@
 #include "VulkanRHI/Core/Swapchain.hpp"
 #include "VulkanRHI/Rendering/Texture.hpp"
 #include "VulkanRHI/Rendering/UniformBuffer.hpp"
+#include "Engine/EntityComponent/Scene.hpp"
+#include "Editor/ImGuiWindows/Hierarchy.hpp"
+#include "Misc/String.hpp"
 
 int main()
 {
@@ -164,9 +167,20 @@ std::shared_ptr<Sandbox::MVPUboObjects> Sandbox::Engine::PrepareUniformBuffers(c
 void Sandbox::Engine::MainLoop()
 {
     // TODO:临时游戏对象
+    std::shared_ptr<Scene> scene = std::make_shared<Scene>();
     std::shared_ptr<GameObject> gameObject = std::make_shared<GameObject>();
+    gameObject->name = "Test";
+    Scene::currentScene = scene;
+    scene->rootGameObjects.push_back(gameObject);
+    // TODO: 测试保存场景
+    auto sceneFile = Directory::GetAssetsDirectory().GetFile("Test.scene");
+    // LOGD("begin serialize scene")
+    // scene->SaveToFile(sceneFile);
+    // LOGD("end serialize scene")
+    // scene->LoadFromFile(sceneFile);
+    editor->imGuiRenderer->hierarchy->SetScene(scene);
     auto mesh = gameObject->AddComponent<Mesh>();
-    gameObjects.push_back(gameObject);
+    // gameObjects.push_back(gameObject);
     // TODO:临时加载模型
     Model model(Directory::GetAssetsDirectory().GetFile("Models/viking_room.obj").path.string());
     mesh->LoadFromModel(renderer->device, renderer->commandBuffers[0], model);
@@ -193,10 +207,11 @@ void Sandbox::Engine::MainLoop()
         timer->EndFrame();
     }
     ValidateVkResult(vkDeviceWaitIdle(renderer->device->vkDevice));
-    for (auto& gameObjectToClean : gameObjects)
-    {
-        gameObjectToClean->Cleanup();
-    }
+    // for (auto& gameObjectToClean : gameObjects)
+    // {
+    //     gameObjectToClean->Cleanup();
+    // }
+    scene->Cleanup();
 }
 
 void Sandbox::Engine::Pause(GLFWwindow* inWindow, int key, int scancode, int action, int mods)

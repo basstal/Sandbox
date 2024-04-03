@@ -25,7 +25,7 @@ namespace Sandbox
         std::shared_ptr<Timer> timer;
         std::vector<std::shared_ptr<MVPUboObjects>> mvpObjects;
 
-        std::vector<std::shared_ptr<GameObject>> gameObjects;
+        // std::vector<std::shared_ptr<GameObject>> gameObjects;
 
         std::vector<std::shared_ptr<Models>> models;
         std::shared_ptr<Window> window;
@@ -51,3 +51,4 @@ namespace Sandbox
         void Cleanup();
     };
 }
+

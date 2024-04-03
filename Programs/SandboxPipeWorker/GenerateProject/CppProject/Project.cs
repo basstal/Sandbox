@@ -24,7 +24,7 @@ public class Project
     public static Type ProjectInstanceType = typeof(Project);
     private IEnumerable<Module>? _AllDependencies;
     public IEnumerable<Module> AllDependencies => _AllDependencies ??= EnumerateDependencies();
-    public FileReference PrecompileHeader;
+    public FileReference? PrecompileHeader;
 
     public static Guid CreateGuidFromPath(string path)
     {
@@ -371,6 +371,10 @@ public class Project
             if (Enum.TryParse(compileEnvironmentMapping["build_type"].ToString(), out BuildType buildType))
             {
                 PrimaryCompileEnvironment.BuildType = buildType;
+            }
+            else
+            {
+                throw new Exception($"Invalid build type {compileEnvironmentMapping["build_type"]}!");
             }
 
             PrimaryCompileEnvironment.IncludePaths.AddRange(ReadIncludePaths(compileEnvironmentMapping));

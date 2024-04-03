@@ -13,7 +13,7 @@ namespace Sandbox
     class Device;
     struct Vertex;
 
-    class Mesh : public IComponent
+    class Mesh : public IComponent, public ISerializable<Mesh>
     {
     public:
         void Cleanup() override;

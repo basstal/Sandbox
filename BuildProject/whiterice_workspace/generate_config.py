@@ -38,31 +38,31 @@ def generate_config():
     return output_config
 
 
-def run():
-    config_file = generate_config()
-    from pyutils.executor import Executor
+# def run():
+#     config_file = generate_config()
+#     from pyutils.executor import Executor
 
-    exec = Executor(True)
-    result = exec.execute_straight(
-        "python",
-        [
-            "-m",
-            "whiterice",
-            "--config",
-            config_file,
-            "--backend=sandbox",
-            "--verbose",
-            #  "--overview"
-        ],
-        work_dir=os.path.dirname(__file__),
-        ignore_error=True,
-    )
-    if result.code != 0:
-        import pyutils.simplelogger as logger
+#     exec = Executor(True)
+#     result = exec.execute_straight(
+#         "python",
+#         [
+#             "-m",
+#             "whiterice",
+#             "--config",
+#             config_file,
+#             "--backend=sandbox",
+#             "--verbose",
+#             #  "--overview"
+#         ],
+#         work_dir=os.path.dirname(__file__),
+#         ignore_error=True,
+#     )
+#     if result.code != 0:
+#         import pyutils.simplelogger as logger
 
-        logger.info(result.out_str)
-        logger.error(result.error)
+#         logger.info(result.out_str)
+#         logger.error(result.error)
 
 
 if __name__ == "__main__":
-    run()
+    generate_config()

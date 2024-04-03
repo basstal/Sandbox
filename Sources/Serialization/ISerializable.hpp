@@ -2,90 +2,86 @@
 
 #include <yaml-cpp/yaml.h>
 
-#include "Generated/ISerializable.rfkh.h"
 #include "FileSystem/File.hpp"
 #include "FileSystem/Logger.hpp"
+#include "Generated/ISerializable.rfkh.h"
 #include "Refureku/Object.h"
-#include "Refureku/TypeInfo/Type.h"
 #include "Refureku/TypeInfo/Archetypes/Struct.h"
-#include "Refureku/TypeInfo/Entity/EntityCast.h"
-#include "Refureku/TypeInfo/Variables/Field.h"
 #include "Refureku/TypeInfo/Database.h"
+#include "Refureku/TypeInfo/Entity/EntityCast.h"
 #include "Refureku/TypeInfo/Functions/Method.h"
+#include "Refureku/TypeInfo/Type.h"
+#include "Refureku/TypeInfo/Variables/Field.h"
 #include "Refureku/TypeInfo/Variables/Variable.h"
 
-namespace Sandbox
-NAMESPACE()
+namespace Sandbox NAMESPACE() {
+template <typename T> class CLASS() ISerializable : public rfk::Object
 {
-    template <typename T>
-    class CLASS() ISerializable : public rfk::Object
+  public:
+    void LoadFromFile(const File& file);
+
+    void SaveToFile(const File& file);
+
+    METHOD()
+    YAML::Node SerializeToYaml();
+
+    METHOD()
+    bool DeserializeFromYaml(const YAML::Node& node);
+
+    rfk::Struct const& getArchetype() const noexcept override;
+
+    Sandbox_ISerializable_GENERATED
+};
+
+template <typename T> void ISerializable<T>::LoadFromFile(const File& file)
+{
+    if (!file.Exists())
     {
-    public:
-        void LoadFromFile(const File& file);
+        LOGW("Cant LoadFromFile : file {} not exists", file.path.string())
+        return;
+    }
+    auto node = YAML::LoadFile(file.path.string());
+    auto success = DeserializeFromYaml(node);
+    assert(success && "DescrializeFromYaml failed");
+}
 
-        void SaveToFile(const File& file);
+template <typename T> void Sandbox::ISerializable<T>::SaveToFile(const File& file)
+{
+    if (!file.Exists())
+    {
+        file.CreateDirectory();
+    }
+    auto node = SerializeToYaml();
+    std::ofstream fout(file.path);
+    fout << node;
+}
 
-        METHOD()
+template <typename T> YAML::Node Sandbox::ISerializable<T>::SerializeToYaml()
+{
+    // 在编译时检查T是否继承自ISerializable
+    static_assert(std::is_base_of<ISerializable, T>::value, "T must inherit from ISerializable");
 
-        YAML::Node SerializeToYaml();
+    // 假设object是一个通过Refureku反射得到的实例
+    // 对象的类型使用Refureku的rkfq::TypeInfo获取
+    const rfk::Class& objectType = T::staticGetArchetype();
+    LOGD("objectType : {}, fieldsCount : {} ", objectType.getName(), std::to_string(objectType.getFieldsCount()))
 
-        METHOD()
-
-        bool DeserializeFromYaml(const YAML::Node& node);
-
-        rfk::Struct const &getArchetype() const noexcept override;
-
-        Sandbox_ISerializable_GENERATED
+    struct UserData
+    {
+        YAML::Node node;
+        T* instancePtr;
     };
-
-    template <typename T>
-    void ISerializable<T>::LoadFromFile(const File& file)
-    {
-        if (!file.Exists())
-        {
-            LOGW("Cant LoadFromFile : file {} not exists", file.path.string())
-            return;
-        }
-        auto node = YAML::LoadFile(file.path.string());
-        auto success = DeserializeFromYaml(node);
-        assert(success && "DescrializeFromYaml failed");
-    }
-
-    template <typename T>
-    void Sandbox::ISerializable<T>::SaveToFile(const File& file)
-    {
-        if (!file.Exists())
-        {
-            file.CreateDirectory();
-        }
-        auto node = SerializeToYaml();
-        std::ofstream fout(file.path);
-        fout << node;
-    }
-
-    template <typename T>
-    YAML::Node Sandbox::ISerializable<T>::SerializeToYaml()
-    {
-        // 在编译时检查T是否继承自ISerializable
-        static_assert(std::is_base_of<ISerializable, T>::value, "T must inherit from ISerializable");
-
-
-        // 假设object是一个通过Refureku反射得到的实例
-        // 对象的类型使用Refureku的rkfq::TypeInfo获取
-        const rfk::Class& objectType = T::staticGetArchetype();
-        LOGD("objectType : {} ", objectType.getName())
-
-        struct UserData
-        {
-            YAML::Node node;
-            T* instancePtr;
-        };
-        UserData userData;
-        userData.instancePtr = static_cast<T*>(this);
-        objectType.foreachField([](rfk::Field const& field, void* inUserData)
-        {
+    UserData userData;
+    userData.instancePtr = static_cast<T*>(this);
+    objectType.foreachField(
+        [](rfk::Field const& field, void* inUserData) {
             const rfk::Type& fieldType = field.getType();
             auto archeType = fieldType.getArchetype();
+            if (archeType == nullptr)
+            {
+                LOGW("archeType is nullptr. skip this field '{}', isCArray {}, isPointer {}", field.getName(), fieldType.isCArray(), fieldType.isPointer())
+                return true;
+            }
             const rfk::Class* classArcheType = rfk::classCast(archeType);
             LOGD("field : {} , fieldType : {}, isPointer : {}, isValue : {}", field.getName(), archeType->getName(), fieldType.isPointer(), fieldType.isValue())
             auto userData = static_cast<UserData*>(inUserData);
@@ -107,6 +103,10 @@ NAMESPACE()
             {
                 userData->node[field.getName()] = field.get<bool, T>(*userData->instancePtr);
             }
+            else if (fieldType.match(rfk::getType<char*>()))
+            {
+                userData->node[field.getName()] = field.get<char*, T>(*userData->instancePtr);
+            }
             else if (classArcheType != nullptr)
             {
                 rfk::Method const* serializeToYaml = classArcheType->getMethodByName("SerializeToYaml", rfk::EMethodFlags::Default, true);
@@ -124,30 +124,29 @@ NAMESPACE()
             }
             // 此处可以添加对其他类型的支持，例如容器等
             return true;
-        }, &userData);
+        },
+        &userData);
 
+    return userData.node;
+}
 
-        return userData.node;
-    }
+template <typename T> bool ISerializable<T>::DeserializeFromYaml(const YAML::Node& inNode)
+{
+    static_assert(std::is_base_of<ISerializable, T>::value, "T must inherit from ISerializable");
 
-    template <typename T>
-    bool ISerializable<T>::DeserializeFromYaml(const YAML::Node& inNode)
+    const rfk::Class& objectType = T::staticGetArchetype();
+    LOGD("Descrialize objectType : {} ", objectType.getName())
+
+    struct UserData
     {
-        static_assert(std::is_base_of<ISerializable, T>::value, "T must inherit from ISerializable");
-
-        const rfk::Class& objectType = T::staticGetArchetype();
-        LOGD("Descrialize objectType : {} ", objectType.getName())
-
-        struct UserData
-        {
-            const YAML::Node* node;
-            T* instancePtr;
-        };
-        UserData userData;
-        userData.node = &inNode;
-        userData.instancePtr = static_cast<T*>(this);
-        objectType.foreachField([](rfk::Field const& field, void* inUserData)
-        {
+        const YAML::Node* node;
+        T* instancePtr;
+    };
+    UserData userData;
+    userData.node = &inNode;
+    userData.instancePtr = static_cast<T*>(this);
+    objectType.foreachField(
+        [](rfk::Field const& field, void* inUserData) {
             const rfk::Type& fieldType = field.getType();
             auto userData = static_cast<UserData*>(inUserData);
             auto archeType = fieldType.getArchetype();
@@ -156,8 +155,14 @@ NAMESPACE()
             // TODO:映射表
             if (fieldType.match(rfk::getType<int>()))
             {
-                auto value = userData->node->operator[](field.getName()).as<int>();
-                field.set(*userData->instancePtr, value);
+                try
+                {
+                    auto value = userData->node->operator[](field.getName()).as<int>();
+                    field.set(*userData->instancePtr, value);
+                } catch (YAML::InvalidNode& e)
+                {
+                    LOGW("DeserializeFromYaml InvalidNode : {}", e.what())
+                }
             }
             else if (fieldType.match(rfk::getType<float>()))
             {
@@ -171,6 +176,13 @@ NAMESPACE()
                 // LOGD("value : {}", std::to_string(value))
                 field.set(*userData->instancePtr, value);
             }
+            else if (fieldType.match(rfk::getType<char*>())) // fixed mapping to 'class String'
+            {
+                auto stringClassArcheType = rfk::classCast(field.getOuterEntity());
+                rfk::Method const* construct = stringClassArcheType->getMethodByName("Construct", rfk::EMethodFlags::Default, true);
+                auto value = userData->node->operator[](field.getName()).as<std::string>();
+                construct->invokeUnsafe<void>(reinterpret_cast<void*>(userData->instancePtr), value);
+            }
             else if (classArcheType != nullptr)
             {
                 rfk::Method const* deserializeFromYaml = classArcheType->getMethodByName("DeserializeFromYaml", rfk::EMethodFlags::Default, true);
@@ -179,7 +191,7 @@ NAMESPACE()
                     LOGF("Method DeserializeFromYaml not found in class {} ?", classArcheType->getName())
                 }
                 const YAML::Node& subNode = userData->node->operator[](field.getName());
-                auto target = field.getPtr(*userData->instancePtr);
+                void* target = field.getPtr(*userData->instancePtr);
                 auto success = deserializeFromYaml->invokeUnsafe<bool>(target, subNode);
                 if (!success)
                 {
@@ -192,15 +204,12 @@ NAMESPACE()
             }
             // 此处可以添加对其他类型的支持，例如容器等
             return true;
-        }, &userData);
-        return true;
-    }
-
-    template <typename T>
-    rfk::Struct const &ISerializable<T>::getArchetype() const noexcept
-    {
-        return T::staticGetArchetype();
-    }
+        },
+        &userData);
+    return true;
 }
+
+template <typename T> rfk::Struct const& ISerializable<T>::getArchetype() const noexcept { return T::staticGetArchetype(); }
+} // namespace Sandbox NAMESPACE()
 
 File_ISerializable_GENERATED

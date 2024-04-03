@@ -1,14 +1,13 @@
-﻿#include "pch.hpp"
-
-#include "Swapchain.hpp"
+﻿#include "Swapchain.hpp"
 
 #include "Device.hpp"
-#include "ImageView.hpp"
-#include "Semaphore.hpp"
-#include "Surface.hpp"
 #include "FileSystem/Logger.hpp"
+#include "ImageView.hpp"
 #include "Misc/Debug.hpp"
 #include "Platform/Window.hpp"
+#include "Semaphore.hpp"
+#include "Surface.hpp"
+#include "pch.hpp"
 
 Sandbox::Swapchain::Swapchain(const std::shared_ptr<Device>& device, const std::shared_ptr<Surface>& surface)
 {
@@ -17,18 +16,14 @@ Sandbox::Swapchain::Swapchain(const std::shared_ptr<Device>& device, const std::
     Create(device, surface);
 }
 
-Sandbox::Swapchain::~Swapchain()
-{
-    Cleanup();
-}
-
+Sandbox::Swapchain::~Swapchain() { Cleanup(); }
 
 void Sandbox::Swapchain::Create(const std::shared_ptr<Device>& device, const std::shared_ptr<Surface>& surface)
 {
     auto swapchainSupports = device->QuerySwapchainSupport(device->vkPhysicalDevice, surface->vkSurfaceKhr);
     const VkSurfaceFormatKHR surfaceFormat = ChooseSwapSurfaceFormat(swapchainSupports.formats);
     uint32_t imageCount;
-    ParseCapabilities(surface->window, swapchainSupports.capabilities, imageCount, vkExtent2D);
+    ParseCapabilities(surface->window, swapchainSupports.capabilities, imageCount, imageExtent);
     const VkPresentModeKHR presentMode = ChooseSwapPresentMode(swapchainSupports.presentModes);
 
     VkSwapchainCreateInfoKHR createInfo{};
@@ -37,7 +32,7 @@ void Sandbox::Swapchain::Create(const std::shared_ptr<Device>& device, const std
     createInfo.minImageCount = imageCount;
     createInfo.imageFormat = surfaceFormat.format;
     createInfo.imageColorSpace = surfaceFormat.colorSpace;
-    createInfo.imageExtent = vkExtent2D;
+    createInfo.imageExtent = imageExtent;
     createInfo.imageArrayLayers = 1;
     createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
     const QueueFamilyIndices indices = device->queueFamilyIndices;
@@ -52,7 +47,7 @@ void Sandbox::Swapchain::Create(const std::shared_ptr<Device>& device, const std
     else
     {
         createInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
-        createInfo.queueFamilyIndexCount = 0; // Optional
+        createInfo.queueFamilyIndexCount = 0;     // Optional
         createInfo.pQueueFamilyIndices = nullptr; // Optional
     }
     createInfo.preTransform = swapchainSupports.capabilities.currentTransform;
@@ -113,10 +108,7 @@ void Sandbox::Swapchain::ParseCapabilities(const std::shared_ptr<Window>& window
     int width, height;
     glfwGetFramebufferSize(window->glfwWindow, &width, &height);
 
-    actualExtent = {
-        static_cast<uint32_t>(width),
-        static_cast<uint32_t>(height)
-    };
+    actualExtent = {static_cast<uint32_t>(width), static_cast<uint32_t>(height)};
 
     actualExtent.width = std::clamp(actualExtent.width, capabilities.minImageExtent.width, capabilities.maxImageExtent.width);
     actualExtent.height = std::clamp(actualExtent.height, capabilities.minImageExtent.height, capabilities.maxImageExtent.height);

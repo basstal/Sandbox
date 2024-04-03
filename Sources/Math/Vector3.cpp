@@ -1,6 +1,7 @@
 ﻿#include "pch.hpp"
 
 #include "Generated/Vector3.rfks.h"
+#include "Vector3.hpp"
 
 Sandbox::Vector3::Vector3()
 {
@@ -12,9 +13,15 @@ Sandbox::Vector3::Vector3(float scalar)
     Sync();
 }
 
-Sandbox::Vector3::Vector3(const glm::vec3& inGlmVec3)
+Sandbox::Vector3::Vector3(const glm::vec3 &inGlmVec3)
 {
     m_vec = inGlmVec3;
+    Sync();
+}
+
+Sandbox::Vector3::Vector3(glm::vec3 &&inGlmVec3)
+{
+    m_vec = std::move(inGlmVec3);
     Sync();
 }
 
@@ -23,19 +30,19 @@ Sandbox::Vector3 Sandbox::Vector3::operator-() const
     return Vector3(-m_vec);
 }
 
-void Sandbox::Vector3::operator+=(const glm::vec3& inGlmVec3)
+void Sandbox::Vector3::operator+=(const glm::vec3 &inGlmVec3)
 {
     m_vec += inGlmVec3;
     Sync();
 }
 
-void Sandbox::Vector3::operator+=(const Vector3& inGlmVec3)
+void Sandbox::Vector3::operator+=(const Vector3 &inGlmVec3)
 {
     m_vec += inGlmVec3.m_vec;
     Sync();
 }
 
-const Sandbox::Vector3 Sandbox::Vector3::operator*(const glm::vec3& inGlmVec3) const
+const Sandbox::Vector3 Sandbox::Vector3::operator*(const glm::vec3 &inGlmVec3) const
 {
     return Vector3(m_vec * inGlmVec3);
 }

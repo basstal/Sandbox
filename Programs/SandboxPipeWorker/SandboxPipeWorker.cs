@@ -42,10 +42,10 @@ public class SandboxPipeWorker
     {
         // Console.WriteLine(Directory.GetCurrentDirectory());
         // Console.WriteLine(Sandbox.RootDirectory.FullName);
-        var cMake = new CMake();
-        cMake.GenerateProjectFiles(new PlatformProjectGeneratorCollection());
-        // var rider = new Rider();
-        // rider.GenerateProjectFiles(new PlatformProjectGeneratorCollection());
+        // var cMake = new CMake();
+        // cMake.GenerateProjectFiles(new PlatformProjectGeneratorCollection());
+        var rider = new Rider();
+        rider.GenerateProjectFiles(new PlatformProjectGeneratorCollection());
         return 0;
     }
 }

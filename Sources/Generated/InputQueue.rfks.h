@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../TestRefureku/TestProperty.hpp"
+#include "../Platform/InputQueue.hpp"
 
 #include <type_traits>
 #include <Refureku/TypeInfo/Entity/DefaultEntityRegisterer.h>

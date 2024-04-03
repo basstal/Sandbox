@@ -22,6 +22,6 @@
 #include <Refureku/TypeInfo/Archetypes/Template/TemplateTemplateArgument.h>
 
 
-#define File_TestProperty_GENERATED	\
+#define File_InputQueue_GENERATED	\
 
 
