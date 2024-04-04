@@ -5,12 +5,13 @@ namespace SandboxPipeWorker;
 
 public static class Sandbox
 {
-    private static DirectoryReference? _RootDirectory;
+    private static DirectoryReference? _rootDirectory;
+
     public static DirectoryReference RootDirectory
     {
         get
         {
-            if (_RootDirectory == null)
+            if (_rootDirectory == null)
             {
                 var baseDirectory = AppDomain.CurrentDomain.BaseDirectory;
                 baseDirectory = Path.GetFullPath(baseDirectory).Replace('\\', '/');
@@ -19,18 +20,17 @@ public static class Sandbox
                 {
                     throw new Exception("Could not find root directory");
                 }
-                _RootDirectory = new DirectoryReference(baseDirectory.Substring(0, rootIndex));
+
+                _rootDirectory = new DirectoryReference(baseDirectory.Substring(0, rootIndex));
             }
-            return _RootDirectory;
+
+            return _rootDirectory;
         }
     }
 
     public static DirectoryReference SourceDirectory
     {
-        get
-        {
-            return Sandbox.RootDirectory.GetDirectory("Programs/SandboxPipeWorker");
-        }
+        get { return Sandbox.RootDirectory.GetDirectory("Programs/SandboxPipeWorker"); }
     }
 
     public static readonly string PrimaryProjectName = "Sandbox";
@@ -38,7 +38,7 @@ public static class Sandbox
 
 public class SandboxPipeWorker
 {
-    private static int Main(string[] arguments)
+    private static int Main(string[] _)
     {
         // Console.WriteLine(Directory.GetCurrentDirectory());
         // Console.WriteLine(Sandbox.RootDirectory.FullName);

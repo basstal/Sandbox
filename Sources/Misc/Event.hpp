@@ -20,35 +20,45 @@ namespace Sandbox
 
         DelegateHandle Bind(void (*Func)(Args...))
         {
-            Delegate<Args...> delegate1(Func);
-            registeredDelegates.insert(std::make_pair(delegate1.GetHandle(), delegate1));
-            return delegate1.GetHandle();
+            Delegate<Args...> delegate(Func);
+            registeredDelegates.insert(std::make_pair(delegate.GetHandle(), delegate));
+            return delegate.GetHandle();
         }
 
-        template <typename Instance, void(Instance::*Func)(Args...)>
+        // 使用std::function绑定
+        DelegateHandle Bind(const std::function<void(Args...)>& func)
+        {
+            Delegate<Args...> delegate(func);
+            registeredDelegates.insert(std::make_pair(delegate.GetHandle(), delegate));
+            return delegate.GetHandle();
+        }
+
+        template <typename Instance, void (Instance::*Func)(Args...)>
         DelegateHandle BindMember(Instance* obj)
         {
-            Delegate<Args...> boundDelegate([=](Args... args)
-            {
-                // TODO:这里没验证 obj 是否还有效
-                (*obj.*Func)(std::forward<Args>(args)...);
-            });
+            Delegate<Args...> boundDelegate(
+                [=](Args... args)
+                {
+                    // TODO:这里没验证 obj 是否还有效
+                    (*obj.*Func)(std::forward<Args>(args)...);
+                });
             registeredDelegates.insert(std::make_pair(boundDelegate.GetHandle(), boundDelegate));
             return boundDelegate.GetHandle();
         }
 
-        template <typename Instance, void(Instance::*Func)(Args...)>
+        template <typename Instance, void (Instance::*Func)(Args...)>
         DelegateHandle BindMember(std::shared_ptr<Instance> sharedPtr)
         {
-            auto weakPtr = std::weak_ptr<Instance>(sharedPtr);
-            Delegate<Args...> boundDelegate([weakPtr](Args... args)
-            {
-                auto obj = weakPtr.lock();
-                if (obj)
+            auto              weakPtr = std::weak_ptr<Instance>(sharedPtr);
+            Delegate<Args...> boundDelegate(
+                [weakPtr](Args... args)
                 {
-                    (*obj.*Func)(std::forward<Args>(args)...);
-                }
-            });
+                    auto obj = weakPtr.lock();
+                    if (obj)
+                    {
+                        (*obj.*Func)(std::forward<Args>(args)...);
+                    }
+                });
             registeredDelegates.insert(std::make_pair(boundDelegate.GetHandle(), boundDelegate));
             return boundDelegate.GetHandle();
         }
@@ -63,9 +73,10 @@ namespace Sandbox
 
         void Trigger(Args... args)
         {
+            // TODO:这里不能用完美转发，会将导致多次使用同一个右值时，只有第一次的有效，后续右值为空
             for (auto it = registeredDelegates.cbegin(); it != registeredDelegates.cend(); ++it)
             {
-                it->second(std::forward<Args>(args)...);
+                it->second(args...);
             }
         }
     };
@@ -83,7 +94,7 @@ namespace Sandbox
             return delegate.GetHandle();
         }
 
-        template <typename Instance, void(Instance::*Func)()>
+        template <typename Instance, void (Instance::*Func)()>
         DelegateHandle BindMember(Instance* obj)
         {
             Delegate<void> boundDelegate(std::bind(Func, obj));
@@ -91,17 +102,18 @@ namespace Sandbox
             return boundDelegate.GetHandle();
         }
 
-        template <typename Instance, void(Instance::*Func)()>
+        template <typename Instance, void (Instance::*Func)()>
         DelegateHandle BindMember(std::weak_ptr<Instance> weakObj)
         {
-            Delegate<void> boundDelegate([weakObj]()
-            {
-                auto obj = weakObj.lock();
-                if (obj)
+            Delegate<void> boundDelegate(
+                [weakObj]()
                 {
-                    (*obj.*Func)();
-                }
-            });
+                    auto obj = weakObj.lock();
+                    if (obj)
+                    {
+                        (*obj.*Func)();
+                    }
+                });
             registeredDelegates.insert(std::make_pair(boundDelegate.GetHandle(), boundDelegate));
             return boundDelegate.GetHandle();
         }
@@ -117,9 +129,9 @@ namespace Sandbox
         void Trigger()
         {
             for (auto it = registeredDelegates.cbegin(); it != registeredDelegates.cend(); ++it)
-            {
-                it->second();
-            }
+			{
+				it->second();
+			}
         }
     };
 }

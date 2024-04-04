@@ -14,4 +14,4 @@ namespace Sandbox
         std::string filePath;
         std::string source;
     };
-}
+}  // namespace Sandbox

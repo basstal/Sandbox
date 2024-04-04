@@ -1,14 +1,19 @@
 #pragma once
 
-#include "Editor/IImGuiWindow.hpp"
+#include "Editor/ImGuiWindows/Inspector.hpp"
 
-namespace Sandbox {
-class TransformInspector : public IImGuiWindow
+namespace Sandbox
 {
-  public:
-    TransformInspector();
+    class TransformInspector : public Inspector
+    {
+    public:
+        TransformInspector();
 
-    void OnGui() override;
+        void OnGui() override;
 
-};
-} // namespace Sandbox
+        ImGuizmo::OPERATION currentGizmoOperation;
+        ImGuizmo::MODE      currentGizmoMode;
+        bool                useSnap;
+        float               snap[3] = {1.f, 1.f, 1.f};
+    };
+}  // namespace Sandbox

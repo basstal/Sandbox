@@ -10,8 +10,8 @@
 #include "VulkanRHI/Core/RenderPass.hpp"
 
 Sandbox::RenderTarget::RenderTarget(const std::shared_ptr<Device>& device, const std::shared_ptr<RenderPass>& renderPass, VkExtent2D inExtent2D,
-                                    const std::shared_ptr<RenderAttachments>& attachments)
-    : extent2D(inExtent2D)
+                                    const std::shared_ptr<RenderAttachments>& attachments) :
+    extent2D(inExtent2D)
 {
     framebuffer = std::make_shared<Framebuffer>(device, renderPass, attachments->attachments, extent2D);
 }

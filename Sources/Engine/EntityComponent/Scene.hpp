@@ -1,9 +1,10 @@
 ﻿#pragma once
 #include <memory>
-#include "Generated/Scene.rfkh.h"
-#include "Serialization/List.hpp"
-#include "Serialization/ISerializable.hpp"
+
 #include "GameObject.hpp"
+#include "Generated/Scene.rfkh.h"
+#include "Serialization/ISerializable.hpp"
+#include "Serialization/List.hpp"
 
 namespace Sandbox NAMESPACE()
 {
@@ -25,8 +26,7 @@ namespace Sandbox NAMESPACE()
         bool m_cleaned = false;
 
         Sandbox_Scene_GENERATED
-
     };
-}
+}  // namespace Sandbox NAMESPACE()
 
 File_Scene_GENERATED

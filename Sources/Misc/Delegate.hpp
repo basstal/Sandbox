@@ -14,9 +14,9 @@ namespace Sandbox
 
         DelegateHandle(DelegateHandle&& other) noexcept;
 
-        DelegateHandle &operator=(const DelegateHandle& other);
+        DelegateHandle& operator=(const DelegateHandle& other);
 
-        DelegateHandle &operator=(DelegateHandle&& other) noexcept;
+        DelegateHandle& operator=(DelegateHandle&& other) noexcept;
 
         uint64_t GetId() const;
 
@@ -28,8 +28,8 @@ namespace Sandbox
         bool operator<(const DelegateHandle& other) const;
 
     private:
-        static uint64_t currentId; // 用于生成唯一ID
-        uint64_t id;
+        static uint64_t currentId;  // 用于生成唯一ID
+        uint64_t        id;
     };
 
     template <typename AbstractData, typename... Args>
@@ -37,10 +37,7 @@ namespace Sandbox
     {
     public:
         // 构造函数，接受一个std::function
-        Delegate(std::function<void(AbstractData, Args...)> f) :
-            func(f), handle()
-        {
-        }
+        Delegate(std::function<void(AbstractData, Args...)> f) : func(f), handle() {}
 
         // 用于有参数的委托函数
         void operator()(AbstractData data, Args... args) const
@@ -53,14 +50,11 @@ namespace Sandbox
 
 
         // 获取委托的句柄
-        DelegateHandle GetHandle() const
-        {
-            return handle;
-        }
+        DelegateHandle GetHandle() const { return handle; }
 
     private:
         std::function<void(AbstractData, Args...)> func;
-        DelegateHandle handle;
+        DelegateHandle                             handle;
     };
 
     // 特化用于 AbstractData 为 void 的情况
@@ -68,10 +62,7 @@ namespace Sandbox
     class Delegate<void>
     {
     public:
-        Delegate(std::function<void()> f) :
-            func(f), handle()
-        {
-        }
+        Delegate(std::function<void()> f) : func(f), handle() {}
 
         void operator()() const
         {
@@ -81,16 +72,13 @@ namespace Sandbox
             }
         }
 
-        DelegateHandle GetHandle() const
-        {
-            return handle;
-        }
+        DelegateHandle GetHandle() const { return handle; }
 
     private:
         std::function<void()> func;
-        DelegateHandle handle;
+        DelegateHandle        handle;
     };
-}
+}  // namespace Sandbox
 
 namespace std
 {

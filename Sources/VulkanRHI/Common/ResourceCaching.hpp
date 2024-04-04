@@ -18,7 +18,7 @@ namespace Sandbox
     {
         HashCombined(hash, param);
     }
-}
+}  // namespace Sandbox
 
 
 namespace std
@@ -38,41 +38,41 @@ namespace std
 
             switch (writeDescriptorSet.descriptorType)
             {
-            case VK_DESCRIPTOR_TYPE_SAMPLER:
-            case VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER:
-            case VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE:
-            case VK_DESCRIPTOR_TYPE_STORAGE_IMAGE:
-            case VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT:
-                for (uint32_t i = 0; i < writeDescriptorSet.descriptorCount; ++i)
-                {
-                    Sandbox::HashCombined(result, writeDescriptorSet.pImageInfo[i]);
-                }
-                break;
-            case VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER:
-            case VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER:
-                for (uint32_t i = 0; i < writeDescriptorSet.descriptorCount; ++i)
-                {
-                    Sandbox::HashCombined(result, writeDescriptorSet.pTexelBufferView[i]);
-                }
-                break;
-            case VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER:
-            case VK_DESCRIPTOR_TYPE_STORAGE_BUFFER:
-            case VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC:
-            case VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC:
-                for (uint32_t i = 0; i < writeDescriptorSet.descriptorCount; ++i)
-                {
-                    Sandbox::HashCombined(result, writeDescriptorSet.pBufferInfo[i]);
-                }
-                break;
-            case VK_DESCRIPTOR_TYPE_INLINE_UNIFORM_BLOCK:
-            case VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR:
-            case VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_NV:
-            case VK_DESCRIPTOR_TYPE_SAMPLE_WEIGHT_IMAGE_QCOM:
-            case VK_DESCRIPTOR_TYPE_BLOCK_MATCH_IMAGE_QCOM:
-            case VK_DESCRIPTOR_TYPE_MUTABLE_EXT:
-            case VK_DESCRIPTOR_TYPE_MAX_ENUM:
-                // dont care
-                break;
+                case VK_DESCRIPTOR_TYPE_SAMPLER:
+                case VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER:
+                case VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE:
+                case VK_DESCRIPTOR_TYPE_STORAGE_IMAGE:
+                case VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT:
+                    for (uint32_t i = 0; i < writeDescriptorSet.descriptorCount; ++i)
+                    {
+                        Sandbox::HashCombined(result, writeDescriptorSet.pImageInfo[i]);
+                    }
+                    break;
+                case VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER:
+                case VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER:
+                    for (uint32_t i = 0; i < writeDescriptorSet.descriptorCount; ++i)
+                    {
+                        Sandbox::HashCombined(result, writeDescriptorSet.pTexelBufferView[i]);
+                    }
+                    break;
+                case VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER:
+                case VK_DESCRIPTOR_TYPE_STORAGE_BUFFER:
+                case VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC:
+                case VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC:
+                    for (uint32_t i = 0; i < writeDescriptorSet.descriptorCount; ++i)
+                    {
+                        Sandbox::HashCombined(result, writeDescriptorSet.pBufferInfo[i]);
+                    }
+                    break;
+                case VK_DESCRIPTOR_TYPE_INLINE_UNIFORM_BLOCK:
+                case VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR:
+                case VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_NV:
+                case VK_DESCRIPTOR_TYPE_SAMPLE_WEIGHT_IMAGE_QCOM:
+                case VK_DESCRIPTOR_TYPE_BLOCK_MATCH_IMAGE_QCOM:
+                case VK_DESCRIPTOR_TYPE_MUTABLE_EXT:
+                case VK_DESCRIPTOR_TYPE_MAX_ENUM:
+                    // dont care
+                    break;
             }
             return result;
         }
@@ -103,4 +103,4 @@ namespace std
             return result;
         }
     };
-}
+}  // namespace std

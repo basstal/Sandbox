@@ -17,10 +17,7 @@ Sandbox::Semaphore::Semaphore(const std::shared_ptr<Device>& device)
     }
 }
 
-Sandbox::Semaphore::~Semaphore()
-{
-    Cleanup();
-}
+Sandbox::Semaphore::~Semaphore() { Cleanup(); }
 
 void Sandbox::Semaphore::Cleanup()
 {

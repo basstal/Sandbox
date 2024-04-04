@@ -32,7 +32,7 @@ static void CheckExtensionsSupport(uint32_t extensionsCount, const char** extens
 
 static std::vector<const char*> GetRequiredExtensions()
 {
-    uint32_t glfwExtensionCount = 0;
+    uint32_t     glfwExtensionCount = 0;
     const char** glfwExtensions;
     glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
 
@@ -42,24 +42,23 @@ static std::vector<const char*> GetRequiredExtensions()
     return extensions;
 }
 
-Sandbox::Instance::Instance(uint32_t inApiVersion, const char* applicationName):
-    apiVersion(inApiVersion)
+Sandbox::Instance::Instance(uint32_t inApiVersion, const char* applicationName) : apiVersion(inApiVersion)
 {
     VkApplicationInfo appInfo{};
-    appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-    appInfo.pApplicationName = applicationName;
+    appInfo.sType              = VK_STRUCTURE_TYPE_APPLICATION_INFO;
+    appInfo.pApplicationName   = applicationName;
     appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
-    appInfo.pEngineName = "Sandbox";
-    appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
-    appInfo.apiVersion = apiVersion;
+    appInfo.pEngineName        = "Sandbox";
+    appInfo.engineVersion      = VK_MAKE_VERSION(1, 0, 0);
+    appInfo.apiVersion         = apiVersion;
 
-    auto requiredExtensions = GetRequiredExtensions();
+    auto                 requiredExtensions = GetRequiredExtensions();
     VkInstanceCreateInfo createInfo{};
-    createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
-    createInfo.pApplicationInfo = &appInfo;
-    createInfo.enabledLayerCount = 0;
-    createInfo.pNext = nullptr;
-    createInfo.enabledExtensionCount = static_cast<uint32_t>(requiredExtensions.size());
+    createInfo.sType                   = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
+    createInfo.pApplicationInfo        = &appInfo;
+    createInfo.enabledLayerCount       = 0;
+    createInfo.pNext                   = nullptr;
+    createInfo.enabledExtensionCount   = static_cast<uint32_t>(requiredExtensions.size());
     createInfo.ppEnabledExtensionNames = requiredExtensions.data();
 
     if (vkCreateInstance(&createInfo, nullptr, &vkInstance) != VK_SUCCESS)
@@ -68,10 +67,7 @@ Sandbox::Instance::Instance(uint32_t inApiVersion, const char* applicationName):
     }
 }
 
-Sandbox::Instance::~Instance()
-{
-    Cleanup();
-}
+Sandbox::Instance::~Instance() { Cleanup(); }
 
 void Sandbox::Instance::Cleanup()
 {

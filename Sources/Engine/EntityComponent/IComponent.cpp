@@ -1,1 +1,3 @@
-﻿#include "IComponent.hpp"
+﻿#include "pch.hpp"
+
+#include "IComponent.hpp"

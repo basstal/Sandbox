@@ -27,4 +27,4 @@ namespace Sandbox
 
         std::filesystem::path path;
     };
-}
+}  // namespace Sandbox

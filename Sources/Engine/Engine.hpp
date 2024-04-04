@@ -1,8 +1,7 @@
 ﻿#pragma once
-#include <memory>
+#include <GLFW/glfw3.h>
 #include <memory>
 #include <vector>
-#include <GLFW/glfw3.h>
 
 
 namespace Sandbox
@@ -20,23 +19,24 @@ namespace Sandbox
     class Engine
     {
     public:
-        std::shared_ptr<Renderer> renderer;
-        std::shared_ptr<Editor> editor;
-        std::shared_ptr<Timer> timer;
+        std::shared_ptr<Renderer>                   renderer;
+        std::shared_ptr<Editor>                     editor;
+        std::shared_ptr<Timer>                      timer;
         std::vector<std::shared_ptr<MVPUboObjects>> mvpObjects;
 
         // std::vector<std::shared_ptr<GameObject>> gameObjects;
 
         std::vector<std::shared_ptr<Models>> models;
-        std::shared_ptr<Window> window;
+        std::shared_ptr<Window>              window;
 
         bool pause = false;
+        bool shouldRecreateRenderer;
         /**
          * \brief 初始化引擎
          */
         void Prepare();
-
-        std::shared_ptr<Sandbox::MVPUboObjects> PrepareUniformBuffers(const std::shared_ptr<Models>& inModels);
+        void CreateEditor();
+        void CreateRenderer();
 
         /**
          * \brief 主循环
@@ -48,7 +48,7 @@ namespace Sandbox
         /**
          * \brief 关闭引擎，清理资源
          */
-        void Cleanup();
+		void Cleanup();
     };
 }
 

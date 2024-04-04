@@ -6,40 +6,37 @@
 #include "CommandPool.hpp"
 #include "DescriptorSet.hpp"
 #include "Device.hpp"
+#include "Engine/Image.hpp"
 #include "Fence.hpp"
+#include "FileSystem/Logger.hpp"
 #include "Framebuffer.hpp"
 #include "Image.hpp"
 #include "Pipeline.hpp"
 #include "PipelineLayout.hpp"
 #include "RenderPass.hpp"
 #include "Semaphore.hpp"
-#include "Engine/Image.hpp"
-#include "FileSystem/Logger.hpp"
 #include "VulkanRHI/Common/Debug.hpp"
 #include "VulkanRHI/Common/SubpassComponents.hpp"
 #include "VulkanRHI/Rendering/PipelineState.hpp"
 
 Sandbox::CommandBuffer::CommandBuffer(const std::shared_ptr<Device>& device, const std::shared_ptr<CommandPool>& commandPool)
 {
-    m_device = device;
+    m_device      = device;
     m_commandPool = commandPool;
 
     VkCommandBufferAllocateInfo allocInfo{};
-    allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-    allocInfo.commandPool = commandPool->vkCommandPool;
-    allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+    allocInfo.sType              = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+    allocInfo.commandPool        = commandPool->vkCommandPool;
+    allocInfo.level              = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
     allocInfo.commandBufferCount = 1;
     if (vkAllocateCommandBuffers(m_device->vkDevice, &allocInfo, &vkCommandBuffer) != VK_SUCCESS)
     {
         Logger::Fatal("failed to allocate command buffers!");
     }
-    // LOGI("{}\n{}", PtrToHexString(vkCommandBuffer), GetCallStack())
+    LOGI("{}\n{}", PtrToHexString(vkCommandBuffer), GetCallStack())
 }
 
-Sandbox::CommandBuffer::~CommandBuffer()
-{
-    Cleanup();
-}
+Sandbox::CommandBuffer::~CommandBuffer() { Cleanup(); }
 
 void Sandbox::CommandBuffer::Cleanup()
 {
@@ -51,17 +48,14 @@ void Sandbox::CommandBuffer::Cleanup()
     m_cleaned = true;
 }
 
-void Sandbox::CommandBuffer::Reset()
-{
-    vkResetCommandBuffer(vkCommandBuffer, 0);
-}
+void Sandbox::CommandBuffer::Reset() { vkResetCommandBuffer(vkCommandBuffer, 0); }
 
 void Sandbox::CommandBuffer::Begin(VkCommandBufferUsageFlags flags)
 {
     VkCommandBufferBeginInfo beginInfo{};
-    beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-    beginInfo.flags = flags;
-    beginInfo.pInheritanceInfo = nullptr; // Optional
+    beginInfo.sType            = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+    beginInfo.flags            = flags;
+    beginInfo.pInheritanceInfo = nullptr;  // Optional
 
     if (vkBeginCommandBuffer(vkCommandBuffer, &beginInfo) != VK_SUCCESS)
     {
@@ -91,9 +85,9 @@ void Sandbox::CommandBuffer::BeginRenderPass(const std::shared_ptr<RenderPass>& 
                                              VkClearColorValue clearColor, VkClearDepthStencilValue clearDepthStencil)
 {
     VkRenderPassBeginInfo renderPassInfo{};
-    renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-    renderPassInfo.renderPass = renderPass->vkRenderPass;
-    renderPassInfo.framebuffer = framebuffer->vkFramebuffer;
+    renderPassInfo.sType             = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+    renderPassInfo.renderPass        = renderPass->vkRenderPass;
+    renderPassInfo.framebuffer       = framebuffer->vkFramebuffer;
     renderPassInfo.renderArea.offset = {0, 0};
     renderPassInfo.renderArea.extent = vkExtent2D;
     std::vector<VkClearValue> clearValues(renderPass->loadStoreInfo.size());
@@ -113,14 +107,11 @@ void Sandbox::CommandBuffer::BeginRenderPass(const std::shared_ptr<RenderPass>& 
         }
     }
     renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
-    renderPassInfo.pClearValues = clearValues.data();
+    renderPassInfo.pClearValues    = clearValues.data();
     vkCmdBeginRenderPass(vkCommandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 }
 
-void Sandbox::CommandBuffer::EndRenderPass()
-{
-    vkCmdEndRenderPass(vkCommandBuffer);
-}
+void Sandbox::CommandBuffer::EndRenderPass() { vkCmdEndRenderPass(vkCommandBuffer); }
 
 void Sandbox::CommandBuffer::SetViewport(uint32_t firstViewport, const std::vector<VkViewport>& viewports)
 {
@@ -132,13 +123,14 @@ void Sandbox::CommandBuffer::SetScissor(uint32_t firstScissor, const std::vector
     vkCmdSetScissor(vkCommandBuffer, firstScissor, static_cast<uint32_t>(scissors.size()), scissors.data());
 }
 
-void Sandbox::CommandBuffer::BindPipeline(const std::shared_ptr<Pipeline>& pipeline, const std::shared_ptr<DescriptorSet>& descriptorSet, const std::vector<uint32_t>& dynamicOffsets)
+void Sandbox::CommandBuffer::BindPipeline(const std::shared_ptr<Pipeline>& pipeline, const std::shared_ptr<DescriptorSet>& descriptorSet,
+                                          const std::vector<uint32_t>& dynamicOffsets)
 {
     auto& pipelineState = pipeline->pipelineState;
     vkCmdBindPipeline(vkCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->vkPipeline);
 
     auto& pushConstantsInfo = pipelineState->pushConstantsInfo;
-    auto& pipelineLayout = pipelineState->pipelineLayout;
+    auto& pipelineLayout    = pipelineState->pipelineLayout;
     if (pushConstantsInfo.size > 0 && pushConstantsInfo.data != nullptr)
     {
         vkCmdPushConstants(vkCommandBuffer, pipelineLayout->vkPipelineLayout, pushConstantsInfo.stage, 0, pushConstantsInfo.size, pushConstantsInfo.data);
@@ -151,25 +143,16 @@ void Sandbox::CommandBuffer::BindPipeline(const std::shared_ptr<Pipeline>& pipel
 
 void Sandbox::CommandBuffer::BindVertexBuffers(const std::shared_ptr<Buffer>& buffer)
 {
-    VkBuffer vertexBuffers[] = {buffer->vkBuffer};
-    VkDeviceSize offsets[] = {0};
+    VkBuffer     vertexBuffers[] = {buffer->vkBuffer};
+    VkDeviceSize offsets[]       = {0};
     vkCmdBindVertexBuffers(vkCommandBuffer, 0, 1, vertexBuffers, offsets);
 }
 
-void Sandbox::CommandBuffer::BindIndexBuffer(const std::shared_ptr<Buffer>& buffer)
-{
-    vkCmdBindIndexBuffer(vkCommandBuffer, buffer->vkBuffer, 0, VK_INDEX_TYPE_UINT32);
-}
+void Sandbox::CommandBuffer::BindIndexBuffer(const std::shared_ptr<Buffer>& buffer) { vkCmdBindIndexBuffer(vkCommandBuffer, buffer->vkBuffer, 0, VK_INDEX_TYPE_UINT32); }
 
-void Sandbox::CommandBuffer::DrawIndexed(uint32_t indexCount)
-{
-    vkCmdDrawIndexed(vkCommandBuffer, indexCount, 1, 0, 0, 0);
-}
+void Sandbox::CommandBuffer::DrawIndexed(uint32_t indexCount) { vkCmdDrawIndexed(vkCommandBuffer, indexCount, 1, 0, 0, 0); }
 
-void Sandbox::CommandBuffer::Draw(uint32_t count)
-{
-    vkCmdDraw(vkCommandBuffer, count, 1, 0, 0);
-}
+void Sandbox::CommandBuffer::Draw(uint32_t count) { vkCmdDraw(vkCommandBuffer, count, 1, 0, 0); }
 
 
 void Sandbox::CommandBuffer::CopyDataToBuffer(const void* inData, VkDeviceSize size, const std::shared_ptr<Buffer>& dstBuffer)
@@ -178,9 +161,9 @@ void Sandbox::CommandBuffer::CopyDataToBuffer(const void* inData, VkDeviceSize s
     stagingBuffer.Update(inData);
     Begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
     VkBufferCopy copyRegion;
-    copyRegion.srcOffset = 0; // Optional
-    copyRegion.dstOffset = 0; // Optional
-    copyRegion.size = size;
+    copyRegion.srcOffset = 0;  // Optional
+    copyRegion.dstOffset = 0;  // Optional
+    copyRegion.size      = size;
     vkCmdCopyBuffer(vkCommandBuffer, stagingBuffer.vkBuffer, dstBuffer->vkBuffer, 1, &copyRegion);
     EndAndSubmit();
 }
@@ -188,7 +171,7 @@ void Sandbox::CommandBuffer::CopyDataToBuffer(const void* inData, VkDeviceSize s
 void Sandbox::CommandBuffer::CopyDataToImage(const std::shared_ptr<Resource::Image>& imageResource, const std::shared_ptr<Image>& image, VkFormat format)
 {
     VkDeviceSize imageSize = (VkDeviceSize)imageResource->width * imageResource->height * sizeof(float);
-    Buffer stagingBuffer(m_device, imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+    Buffer       stagingBuffer(m_device, imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
     stagingBuffer.Update(imageResource->pixels);
 
     Begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
@@ -210,62 +193,50 @@ void Sandbox::CommandBuffer::GenerateMipmaps(VkImage vkImage, VkFormat imageForm
     }
 
     VkImageMemoryBarrier barrier{};
-    barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-    barrier.image = vkImage;
-    barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-    barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-    barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    barrier.sType                           = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+    barrier.image                           = vkImage;
+    barrier.srcQueueFamilyIndex             = VK_QUEUE_FAMILY_IGNORED;
+    barrier.dstQueueFamilyIndex             = VK_QUEUE_FAMILY_IGNORED;
+    barrier.subresourceRange.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
     barrier.subresourceRange.baseArrayLayer = 0;
-    barrier.subresourceRange.layerCount = 1;
-    barrier.subresourceRange.levelCount = 1;
+    barrier.subresourceRange.layerCount     = 1;
+    barrier.subresourceRange.levelCount     = 1;
 
-    int32_t mipWidth = texWidth;
+    int32_t mipWidth  = texWidth;
     int32_t mipHeight = texHeight;
 
     for (uint32_t i = 1; i < mipLevels; i++)
     {
         barrier.subresourceRange.baseMipLevel = i - 1;
-        barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-        barrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
-        barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-        barrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+        barrier.oldLayout                     = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+        barrier.newLayout                     = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+        barrier.srcAccessMask                 = VK_ACCESS_TRANSFER_WRITE_BIT;
+        barrier.dstAccessMask                 = VK_ACCESS_TRANSFER_READ_BIT;
 
-        vkCmdPipelineBarrier(vkCommandBuffer,
-                             VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0,
-                             0, nullptr,
-                             0, nullptr,
-                             1, &barrier);
+        vkCmdPipelineBarrier(vkCommandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &barrier);
 
         VkImageBlit blit{};
-        blit.srcOffsets[0] = {0, 0, 0};
-        blit.srcOffsets[1] = {mipWidth, mipHeight, 1};
-        blit.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-        blit.srcSubresource.mipLevel = i - 1;
+        blit.srcOffsets[0]                 = {0, 0, 0};
+        blit.srcOffsets[1]                 = {mipWidth, mipHeight, 1};
+        blit.srcSubresource.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
+        blit.srcSubresource.mipLevel       = i - 1;
         blit.srcSubresource.baseArrayLayer = 0;
-        blit.srcSubresource.layerCount = 1;
-        blit.dstOffsets[0] = {0, 0, 0};
-        blit.dstOffsets[1] = {mipWidth > 1 ? mipWidth / 2 : 1, mipHeight > 1 ? mipHeight / 2 : 1, 1};
-        blit.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-        blit.dstSubresource.mipLevel = i;
+        blit.srcSubresource.layerCount     = 1;
+        blit.dstOffsets[0]                 = {0, 0, 0};
+        blit.dstOffsets[1]                 = {mipWidth > 1 ? mipWidth / 2 : 1, mipHeight > 1 ? mipHeight / 2 : 1, 1};
+        blit.dstSubresource.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
+        blit.dstSubresource.mipLevel       = i;
         blit.dstSubresource.baseArrayLayer = 0;
-        blit.dstSubresource.layerCount = 1;
+        blit.dstSubresource.layerCount     = 1;
 
-        vkCmdBlitImage(vkCommandBuffer,
-                       vkImage, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-                       vkImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-                       1, &blit,
-                       VK_FILTER_LINEAR);
+        vkCmdBlitImage(vkCommandBuffer, vkImage, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, vkImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &blit, VK_FILTER_LINEAR);
 
-        barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
-        barrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+        barrier.oldLayout     = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+        barrier.newLayout     = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
         barrier.srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
         barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
 
-        vkCmdPipelineBarrier(vkCommandBuffer,
-                             VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0,
-                             0, nullptr,
-                             0, nullptr,
-                             1, &barrier);
+        vkCmdPipelineBarrier(vkCommandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, nullptr, 0, nullptr, 1, &barrier);
         if (mipWidth > 1)
         {
             mipWidth /= 2;
@@ -277,29 +248,25 @@ void Sandbox::CommandBuffer::GenerateMipmaps(VkImage vkImage, VkFormat imageForm
     }
 
     barrier.subresourceRange.baseMipLevel = mipLevels - 1;
-    barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-    barrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-    barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-    barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+    barrier.oldLayout                     = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+    barrier.newLayout                     = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+    barrier.srcAccessMask                 = VK_ACCESS_TRANSFER_WRITE_BIT;
+    barrier.dstAccessMask                 = VK_ACCESS_SHADER_READ_BIT;
 
-    vkCmdPipelineBarrier(vkCommandBuffer,
-                         VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0,
-                         0, nullptr,
-                         0, nullptr,
-                         1, &barrier);
+    vkCmdPipelineBarrier(vkCommandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, nullptr, 0, nullptr, 1, &barrier);
 }
 
 void Sandbox::CommandBuffer::CopyBufferToImage(Buffer& buffer, VkImage vkImage, uint32_t width, uint32_t height)
 {
     VkBufferImageCopy region;
-    region.bufferOffset = 0;
-    region.bufferRowLength = 0;
+    region.bufferOffset      = 0;
+    region.bufferRowLength   = 0;
     region.bufferImageHeight = 0;
 
-    region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-    region.imageSubresource.mipLevel = 0;
+    region.imageSubresource.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
+    region.imageSubresource.mipLevel       = 0;
     region.imageSubresource.baseArrayLayer = 0;
-    region.imageSubresource.layerCount = 1;
+    region.imageSubresource.layerCount     = 1;
 
     region.imageOffset = {0, 0, 0};
     region.imageExtent = {width, height, 1};
@@ -310,17 +277,17 @@ void Sandbox::CommandBuffer::TransitionImageLayout(const std::shared_ptr<Image>&
 {
     VkImageMemoryBarrier barrier{};
     VkPipelineStageFlags sourceStage{}, destinationStage{};
-    barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-    barrier.oldLayout = oldLayout;
-    barrier.newLayout = newLayout;
-    barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-    barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-    barrier.image = vkImage->vkImage;
-    barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-    barrier.subresourceRange.baseMipLevel = 0;
-    barrier.subresourceRange.levelCount = mipLevels;
+    barrier.sType                           = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+    barrier.oldLayout                       = oldLayout;
+    barrier.newLayout                       = newLayout;
+    barrier.srcQueueFamilyIndex             = VK_QUEUE_FAMILY_IGNORED;
+    barrier.dstQueueFamilyIndex             = VK_QUEUE_FAMILY_IGNORED;
+    barrier.image                           = vkImage->vkImage;
+    barrier.subresourceRange.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
+    barrier.subresourceRange.baseMipLevel   = 0;
+    barrier.subresourceRange.levelCount     = mipLevels;
     barrier.subresourceRange.baseArrayLayer = 0;
-    barrier.subresourceRange.layerCount = 1;
+    barrier.subresourceRange.layerCount     = 1;
     // TODO:重构成可查询的数据结构
     if (oldLayout == VK_IMAGE_LAYOUT_UNDEFINED)
     {
@@ -329,7 +296,7 @@ void Sandbox::CommandBuffer::TransitionImageLayout(const std::shared_ptr<Image>&
             barrier.srcAccessMask = 0;
             barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
 
-            sourceStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+            sourceStage      = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
             destinationStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
         }
         else if (newLayout == VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL)
@@ -337,7 +304,7 @@ void Sandbox::CommandBuffer::TransitionImageLayout(const std::shared_ptr<Image>&
             barrier.srcAccessMask = 0;
             barrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
 
-            sourceStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+            sourceStage      = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
             destinationStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
         }
         else if (newLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL)
@@ -345,7 +312,7 @@ void Sandbox::CommandBuffer::TransitionImageLayout(const std::shared_ptr<Image>&
             barrier.srcAccessMask = 0;
             barrier.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
 
-            sourceStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+            sourceStage      = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
             destinationStage = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
         }
         else if (newLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
@@ -353,7 +320,7 @@ void Sandbox::CommandBuffer::TransitionImageLayout(const std::shared_ptr<Image>&
             barrier.srcAccessMask = 0;
             barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
 
-            sourceStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+            sourceStage      = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
             destinationStage = VK_PIPELINE_STAGE_VERTEX_SHADER_BIT;
         }
         else
@@ -368,7 +335,7 @@ void Sandbox::CommandBuffer::TransitionImageLayout(const std::shared_ptr<Image>&
             barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
             barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_SHADER_WRITE_BIT;
 
-            sourceStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+            sourceStage      = VK_PIPELINE_STAGE_TRANSFER_BIT;
             destinationStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
         }
         else if (newLayout == VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL)
@@ -376,7 +343,7 @@ void Sandbox::CommandBuffer::TransitionImageLayout(const std::shared_ptr<Image>&
             barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
             barrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
 
-            sourceStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+            sourceStage      = VK_PIPELINE_STAGE_TRANSFER_BIT;
             destinationStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
         }
         else
@@ -391,7 +358,7 @@ void Sandbox::CommandBuffer::TransitionImageLayout(const std::shared_ptr<Image>&
             barrier.srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
             barrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
 
-            sourceStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+            sourceStage      = VK_PIPELINE_STAGE_TRANSFER_BIT;
             destinationStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
         }
         else
@@ -403,11 +370,11 @@ void Sandbox::CommandBuffer::TransitionImageLayout(const std::shared_ptr<Image>&
     {
         if (newLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
         {
-            barrier.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT; // 第一个渲染通道结束时的访问类型
-            barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT; // 第二个渲染通道开始前的访问类型
+            barrier.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;  // 第一个渲染通道结束时的访问类型
+            barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;  // 第二个渲染通道开始前的访问类型
 
-            sourceStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT; // 第一个渲染通道的最后一个阶段
-            destinationStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT; // 第二个渲染通道的第一个阶段
+            sourceStage      = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;  // 第一个渲染通道的最后一个阶段
+            destinationStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;  // 第二个渲染通道的第一个阶段
         }
         else if (newLayout == VK_IMAGE_LAYOUT_PRESENT_SRC_KHR)
         {
@@ -423,16 +390,16 @@ void Sandbox::CommandBuffer::TransitionImageLayout(const std::shared_ptr<Image>&
             barrier.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
             barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
 
-            sourceStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT; // 第一个渲染通道的最后一个阶段
-            destinationStage = VK_PIPELINE_STAGE_TRANSFER_BIT; // 第二个渲染通道的第一个阶段
+            sourceStage      = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;  // 第一个渲染通道的最后一个阶段
+            destinationStage = VK_PIPELINE_STAGE_TRANSFER_BIT;  // 第二个渲染通道的第一个阶段
         }
         else if (newLayout == VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL)
         {
             barrier.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_COLOR_ATTACHMENT_READ_BIT;
             barrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
 
-            sourceStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT; // 第一个渲染通道的最后一个阶段
-            destinationStage = VK_PIPELINE_STAGE_TRANSFER_BIT; // 第二个渲染通道的第一个阶段
+            sourceStage      = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;  // 第一个渲染通道的最后一个阶段
+            destinationStage = VK_PIPELINE_STAGE_TRANSFER_BIT;  // 第二个渲染通道的第一个阶段
         }
         else
         {
@@ -444,20 +411,14 @@ void Sandbox::CommandBuffer::TransitionImageLayout(const std::shared_ptr<Image>&
         barrier.srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
         barrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
 
-        sourceStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT; // 在片段着色器读取完成后
-        destinationStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT; // 在颜色附件输出之前
+        sourceStage      = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;  // 在片段着色器读取完成后
+        destinationStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;  // 在颜色附件输出之前
     }
     else
     {
         Logger::Fatal("unsupported layout transition!");
     }
-    vkCmdPipelineBarrier(
-        vkCommandBuffer,
-        sourceStage, destinationStage,
-        0,
-        0, nullptr,
-        0, nullptr,
-        1, &barrier);
+    vkCmdPipelineBarrier(vkCommandBuffer, sourceStage, destinationStage, 0, 0, nullptr, 0, nullptr, 1, &barrier);
 }
 
 void Sandbox::CommandBuffer::Submit(const std::shared_ptr<Fence>& fence, const std::vector<VkPipelineStageFlags>& waitStages,
@@ -472,17 +433,17 @@ void Sandbox::CommandBuffer::Submit(const std::shared_ptr<Fence>& fence, const s
         vkWaitSemaphores.push_back((*it)->vkSemaphore);
     }
     submitInfo.waitSemaphoreCount = static_cast<uint32_t>(vkWaitSemaphores.size());
-    submitInfo.pWaitSemaphores = vkWaitSemaphores.data();
-    submitInfo.pWaitDstStageMask = waitStages.empty() ? nullptr : waitStages.data();
+    submitInfo.pWaitSemaphores    = vkWaitSemaphores.data();
+    submitInfo.pWaitDstStageMask  = waitStages.empty() ? nullptr : waitStages.data();
     submitInfo.commandBufferCount = 1;
-    submitInfo.pCommandBuffers = &vkCommandBuffer;
+    submitInfo.pCommandBuffers    = &vkCommandBuffer;
     std::vector<VkSemaphore> vkSignalSemaphores;
     for (auto it = signalSemaphores.cbegin(); it != signalSemaphores.cend(); ++it)
     {
         vkSignalSemaphores.push_back((*it)->vkSemaphore);
     }
     submitInfo.signalSemaphoreCount = static_cast<uint32_t>(vkSignalSemaphores.size());
-    submitInfo.pSignalSemaphores = vkSignalSemaphores.data();
+    submitInfo.pSignalSemaphores    = vkSignalSemaphores.data();
     ValidateVkResult(vkQueueSubmit(m_device->graphicsQueue, 1, &submitInfo, fence == nullptr ? nullptr : fence->vkFence));
 }
 
@@ -493,21 +454,15 @@ void Sandbox::CommandBuffer::BufferMemoryBarrier(const std::shared_ptr<Buffer>& 
     // 设置此屏障是为了等待主机写入
     bufferMemoryBarrier.srcAccessMask = VK_ACCESS_HOST_WRITE_BIT;
     // 当我们在顶点着色器中读取数据时，需要这个访问类型
-    bufferMemoryBarrier.dstAccessMask = VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT;
-    bufferMemoryBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED; // 不跨队列家族转换
-    bufferMemoryBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED; // 不跨队列家族转换
-    bufferMemoryBarrier.buffer = buffer->vkBuffer; // 你要更新的uniform buffer
-    bufferMemoryBarrier.offset = 0; // 从哪里开始
-    bufferMemoryBarrier.size = VK_WHOLE_SIZE; // 整个buffer大小
-    VkPipelineStageFlags sourceStage = VK_PIPELINE_STAGE_HOST_BIT;
-    VkPipelineStageFlags destinationStage = VK_PIPELINE_STAGE_VERTEX_SHADER_BIT;
-    vkCmdPipelineBarrier(
-        vkCommandBuffer,
-        sourceStage, destinationStage,
-        0,
-        0, nullptr,
-        1, &bufferMemoryBarrier,
-        0, nullptr);
+    bufferMemoryBarrier.dstAccessMask       = VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT;
+    bufferMemoryBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;  // 不跨队列家族转换
+    bufferMemoryBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;  // 不跨队列家族转换
+    bufferMemoryBarrier.buffer              = buffer->vkBuffer;  // 你要更新的uniform buffer
+    bufferMemoryBarrier.offset              = 0;  // 从哪里开始
+    bufferMemoryBarrier.size                = VK_WHOLE_SIZE;  // 整个buffer大小
+    VkPipelineStageFlags sourceStage        = VK_PIPELINE_STAGE_HOST_BIT;
+    VkPipelineStageFlags destinationStage   = VK_PIPELINE_STAGE_VERTEX_SHADER_BIT;
+    vkCmdPipelineBarrier(vkCommandBuffer, sourceStage, destinationStage, 0, 0, nullptr, 1, &bufferMemoryBarrier, 0, nullptr);
 }
 
 void Sandbox::CommandBuffer::ImageMemoryBarrier(const std::shared_ptr<Image>& image)
@@ -536,18 +491,18 @@ void Sandbox::CommandBuffer::BlitImage(const std::shared_ptr<Image>& srcImage, c
     VkImageBlit imageBlit{};
 
     // 源图像的指定
-    imageBlit.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT; // 指定操作的是颜色数据
-    imageBlit.srcSubresource.mipLevel = 0; // 源图像的 mip 级别
-    imageBlit.srcSubresource.baseArrayLayer = 0; // 起始的数组层
-    imageBlit.srcSubresource.layerCount = 1; // 操作的图像层数
+    imageBlit.srcSubresource.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;  // 指定操作的是颜色数据
+    imageBlit.srcSubresource.mipLevel       = 0;  // 源图像的 mip 级别
+    imageBlit.srcSubresource.baseArrayLayer = 0;  // 起始的数组层
+    imageBlit.srcSubresource.layerCount     = 1;  // 操作的图像层数
 
     // 源图像的拷贝区域
-    imageBlit.srcOffsets[0] = {0, 0, 0}; // 起始点
-    imageBlit.srcOffsets[1] = VkOffset3D{static_cast<int32_t>(size.width), static_cast<int32_t>(size.height), 1}; // 终点，假设是2D图像，Z维度设置为1
+    imageBlit.srcOffsets[0] = {0, 0, 0};  // 起始点
+    imageBlit.srcOffsets[1] = VkOffset3D{static_cast<int32_t>(size.width), static_cast<int32_t>(size.height), 1};  // 终点，假设是2D图像，Z维度设置为1
 
     // 目标图像的指定
-    imageBlit.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-    imageBlit.dstSubresource.mipLevel = 0;
+    imageBlit.dstSubresource.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
+	imageBlit.dstSubresource.mipLevel = 0;
     imageBlit.dstSubresource.baseArrayLayer = 0;
     imageBlit.dstSubresource.layerCount = 1;
 

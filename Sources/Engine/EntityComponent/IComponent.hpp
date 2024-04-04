@@ -1,15 +1,17 @@
 ﻿#pragma once
-#include "Serialization/ISerializable.hpp"
 #include <memory>
 
-namespace Sandbox {
-class GameObject;
+#include "Serialization/ISerializable.hpp"
 
-class IComponent
+namespace Sandbox
 {
-  public:
-    std::weak_ptr<GameObject> gameObject;
+    class GameObject;
 
-    virtual void Cleanup() = 0;
-};
-} // namespace Sandbox
+    class IComponent
+    {
+    public:
+        std::weak_ptr<GameObject> gameObject;
+
+        virtual void Cleanup() = 0;
+    };
+}  // namespace Sandbox

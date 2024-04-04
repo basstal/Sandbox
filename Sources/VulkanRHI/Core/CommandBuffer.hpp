@@ -69,8 +69,7 @@ namespace Sandbox
         void TransitionImageLayout(const std::shared_ptr<Image>& vkImage, VkImageLayout oldLayout, VkImageLayout newLayout, uint32_t mipLevels = 1);
 
         void Submit(const std::shared_ptr<Fence>& fence, const std::vector<VkPipelineStageFlags>& waitStages, const std::vector<std::shared_ptr<Semaphore>>& waitSemaphores,
-                    const std::vector<std::shared_ptr<
-                        Semaphore>>& signalSemaphores);
+                    const std::vector<std::shared_ptr<Semaphore>>& signalSemaphores);
 
         void BufferMemoryBarrier(const std::shared_ptr<Buffer>& buffer);
 
@@ -82,7 +81,7 @@ namespace Sandbox
 
     private:
         std::shared_ptr<CommandPool> m_commandPool;
-        std::shared_ptr<Device> m_device;
-        bool m_cleaned = false;
+        std::shared_ptr<Device>      m_device;
+        bool                         m_cleaned = false;
     };
-}
+}  // namespace Sandbox

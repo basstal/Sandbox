@@ -29,4 +29,4 @@ namespace Sandbox
 
         static Directory GetLibraryDirectory();
     };
-}
+}  // namespace Sandbox

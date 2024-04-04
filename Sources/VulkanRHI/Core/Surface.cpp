@@ -2,15 +2,15 @@
 
 #include "Surface.hpp"
 
-#include "Instance.hpp"
 #include "FileSystem/Logger.hpp"
+#include "Instance.hpp"
 #include "Platform/GlfwCallbackBridge.hpp"
 #include "Platform/Window.hpp"
 
 Sandbox::Surface::Surface(const std::shared_ptr<Instance>& instance, const std::shared_ptr<Window>& inWindow)
 {
     m_instance = instance;
-    window = inWindow;
+    window     = inWindow;
     inWindow->callbackBridge->onFramebufferSize.BindMember<Surface, &Surface::OnFramebufferSize>(this);
 
     if (glfwCreateWindowSurface(instance->vkInstance, window->glfwWindow, nullptr, &vkSurfaceKhr) != VK_SUCCESS)
@@ -19,10 +19,7 @@ Sandbox::Surface::Surface(const std::shared_ptr<Instance>& instance, const std::
     }
 }
 
-Sandbox::Surface::~Surface()
-{
-    Cleanup();
-}
+Sandbox::Surface::~Surface() { Cleanup(); }
 
 
 void Sandbox::Surface::Cleanup()
@@ -35,7 +32,4 @@ void Sandbox::Surface::Cleanup()
     m_cleaned = true;
 }
 
-void Sandbox::Surface::OnFramebufferSize(GLFWwindow* inWindow, int width, int height)
-{
-    framebufferResized = true;
-}
+void Sandbox::Surface::OnFramebufferSize(GLFWwindow* inWindow, int width, int height) { framebufferResized = true; }

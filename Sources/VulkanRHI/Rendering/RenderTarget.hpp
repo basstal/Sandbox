@@ -4,29 +4,30 @@
 
 #include "vulkan/vulkan_core.h"
 
-namespace Sandbox {
-class RenderAttachments;
-class Device;
-class RenderPass;
-class Framebuffer;
-class Image;
-class ImageView;
-
-class RenderTarget
+namespace Sandbox
 {
-  public:
-    RenderTarget(const std::shared_ptr<Device>& device, const std::shared_ptr<RenderPass>& renderPass, VkExtent2D extent2D,
-                 const std::shared_ptr<RenderAttachments>& attachments);
+    class RenderAttachments;
+    class Device;
+    class RenderPass;
+    class Framebuffer;
+    class Image;
+    class ImageView;
 
-    ~RenderTarget();
+    class RenderTarget
+    {
+    public:
+        RenderTarget(const std::shared_ptr<Device>& device, const std::shared_ptr<RenderPass>& renderPass, VkExtent2D extent2D,
+                     const std::shared_ptr<RenderAttachments>& attachments);
 
-    void Cleanup();
+        ~RenderTarget();
 
-    std::shared_ptr<Framebuffer> framebuffer;
+        void Cleanup();
 
-    VkExtent2D extent2D;
+        std::shared_ptr<Framebuffer> framebuffer;
 
-  private:
-    bool m_cleaned = false;
-};
-} // namespace Sandbox
+        VkExtent2D extent2D;
+
+    private:
+        bool m_cleaned = false;
+    };
+}  // namespace Sandbox

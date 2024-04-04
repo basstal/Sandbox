@@ -2,14 +2,11 @@
 
 #include "Device.hpp"
 
+#include "FileSystem/Logger.hpp"
 #include "Instance.hpp"
 #include "Surface.hpp"
-#include "FileSystem/Logger.hpp"
 
-bool Sandbox::QueueFamilyIndices::isComplete() const
-{
-    return graphicsFamily.has_value() && presentFamily.has_value();
-}
+bool Sandbox::QueueFamilyIndices::isComplete() const { return graphicsFamily.has_value() && presentFamily.has_value(); }
 
 Sandbox::Device::Device(const std::shared_ptr<Instance>& instance, const std::shared_ptr<Surface>& surface, const std::vector<const char*>& deviceExtensions)
 {
@@ -17,10 +14,7 @@ Sandbox::Device::Device(const std::shared_ptr<Instance>& instance, const std::sh
     CreateLogicalDevice(surface->vkSurfaceKhr, deviceExtensions);
 }
 
-Sandbox::Device::~Device()
-{
-    Cleanup();
-}
+Sandbox::Device::~Device() { Cleanup(); }
 
 void Sandbox::Device::Cleanup()
 {
@@ -65,18 +59,18 @@ void Sandbox::Device::SelectPhysicalDevice(const VkInstance& instance, const VkS
 
 void Sandbox::Device::CreateLogicalDevice(const VkSurfaceKHR& surface, const std::vector<const char*>& deviceExtensions)
 {
-    queueFamilyIndices = FindQueueFamilies(vkPhysicalDevice, surface);
-    auto swapchainSupportDetails = QuerySwapchainSupport(vkPhysicalDevice, surface);
+    queueFamilyIndices                                           = FindQueueFamilies(vkPhysicalDevice, surface);
+    auto                                 swapchainSupportDetails = QuerySwapchainSupport(vkPhysicalDevice, surface);
     std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
-    std::set<uint32_t> uniqueQueueFamilies = {*queueFamilyIndices.graphicsFamily, *queueFamilyIndices.presentFamily};
+    std::set<uint32_t>                   uniqueQueueFamilies = {*queueFamilyIndices.graphicsFamily, *queueFamilyIndices.presentFamily};
 
     float queuePriority = 1.0f;
     for (uint32_t queueFamily : uniqueQueueFamilies)
     {
         VkDeviceQueueCreateInfo queueCreateInfo{};
-        queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+        queueCreateInfo.sType            = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
         queueCreateInfo.queueFamilyIndex = queueFamily;
-        queueCreateInfo.queueCount = 1;
+        queueCreateInfo.queueCount       = 1;
         queueCreateInfo.pQueuePriorities = &queuePriority;
         queueCreateInfos.push_back(queueCreateInfo);
     }
@@ -84,16 +78,16 @@ void Sandbox::Device::CreateLogicalDevice(const VkSurfaceKHR& surface, const std
     VkPhysicalDeviceFeatures deviceFeatures{};
     deviceFeatures.samplerAnisotropy = VK_TRUE;
     deviceFeatures.sampleRateShading = VK_TRUE;
-    deviceFeatures.fillModeNonSolid = VK_TRUE;
+    deviceFeatures.fillModeNonSolid  = VK_TRUE;
 
     VkDeviceCreateInfo createInfo{};
-    createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-    createInfo.pQueueCreateInfos = queueCreateInfos.data();
-    createInfo.queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfos.size());
-    createInfo.pEnabledFeatures = &deviceFeatures;
-    createInfo.enabledExtensionCount = static_cast<uint32_t>(deviceExtensions.size());
+    createInfo.sType                   = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+    createInfo.pQueueCreateInfos       = queueCreateInfos.data();
+    createInfo.queueCreateInfoCount    = static_cast<uint32_t>(queueCreateInfos.size());
+    createInfo.pEnabledFeatures        = &deviceFeatures;
+    createInfo.enabledExtensionCount   = static_cast<uint32_t>(deviceExtensions.size());
     createInfo.ppEnabledExtensionNames = deviceExtensions.data();
-    createInfo.enabledLayerCount = 0;
+    createInfo.enabledLayerCount       = 0;
     if (vkCreateDevice(vkPhysicalDevice, &createInfo, nullptr, &vkDevice) != VK_SUCCESS)
     {
         Logger::Fatal("failed to create logical device!");
@@ -104,9 +98,9 @@ void Sandbox::Device::CreateLogicalDevice(const VkSurfaceKHR& surface, const std
 
 int Sandbox::Device::RateDeviceSuitability(const VkPhysicalDevice& device, const VkSurfaceKHR& surface, const std::vector<const char*>& deviceExtensions) const
 {
-    int score = 0;
+    int                        score = 0;
     VkPhysicalDeviceProperties deviceProperties{};
-    VkPhysicalDeviceFeatures deviceFeatures{};
+    VkPhysicalDeviceFeatures   deviceFeatures{};
     vkGetPhysicalDeviceFeatures(device, &deviceFeatures);
     vkGetPhysicalDeviceProperties(device, &deviceProperties);
     // Discrete GPUs have a significant performance advantage
@@ -118,18 +112,18 @@ int Sandbox::Device::RateDeviceSuitability(const VkPhysicalDevice& device, const
     // Maximum possible size of textures affects graphics quality
     score += static_cast<int>(deviceProperties.limits.maxImageDimension2D);
 
-    QueueFamilyIndices indices = FindQueueFamilies(device, surface);
-    bool swapchainAdequate = false;
-    bool supportDeviceExtensions = IsDeviceExtensionSupport(device, deviceExtensions);
+    QueueFamilyIndices indices                 = FindQueueFamilies(device, surface);
+    bool               swapchainAdequate       = false;
+    bool               supportDeviceExtensions = IsDeviceExtensionSupport(device, deviceExtensions);
     if (supportDeviceExtensions)
     {
         SwapchainSupportDetails swapchainSupport = QuerySwapchainSupport(device, surface);
-        swapchainAdequate = !swapchainSupport.formats.empty() && !swapchainSupport.presentModes.empty();
+        swapchainAdequate                        = !swapchainSupport.formats.empty() && !swapchainSupport.presentModes.empty();
     }
     // should support polygon mode line
     bool supportFillModeNonSolid = deviceFeatures.fillModeNonSolid && (deviceProperties.limits.lineWidthRange[0] <= 1.0f && deviceProperties.limits.lineWidthRange[1] >= 1.0f);
     // Application can't function without geometry shaders
-    bool supportGeometryShader = deviceFeatures.geometryShader;
+    bool supportGeometryShader    = deviceFeatures.geometryShader;
     bool supportSamplerAnisotropy = deviceFeatures.samplerAnisotropy;
     if (!supportGeometryShader || !supportFillModeNonSolid || !indices.isComplete() || !supportDeviceExtensions || !swapchainAdequate || !supportSamplerAnisotropy)
     {

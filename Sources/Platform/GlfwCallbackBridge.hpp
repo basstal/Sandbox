@@ -1,6 +1,7 @@
 ﻿#pragma once
-#include "GLFW/glfw3.h"
 #include <glm/mat4x4.hpp>
+
+#include "GLFW/glfw3.h"
 #include "Misc/Event.hpp"
 
 namespace Sandbox
@@ -10,17 +11,17 @@ namespace Sandbox
     class GlfwCallbackBridge : public std::enable_shared_from_this<GlfwCallbackBridge>
     {
     public:
-        Event<GLFWwindow*, int> onWindowFocus;
-        Event<GLFWwindow*, int> onCursorEnter;
-        Event<GLFWwindow*, double, double> onCursorPosition;
-        Event<GLFWwindow*, int, int, int> onMouseButton;
-        Event<GLFWwindow*, double, double> onScroll;
+        Event<GLFWwindow*, int>                onWindowFocus;
+        Event<GLFWwindow*, int>                onCursorEnter;
+        Event<GLFWwindow*, double, double>     onCursorPosition;
+        Event<GLFWwindow*, int, int, int>      onMouseButton;
+        Event<GLFWwindow*, double, double>     onScroll;
         Event<GLFWwindow*, int, int, int, int> onKey;
-        Event<GLFWwindow*, unsigned int> onChar;
-        Event<GLFWmonitor*, int> onMonitor;
-        Event<GLFWwindow*, int, int> onWindowPosition;
-        Event<GLFWwindow*, int, int> onWindowSize;
-        Event<GLFWwindow*, int, int> onFramebufferSize;
+        Event<GLFWwindow*, unsigned int>       onChar;
+        Event<GLFWmonitor*, int>               onMonitor;
+        Event<GLFWwindow*, int, int>           onWindowPosition;
+        Event<GLFWwindow*, int, int>           onWindowSize;
+        Event<GLFWwindow*, int, int>           onFramebufferSize;
 
 
         void BindCallbacks(GLFWwindow* window);
@@ -30,7 +31,7 @@ namespace Sandbox
         void UninstallImGuiCallback();
 
     private:
-        bool m_imGuiCallbackInstalled = false;
+        bool           m_imGuiCallbackInstalled = false;
         DelegateHandle m_handleWindowFocus;
         DelegateHandle m_handleCursorEnter;
         DelegateHandle m_handleCursorPosition;

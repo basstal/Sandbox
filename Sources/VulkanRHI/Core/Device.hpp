@@ -8,8 +8,8 @@ namespace Sandbox
     class Instance;
 
     /**
- * \brief vulkan 队列族索引信息
- */
+     * \brief vulkan 队列族索引信息
+     */
     struct QueueFamilyIndices
     {
         /**
@@ -83,7 +83,7 @@ namespace Sandbox
         VkDeviceSize GetMinUniformBufferOffsetAlignment(VkDeviceSize& dynamicAlignment);
 
         VkPhysicalDevice vkPhysicalDevice;
-        VkDevice vkDevice;
+        VkDevice         vkDevice;
         /**
          * \brief 图形队列
          */

@@ -12,12 +12,12 @@ namespace Sandbox
         /**
          * \brief 导入相对路径
          */
-        IncludeResult *includeLocal(const char*, const char*, size_t) override;
+        IncludeResult* includeLocal(const char*, const char*, size_t) override;
 
         /**
          * \brief 导入系统路径
          */
-        IncludeResult *includeSystem(const char*, const char*, size_t) override;
+        IncludeResult* includeSystem(const char*, const char*, size_t) override;
 
         /**
          * \brief 释放缓存内容

@@ -1,9 +1,7 @@
 ﻿#pragma once
+#include <glm/vec3.hpp>
 #include <memory>
 #include <vector>
-
-#include "glm/fwd.hpp"
-#include "glm/vec3.hpp"
 
 namespace Sandbox
 {
@@ -25,7 +23,7 @@ namespace Sandbox
         /**
          * \brief  最大点
          */
-        glm::vec3 max;
+        glm::vec3               max;
         std::shared_ptr<Buffer> vertexBuffer;
         std::shared_ptr<Buffer> indexBuffer;
 

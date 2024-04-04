@@ -1,4 +1,6 @@
-﻿using SandboxPipeWorker.GenerateProject.CppProject;
+﻿using SandboxPipeWorker.Common;
+using SandboxPipeWorker.GenerateProject.CppProject;
+using SandboxPipeWorker.GenerateProject.Variants;
 
 namespace SandboxPipeWorker.GenerateProject;
 
@@ -6,19 +8,19 @@ public class Rider : IProjectGenerator
 {
     public bool GenerateProjectFiles(PlatformProjectGeneratorCollection platformProjectGeneratorCollection)
     {
-        Project rootProject = new Project(Sandbox.PrimaryProjectName);
+        Project rootProject = new RiderProject(Sandbox.PrimaryProjectName);
 
-        VcxProject sourceFolder = new VcxProject("Sources");
+        RiderProject sourceFolder = new RiderProject("Sources");
         sourceFolder.ProjectDirectory = Sandbox.RootDirectory.GetDirectory("Sources");
         sourceFolder.ProjectType = ProjectType.Folder;
         rootProject.AddProject(sourceFolder);
 
-        Project programFolder = new Project("Programs");
+        Project programFolder = new RiderProject("Programs");
         programFolder.ProjectDirectory = Sandbox.RootDirectory.GetDirectory("Programs");
         programFolder.ProjectType = ProjectType.Folder;
         rootProject.AddProject(programFolder);
 
-        VcxProject pluginFolder = new VcxProject("Plugins");
+        RiderProject pluginFolder = new RiderProject("Plugins");
         pluginFolder.ProjectDirectory = Sandbox.RootDirectory.GetDirectory("Plugins");
         pluginFolder.ProjectType = ProjectType.Folder;
         rootProject.AddProject(pluginFolder);
@@ -29,11 +31,11 @@ public class Rider : IProjectGenerator
         sourceFolder.GenerateSubProjects();
         pluginFolder.GenerateSubProjects();
 
-        VcxProject sandboxPipeWorker = new VcxProject("SandboxPipeWorker");
+        RiderProject sandboxPipeWorker = new RiderProject("SandboxPipeWorker");
         sandboxPipeWorker.ProjectType = ProjectType.CSharp;
         sandboxPipeWorker.ProjectDirectory = programFolder.ProjectDirectory.GetDirectory("SandboxPipeWorker");
         sandboxPipeWorker.GeneratedProjectPath = sandboxPipeWorker.ProjectDirectory.GetFile(
-            $"{sandboxPipeWorker.PrimaryProjectName}{VcxProject.ProjectTypeExtensionMapping[sandboxPipeWorker.ProjectType]}");
+            $"{sandboxPipeWorker.PrimaryProjectName}{RiderProject.ProjectTypeExtensionMapping[sandboxPipeWorker.ProjectType]}");
         programFolder.AddProject(sandboxPipeWorker);
 
         WritePrimaryProjectFile(rootProject);

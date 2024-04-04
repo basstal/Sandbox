@@ -18,10 +18,7 @@ Sandbox::Fence::Fence(const std::shared_ptr<Device>& device)
     }
 }
 
-Sandbox::Fence::~Fence()
-{
-    Cleanup();
-}
+Sandbox::Fence::~Fence() { Cleanup(); }
 
 void Sandbox::Fence::Cleanup()
 {
@@ -34,15 +31,9 @@ void Sandbox::Fence::Cleanup()
 }
 
 
-void Sandbox::Fence::WaitForFence()
-{
-    vkWaitForFences(m_device->vkDevice, 1, &vkFence, VK_TRUE, UINT64_MAX);
-}
+void Sandbox::Fence::WaitForFence() { vkWaitForFences(m_device->vkDevice, 1, &vkFence, VK_TRUE, UINT64_MAX); }
 
 /**
  * \brief Only reset the fence if we are submitting work
  */
-void Sandbox::Fence::Reset()
-{
-    vkResetFences(m_device->vkDevice, 1, &vkFence);
-}
+void Sandbox::Fence::Reset() { vkResetFences(m_device->vkDevice, 1, &vkFence); }

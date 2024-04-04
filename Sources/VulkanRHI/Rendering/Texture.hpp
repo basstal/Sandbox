@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include <memory>
+
 #include "vulkan/vulkan_core.h"
 
 namespace Sandbox
@@ -12,8 +13,8 @@ namespace Sandbox
     class Texture
     {
     public:
-        std::shared_ptr<Sampler> sampler;
-        std::shared_ptr<Image> image;
+        std::shared_ptr<Sampler>   sampler;
+        std::shared_ptr<Image>     image;
         std::shared_ptr<ImageView> imageView;
 
         Texture(std::shared_ptr<Image>&& inImage, VkSamplerAddressMode samplerAddressMode);
@@ -28,6 +29,6 @@ namespace Sandbox
 
     private:
         std::shared_ptr<Device> m_device;
-        bool m_cleaned = false;
+        bool                    m_cleaned = false;
     };
-}
+}  // namespace Sandbox

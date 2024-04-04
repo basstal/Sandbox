@@ -1,8 +1,8 @@
 ﻿#include "pch.hpp"
 
 #include "BoundingBox.hpp"
-#include "Editor/Grid.hpp"
 
+#include "Editor/Grid.hpp"
 #include "VulkanRHI/Core/Buffer.hpp"
 
 Sandbox::BoundingBox::BoundingBox(const std::vector<SimpleVertex>& vertices)
@@ -13,12 +13,12 @@ Sandbox::BoundingBox::BoundingBox(const std::vector<SimpleVertex>& vertices)
     for (const auto& vertex : vertices)
     {
         auto& position = vertex.position;
-        min.x = std::min(min.x, position.x);
-        min.y = std::min(min.y, position.y);
-        min.z = std::min(min.z, position.z);
-        max.x = std::max(max.x, position.x);
-        max.y = std::max(max.y, position.y);
-        max.z = std::max(max.z, position.z);
+        min.x          = std::min(min.x, position.x);
+        min.y          = std::min(min.y, position.y);
+        min.z          = std::min(min.z, position.z);
+        max.x          = std::max(max.x, position.x);
+        max.y          = std::max(max.y, position.y);
+        max.z          = std::max(max.z, position.z);
     }
 }
 
@@ -48,9 +48,9 @@ std::vector<uint32_t> Sandbox::BoundingBox::GetIndices() const
 {
     // 使用 VK_PRIMITIVE_TOPOLOGY_LINE_LIST，定义12条线段
     std::vector<uint32_t> indices = {
-        0, 1, 1, 2, 2, 3, 3, 0, // 底面
-        4, 5, 5, 6, 6, 7, 7, 4, // 顶面
-        0, 4, 1, 5, 2, 6, 3, 7 // 侧面连接线
+        0, 1, 1, 2, 2, 3, 3, 0,  // 底面
+        4, 5, 5, 6, 6, 7, 7, 4,  // 顶面
+        0, 4, 1, 5, 2, 6, 3, 7  // 侧面连接线
     };
     return indices;
 }

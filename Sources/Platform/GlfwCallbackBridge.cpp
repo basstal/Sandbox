@@ -111,10 +111,7 @@ static void FramebufferSizeCallback(GLFWwindow* window, int width, int height)
     }
 }
 
-static void ErrorCallback(int error, const char* description)
-{
-    LOGE("code {}\n{}", std::to_string(error), description)
-}
+static void ErrorCallback(int error, const char* description) { LOGE("code {}\n{}", std::to_string(error), description) }
 
 void Sandbox::GlfwCallbackBridge::BindCallbacks(GLFWwindow* window)
 {
@@ -140,14 +137,14 @@ void Sandbox::GlfwCallbackBridge::InstallImGuiCallback()
         return;
     }
     m_imGuiCallbackInstalled = true;
-    m_handleWindowFocus = onWindowFocus.Bind(ImGui_ImplGlfw_WindowFocusCallback);
-    m_handleCursorEnter = onCursorEnter.Bind(ImGui_ImplGlfw_CursorEnterCallback);
-    m_handleCursorPosition = onCursorPosition.Bind(ImGui_ImplGlfw_CursorPosCallback);
-    m_handleMouseButton = onMouseButton.Bind(ImGui_ImplGlfw_MouseButtonCallback);
-    m_handleScroll = onScroll.Bind(ImGui_ImplGlfw_ScrollCallback);
-    m_handleKey = onKey.Bind(ImGui_ImplGlfw_KeyCallback);
-    m_handleChar = onChar.Bind(ImGui_ImplGlfw_CharCallback);
-    m_handleMonitor = onMonitor.Bind(ImGui_ImplGlfw_MonitorCallback);
+    m_handleWindowFocus      = onWindowFocus.Bind(ImGui_ImplGlfw_WindowFocusCallback);
+    m_handleCursorEnter      = onCursorEnter.Bind(ImGui_ImplGlfw_CursorEnterCallback);
+    m_handleCursorPosition   = onCursorPosition.Bind(ImGui_ImplGlfw_CursorPosCallback);
+    m_handleMouseButton      = onMouseButton.Bind(ImGui_ImplGlfw_MouseButtonCallback);
+    m_handleScroll           = onScroll.Bind(ImGui_ImplGlfw_ScrollCallback);
+    m_handleKey              = onKey.Bind(ImGui_ImplGlfw_KeyCallback);
+    m_handleChar             = onChar.Bind(ImGui_ImplGlfw_CharCallback);
+    m_handleMonitor          = onMonitor.Bind(ImGui_ImplGlfw_MonitorCallback);
 }
 
 
@@ -171,7 +168,7 @@ void Sandbox::GlfwCallbackBridge::UninstallImGuiCallback()
 
 Sandbox::Ray Sandbox::CursorPositionToWorldRay(GLFWwindow* window, const glm::mat4& viewMatrix, const glm::mat4& projectionMatrix)
 {
-    ImGuiIO& io = ImGui::GetIO();
+    ImGuiIO&     io          = ImGui::GetIO();
     ImGuiWindow* imGuiWindow = ImGui::GetCurrentWindow();
     if (imGuiWindow == nullptr)
     {
@@ -186,14 +183,14 @@ Sandbox::Ray Sandbox::CursorPositionToWorldRay(GLFWwindow* window, const glm::ma
     float x = (2.0f * static_cast<float>(relativeX)) / static_cast<float>(windowWidth) - 1.0f;
     float y = 1.0f - (2.0f * static_cast<float>(mouseY)) / static_cast<float>(windowHeight);
     // float y = (2.0f * static_cast<float>(relativeY)) / static_cast<float>(windowHeight) - 1.0f;
-    float z = 1.0f; // 对于射线来说，Z分量通常设置为1
+    float     z      = 1.0f;  // 对于射线来说，Z分量通常设置为1
     glm::vec3 rayNds = glm::vec3(x, y, z);
 
-    glm::vec4 rayClip = glm::vec4(rayNds.x, rayNds.y, -1.0f, 1.0f);
-    glm::vec4 rayEye = glm::inverse(projectionMatrix) * rayClip;
-    rayEye = glm::vec4(rayEye.x, rayEye.y, -1.0f, 0.0f);
-    glm::vec4 rayWorld = glm::inverse(viewMatrix) * rayEye;
-    auto direction = glm::normalize(glm::vec3(rayWorld));
-    auto origin = glm::vec3(glm::inverse(viewMatrix) * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f));
+    glm::vec4 rayClip   = glm::vec4(rayNds.x, rayNds.y, -1.0f, 1.0f);
+    glm::vec4 rayEye    = glm::inverse(projectionMatrix) * rayClip;
+    rayEye              = glm::vec4(rayEye.x, rayEye.y, -1.0f, 0.0f);
+    glm::vec4 rayWorld  = glm::inverse(viewMatrix) * rayEye;
+    auto      direction = glm::normalize(glm::vec3(rayWorld));
+    auto      origin    = glm::vec3(glm::inverse(viewMatrix) * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f));
     return Sandbox::Ray(origin, direction);
 }

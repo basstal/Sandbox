@@ -1,19 +1,20 @@
 ﻿#pragma once
 #include "Editor/IImGuiWindow.hpp"
 
-namespace Sandbox {
-class DemoWindow : public IImGuiWindow
+namespace Sandbox
 {
-  public:
-    DemoWindow();
-    void OnGuiBegin() override;
+    class DemoWindow : public IImGuiWindow
+    {
+    public:
+             DemoWindow();
+        void OnGuiBegin() override;
 
-    void Prepare() override;
+        void Prepare() override;
 
-    void OnGui() override;
+        void OnGui() override;
 
-    void Cleanup() override;
+        void Cleanup() override;
 
-    bool showImGuiDemoWindow = true;
-};
-} // namespace Sandbox
+        bool showImGuiDemoWindow = true;
+    };
+}  // namespace Sandbox

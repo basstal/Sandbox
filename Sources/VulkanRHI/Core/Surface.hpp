@@ -1,35 +1,37 @@
 ﻿#pragma once
-#include "VulkanRHI/Common/Macros.hpp"
 #include <GLFW/glfw3.h>
 #include <memory>
 #include <vulkan/vulkan_core.h>
 
-namespace Sandbox {
-class Instance;
-class Window;
+#include "VulkanRHI/Common/Macros.hpp"
 
-class Surface
+namespace Sandbox
 {
-  public:
-    Surface(const std::shared_ptr<Instance>& instance, const std::shared_ptr<Window>& inWindow);
+    class Instance;
+    class Window;
 
-    ~Surface();
+    class Surface
+    {
+    public:
+        Surface(const std::shared_ptr<Instance>& instance, const std::shared_ptr<Window>& inWindow);
 
-    DISABLE_COPY_AND_MOVE(Surface)
+        ~Surface();
 
-    void Cleanup();
+        DISABLE_COPY_AND_MOVE(Surface)
 
-    void OnFramebufferSize(GLFWwindow* window, int width, int height);
+        void Cleanup();
 
-    VkSurfaceKHR vkSurfaceKhr;
+        void OnFramebufferSize(GLFWwindow* window, int width, int height);
 
-    // TODO: replace this??
-    std::shared_ptr<Window> window;
+        VkSurfaceKHR vkSurfaceKhr;
 
-    bool framebufferResized = false;
+        // TODO: replace this??
+        std::shared_ptr<Window> window;
 
-  private:
-    bool m_cleaned = false;
-    std::shared_ptr<Instance> m_instance;
-};
-} // namespace Sandbox
+        bool framebufferResized = false;
+
+    private:
+        bool                      m_cleaned = false;
+        std::shared_ptr<Instance> m_instance;
+    };
+}  // namespace Sandbox

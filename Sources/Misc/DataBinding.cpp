@@ -2,10 +2,7 @@
 
 #include "DataBinding.hpp"
 
-Sandbox::IDataBinding::IDataBinding(std::string InName):
-    Name(InName)
-{
-}
+Sandbox::IDataBinding::IDataBinding(std::string InName) : Name(InName) {}
 
 Sandbox::DelegateHandle Sandbox::TDataBinding<void>::Bind(DelegateType InDelegate)
 {
@@ -17,6 +14,7 @@ Sandbox::DelegateHandle Sandbox::TDataBinding<void>::Bind(DelegateType InDelegat
     }
     return DelegateHandle;
 }
+Sandbox::DelegateHandle Sandbox::TDataBinding<void>::Bind(const std::function<void()>& func) { return Bind(DelegateType(func)); }
 
 bool Sandbox::TDataBinding<void>::UnBind(DelegateHandle InDelegateHandle)
 {
@@ -48,14 +46,9 @@ void Sandbox::TDataBinding<void>::Trigger(const DelegateHandle& InDelegateHandle
     }
 }
 
-void Sandbox::TDataBinding<void>::Release()
-{
-}
+void Sandbox::TDataBinding<void>::Release() {}
 
-Sandbox::TDataBinding<void>::TDataBinding(std::string InName):
-    IDataBinding(InName)
-{
-}
+Sandbox::TDataBinding<void>::TDataBinding(std::string InName) : IDataBinding(InName) {}
 
 
 auto Sandbox::DataBinding::Create(std::string InName) -> std::shared_ptr<TDataBinding<void>>
@@ -77,9 +70,6 @@ auto Sandbox::DataBinding::Create(std::string InName) -> std::shared_ptr<TDataBi
     return CreatedDataBinding;
 }
 
-void Sandbox::DataBinding::Trigger(std::string InName, const DelegateHandle& InDelegateHandle)
-{
-    Logger::Error("The method or operation is not implemented.");
-}
+void Sandbox::DataBinding::Trigger(std::string InName, const DelegateHandle& InDelegateHandle) { Logger::Error("The method or operation is not implemented."); }
 
 std::map<std::string, std::any> Sandbox::DataBinding::DataBindingMap = std::map<std::string, std::any>();

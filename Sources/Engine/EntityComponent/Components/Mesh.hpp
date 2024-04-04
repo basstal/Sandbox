@@ -27,7 +27,7 @@ namespace Sandbox
         uint32_t Indices() const;
 
     private:
-        std::vector<Vertex> m_vertices;
+        std::vector<Vertex>   m_vertices;
         std::vector<uint32_t> m_indices;
     };
-}
+}  // namespace Sandbox

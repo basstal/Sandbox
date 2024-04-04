@@ -1,9 +1,9 @@
 ﻿#pragma once
+#include <glm/vec3.hpp>
 #include <memory>
 #include <string>
 #include <vector>
 
-#include "glm/vec3.hpp"
 
 namespace Sandbox
 {
@@ -15,8 +15,8 @@ namespace Sandbox
     {
     public:
         /**
-     * \brief  起点
-     */
+         * \brief  起点
+         */
         glm::vec3 origin;
         /**
          * \brief  方向

@@ -5,7 +5,7 @@ using YamlDotNet.RepresentationModel;
 
 namespace SandboxPipeWorker.GenerateProject.CppProject;
 
-public class Project
+public abstract class Project
 {
     internal static string ProjectFileExtension = ".project.yaml";
     internal static string SearchHeaderFileRegex = ".*\\.h(pp)?";
@@ -16,15 +16,17 @@ public class Project
     };
 
     public ProjectType ProjectType;
+
     public CppSubType CppSubType;
+
     // TODO:替换为 Name
     public string PrimaryProjectName;
     public string Name => PrimaryProjectName;
     public CompileEnvironment PrimaryCompileEnvironment = new();
     public static Type ProjectInstanceType = typeof(Project);
-    private IEnumerable<Module>? _AllDependencies;
-    public IEnumerable<Module> AllDependencies => _AllDependencies ??= EnumerateDependencies();
-    public FileReference? PrecompileHeader;
+    private IEnumerable<Module>? _allDependencies;
+    public IEnumerable<Module> AllDependencies => _allDependencies ??= EnumerateDependencies();
+    // public FileReference? PrecompileHeader;
 
     public static Guid CreateGuidFromPath(string path)
     {
@@ -49,7 +51,6 @@ public class Project
     //     { ProjectType.CSharp, "FAE04EC0-301F-11D3-BF4B-00C04F79EFBC" },
     //     { ProjectType.Folder, "2150E333-8FDC-42A3-9474-1A3956D46DE8" },
     // };
-
 
 
     // public string SlnProjectTypeGuid => ProjectTypeGuidMapping[ProjectType];
@@ -223,7 +224,6 @@ public class Project
 
     public virtual void PostProcessParse(FileReference fileReference)
     {
-
     }
 
     public bool TryParse(FileReference fileReference)
@@ -407,9 +407,15 @@ public class Project
 
             PrimaryCompileEnvironment.SourceFiles.AddRange(ReadSourcePaths(compileEnvironmentMapping));
 
-            if (compileEnvironmentMapping.TryGetValue("precompile_header", out var precompileHeader))
+            PrecompileEnvironment ??= new PrecompileEnvironment();
+            if (compileEnvironmentMapping.TryGetValue("precompiled_header", out var precompiledHeader))
             {
-                PrecompileHeader = sourceDirectory.GetFile(precompileHeader.ToString());
+                PrecompileEnvironment.PrecompiledHeaderFile = sourceDirectory.GetFile(precompiledHeader.ToString());
+            }
+
+            if (compileEnvironmentMapping.TryGetValue("precompiled_source", out var precompiledSource))
+            {
+                PrecompileEnvironment.PrecompiledSourceFile = sourceDirectory.GetFile(precompiledSource.ToString());
             }
         }
     }

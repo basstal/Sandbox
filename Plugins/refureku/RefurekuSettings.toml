@@ -33,7 +33,7 @@ ignoredFiles = []
 
 [CodeGenUnitSettings]
 # Generated files will be located here
-outputDirectory = "D:/Documents/GitHub/Sandbox/Sources/Generated"
+outputDirectory = "D:/Documents/GitHub/Sandbox/Sources/GeneratedTemp"
 
 generatedHeaderFileNamePattern = "##FILENAME##.rfkh.h"
 generatedSourceFileNamePattern = "##FILENAME##.rfks.h"

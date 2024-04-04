@@ -1,37 +1,41 @@
 ﻿#pragma once
 #include "Editor/ImGuiWidgets/TreeView.hpp"
 #include "Engine/EntityComponent/Scene.hpp"
+#include "Misc/Event.hpp"
 
-namespace Sandbox {
-class Inspector;
-
-struct HierarchyTreeViewSource : public TreeViewSource
+namespace Sandbox
 {
-    std::shared_ptr<GameObject> gameObject;
-};
+    class Inspector;
 
-struct HierarchyTreeViewItem : public TreeViewItem
-{
-};
+    struct HierarchyTreeViewSource : public TreeViewSource
+    {
+        std::shared_ptr<GameObject> gameObject;
+    };
 
-class Hierarchy : public TreeView
-{
-public:
-    Hierarchy(const std::shared_ptr<Inspector>& inspector);
-    std::vector<std::shared_ptr<Sandbox::TreeViewItem>> CreateTreeViewItems(const std::shared_ptr<Scene>& scene);
+    struct HierarchyTreeViewItem : public TreeViewItem
+    {
+    };
 
-    std::vector<std::shared_ptr<Sandbox::TreeViewItem>> ChildGameObjects(const std::shared_ptr<GameObject>& gameObject);
+    class Hierarchy : public TreeView
+    {
+    public:
+                                                            Hierarchy(const std::shared_ptr<Inspector>& inspector);
+        std::vector<std::shared_ptr<Sandbox::TreeViewItem>> CreateTreeViewItems(const std::shared_ptr<Scene>& scene);
 
-    void Prepare() override;
+        std::vector<std::shared_ptr<Sandbox::TreeViewItem>> ChildGameObjects(const std::shared_ptr<GameObject>& gameObject);
 
-    void OnGui() override;
+        void Prepare() override;
 
-    void Tick(float deltaTime) override;
-    std::shared_ptr<GameObject> LeafIdToGameObject(intptr_t inPtr);
+        void OnGui() override;
 
-    void SetScene(const std::shared_ptr<Scene>& inScene);
+        void                        Tick(float deltaTime) override;
+        std::shared_ptr<GameObject> LeafIdToGameObject(intptr_t inPtr);
 
-private:
-    std::shared_ptr<Inspector> m_inspector;
-};
-} // namespace Sandbox
+        void SetScene(const std::shared_ptr<Scene>& inScene);
+
+        Event<std::shared_ptr<GameObject>> onTargetChanged;
+
+    private:
+        std::shared_ptr<Inspector> m_inspector;
+    };
+}  // namespace Sandbox

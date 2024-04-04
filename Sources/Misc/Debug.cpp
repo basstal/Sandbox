@@ -4,34 +4,35 @@
 
 #ifdef _WIN64
 #include <windows.h>
-#include <dbghelp.h>
+// "dbghelp.h" 必须在 <windows.h> 后面，因此使用 "" 以避免被自动格式化到前面去
+#include "dbghelp.h"
 #endif
 
 std::string Sandbox::GetCallStack()
 {
 #ifdef _WIN64
-    void* stack[100];
+    void*          stack[100];
     unsigned short frames;
-    SYMBOL_INFO* symbol;
-    HANDLE process;
-    std::string callStack;
+    SYMBOL_INFO*   symbol;
+    HANDLE         process;
+    std::string    callStack;
 
     process = GetCurrentProcess();
     SymInitialize(process, NULL, TRUE);
-    frames = CaptureStackBackTrace(1, 100, stack, NULL);
-    symbol = (SYMBOL_INFO*)calloc(sizeof(SYMBOL_INFO) + 256 * sizeof(char), 1);
-    symbol->MaxNameLen = 255;
+    frames               = CaptureStackBackTrace(1, 100, stack, NULL);
+    symbol               = (SYMBOL_INFO*)calloc(sizeof(SYMBOL_INFO) + 256 * sizeof(char), 1);
+    symbol->MaxNameLen   = 255;
     symbol->SizeOfStruct = sizeof(SYMBOL_INFO);
 
     IMAGEHLP_LINE64 line = {0};
-    line.SizeOfStruct = sizeof(IMAGEHLP_LINE64);
+    line.SizeOfStruct    = sizeof(IMAGEHLP_LINE64);
     DWORD displacement;
 
     for (int i = 0; i < frames; i++)
     {
         DWORD64 address = (DWORD64)(stack[i]);
         SymFromAddr(process, address, 0, symbol);
-        char buffer[512]; // Assume this buffer is large enough.
+        char buffer[512];  // Assume this buffer is large enough.
 
         if (SymGetLineFromAddr64(process, address, &displacement, &line))
         {

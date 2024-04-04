@@ -8,7 +8,7 @@
 Sandbox::PipelineState::PipelineState(const std::vector<std::shared_ptr<ShaderModule>>& inShaderModules, const std::shared_ptr<RenderPass>& inRenderPass,
                                       const std::shared_ptr<PipelineLayout>& inPipelineLayout)
 {
-    renderPass = inRenderPass;
+    renderPass    = inRenderPass;
     shaderModules = inShaderModules;
     for (const auto& shaderModule : shaderModules)
     {

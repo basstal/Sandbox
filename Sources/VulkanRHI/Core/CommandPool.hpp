@@ -6,10 +6,7 @@
 namespace Sandbox
 {
     class Device;
-}
 
-namespace Sandbox
-{
     class CommandPool
     {
     public:
@@ -23,6 +20,6 @@ namespace Sandbox
 
     private:
         std::shared_ptr<Device> m_device;
-        bool m_cleaned = false;
+        bool                    m_cleaned = false;
     };
-}
+}  // namespace Sandbox

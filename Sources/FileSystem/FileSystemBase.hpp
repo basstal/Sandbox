@@ -1,6 +1,6 @@
 ﻿#pragma once
-#include <string>
 #include <filesystem>
+#include <string>
 namespace Sandbox
 {
     class FileSystemBase
@@ -8,4 +8,4 @@ namespace Sandbox
     public:
         static std::filesystem::path GetProjectRoot();
     };
-}
+}  // namespace Sandbox

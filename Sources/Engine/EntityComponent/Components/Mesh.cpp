@@ -15,8 +15,8 @@ void Sandbox::Mesh::Cleanup()
 
 void Sandbox::Mesh::LoadFromModel(const std::shared_ptr<Device>& device, const std::shared_ptr<CommandBuffer>& commandBuffer, const Model& model)
 {
-    m_vertices = model.vertices;
-    m_indices = model.indices;
+    m_vertices                    = model.vertices;
+    m_indices                     = model.indices;
     VkDeviceSize vertexBufferSize = sizeof(Vertex) * m_vertices.size();
     vertexBuffer = std::make_shared<Buffer>(device, vertexBufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
     // TODO: 临时填充待绘制的数据

@@ -47,6 +47,10 @@
             <SDLCheck>true</SDLCheck>
             <PreprocessorDefinitions>{{Project.PrimaryCompileEnvironment.Definitions | array.join ";"}};{{~if Configuration == "Release"~}}NDEBUG;{{~else~}}_DEBUG;{{~end~}}%(PreprocessorDefinitions)</PreprocessorDefinitions>
             <ConformanceMode>true</ConformanceMode>
+            {{~if PrecompiledHeader.Header ~}}
+            <PrecompiledHeader>Use</PrecompiledHeader>
+            <PrecompiledHeaderFile>{{PrecompiledHeader.Header}}</PrecompiledHeaderFile>
+            {{~end~}}
             <LanguageStandard>std{{Project.PrimaryCompileEnvironment.CppVersion | string.downcase}}</LanguageStandard>
             <LanguageStandard_C>stdc11</LanguageStandard_C>
             {{~if Configuration == "Release"~}}
@@ -66,7 +70,7 @@
             <OptimizeReferences>true</OptimizeReferences>
             {{~end~}}
         </Link>
-        {{~if Project.PrimaryProjectName == "Sandbox"~}}
+        {{~if Project.PrimaryProjectName == "UseWhitericeInstead"~}}
         <PostBuildEvent>
           <Command>
             PowerShell -ExecutionPolicy Bypass -File "{{PostBuildCommandsPath}}"
@@ -83,6 +87,11 @@
     <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
 
     <ItemGroup>
+        {{~ if PrecompiledHeader.Source ~}}
+        <ClCompile Include="{{PrecompiledHeader.Source}}">
+            <PrecompiledHeader>Create</PrecompiledHeader>
+        </ClCompile>
+        {{~end~}}
         {{~for CppSourceInfo in CppSourceInfos~}}
         <ClCompile Include="{{CppSourceInfo.SourcePath}}">
             <ObjectFileName>$(IntDir)/{{CppSourceInfo.ObjectPath}}</ObjectFileName>

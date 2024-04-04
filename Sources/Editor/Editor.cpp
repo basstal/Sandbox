@@ -3,6 +3,7 @@
 #include "Editor.hpp"
 
 #include "Engine/Camera.hpp"
+#include "Engine/RendererSource/RendererSource.hpp"
 #include "Engine/Timer.hpp"
 #include "FileSystem/Directory.hpp"
 #include "FileSystem/File.hpp"
@@ -30,34 +31,39 @@ static Sandbox::File editorCameraConfigCache = Sandbox::Directory::GetLibraryDir
 void Sandbox::Editor::Prepare(const std::shared_ptr<Renderer>& renderer, const std::shared_ptr<Timer>& timer, const std::vector<std::shared_ptr<Models>>& inModels,
                               const std::shared_ptr<Window>& inWindow)
 {
-    // editorWeakPtr = weak_from_this();
-    m_renderer = renderer;
-    m_timer = timer;
-    window = inWindow;
+    m_renderer    = renderer;
+    m_timer       = timer;
+    window        = inWindow;
+    models        = inModels;
     imGuiRenderer = std::make_shared<ImGuiRenderer>();
-    imGuiRenderer->Prepare(m_renderer, shared_from_this());
+    imGuiRenderer->Prepare(renderer, shared_from_this());
 
-    models = inModels;
-    auto& resolution = renderer->resolution;
-    auto aspectRatio = static_cast<float>(resolution.width) / static_cast<float>(resolution.height);
+    auto&           resolution       = renderer->resolution;
+    auto            aspectRatio      = static_cast<float>(resolution.width) / static_cast<float>(resolution.height);
     const glm::vec3 DEFAULT_WORLD_UP = glm::vec3(0.0f, 0.0f, 1.0f);
     // TODO:将 camera 移到 viewport 内
     camera = std::make_shared<Camera>(DEFAULT_WORLD_UP, aspectRatio);
     camera->LoadFromFile(editorCameraConfigCache);
     camera->UpdateCameraVectors();
     imGuiRenderer->viewport->mainCamera = camera;
-    renderer->pipeline->pipelineState->pushConstantsInfo.data = &camera->position;
-
+    BindCameraPosition(renderer->viewMode);
     grid = std::make_shared<Grid>();
-    grid->Prepare(m_renderer, shared_from_this());
-    m_renderer->onBeforeRendererDraw.BindMember<Grid, &Grid::DrawGrid>(grid);
+    grid->Prepare(renderer, shared_from_this());
+    renderer->onBeforeRendererDraw.BindMember<Grid, &Grid::DrawGrid>(grid);
+    renderer->onViewModeChanged.BindMember<Editor, &Editor::BindCameraPosition>(this);
 
-    // transformGizmo = std::make_shared<TransformGizmo>();
-    // transformGizmo->Prepare(m_renderer, shared_from_this());
-    // onUpdateInputs.BindMember<TransformGizmo, &TransformGizmo::UpdateInputs>(transformGizmo);
-    // m_renderer->onAfterRendererDraw.BindMember<TransformGizmo, &TransformGizmo::DrawGizmo>(transformGizmo);
+    PrepareOnGui();
 }
 
+void Sandbox::Editor::BindCameraPosition(EViewMode inViewMode)
+{
+    std::shared_ptr<RendererSource> rendererSource;
+    if (m_renderer->TryGetRendererSource(inViewMode, rendererSource))
+    {
+        // TODO:因为这里 position 是 Vector3 派生自 rfk::Object 虚函数表指针要求 8 字节对齐，因此不满足传递给 GPU 对齐要求
+        rendererSource->pipeline->pipelineState->pushConstantsInfo.data = &camera->position.vec;
+    }
+}
 void Sandbox::Editor::Cleanup()
 {
     camera->SaveToFile(editorCameraConfigCache);
@@ -87,35 +93,52 @@ void Sandbox::Editor::CleanupOnGui()
 
 void Sandbox::Editor::PrepareOnGui()
 {
-    auto device = m_renderer->device;
+    auto         device = m_renderer->device;
     ShaderSource vertexShaderSource(Directory::GetAssetsDirectory().GetFile("Shaders/FillModeNonSolidGrid.vert"));
     shaderModules.push_back(std::make_shared<ShaderModule>(device, vertexShaderSource, "", VK_SHADER_STAGE_VERTEX_BIT));
     ShaderSource fragmentShaderSource(Directory::GetAssetsDirectory().GetFile("Shaders/FillModeNonSolidGrid.frag"));
     shaderModules.push_back(std::make_shared<ShaderModule>(device, fragmentShaderSource, "", VK_SHADER_STAGE_FRAGMENT_BIT));
 
-    pipelineLayout = std::make_shared<PipelineLayout>(device, shaderModules, std::vector<uint32_t>{1});
-    auto renderPass = m_renderer->renderPass;
-    pipelineLineList = std::make_shared<Pipeline>(device, shaderModules, renderPass, pipelineLayout, VK_PRIMITIVE_TOPOLOGY_LINE_LIST, VK_POLYGON_MODE_FILL);
+    pipelineLayout     = std::make_shared<PipelineLayout>(device, shaderModules, std::vector<uint32_t>{1});
+    auto renderPass    = m_renderer->renderPass;
+    pipelineLineList   = std::make_shared<Pipeline>(device, shaderModules, renderPass, pipelineLayout, VK_PRIMITIVE_TOPOLOGY_LINE_LIST, VK_POLYGON_MODE_FILL);
     auto pipelineState = std::make_shared<PipelineState>(shaderModules, renderPass, pipelineLayout);
-    pipelineState->depthStencilState.depthTestEnable = VK_FALSE;
+    pipelineState->depthStencilState.depthTestEnable  = VK_FALSE;
     pipelineState->depthStencilState.depthWriteEnable = VK_TRUE;
-    pipelineGizmo = std::make_shared<Pipeline>(device, pipelineState);
+    pipelineGizmo                                     = std::make_shared<Pipeline>(device, pipelineState);
     // auto pipelineState1 = std::make_shared<PipelineState>(shaderModules, renderPass, pipelineLayout);
     // pipelineState1->inputAssemblyState.topology = VK_PRIMITIVE_TOPOLOGY_LINE_LIST;
     // pipelineState1->depthStencilState.depthTestEnable = VK_TRUE;
     // pipelineState1->depthStencilState.depthWriteEnable = VK_TRUE;
     // pipelineGizmoDebug = std::make_shared<Pipeline>(device, pipelineState1);
 
-    auto uniformMvpObjects = m_renderer->uboMvp;
-    uint32_t dynamicAlignment = GetUniformDynamicAlignment(sizeof(glm::mat4));
+    UpdateDescriptorSets(m_renderer->viewMode);
+    m_renderer->onViewModeChanged.BindMember<Editor, &Editor::UpdateDescriptorSets>(this);
+}
+
+void Sandbox::Editor::UpdateDescriptorSets(EViewMode inViewMode)
+{
+    std::shared_ptr<RendererSource> rendererSource;
+    if (!m_renderer->TryGetRendererSource(inViewMode, rendererSource))
+    {
+        LOGF("Renderer source for view mode '{}' not found", VIEW_MODE_NAMES[static_cast<uint32_t>(inViewMode)])
+    }
+    auto     uniformMvpObjects = rendererSource->uboMvp;
+    uint32_t dynamicAlignment  = GetUniformDynamicAlignment(sizeof(glm::mat4));
+    for (auto& descirptorSet : descriptorSets)
+    {
+        descirptorSet->Cleanup();
+    }
+    descriptorSets.clear();
     for (size_t i = 0; i < m_renderer->maxFramesFlight; ++i)
     {
         BindingMap<VkDescriptorBufferInfo> bufferInfoMapping = {
             {0, {uniformMvpObjects[i]->vpUbo->GetDescriptorBufferInfo()}},
             {1, {uniformMvpObjects[i]->modelsUbo->GetDescriptorBufferInfo(dynamicAlignment)}},
         };
-        auto descriptorSet =
-            std::make_shared<DescriptorSet>(device, m_renderer->descriptorPool, pipelineLayout->descriptorSetLayout, bufferInfoMapping, BindingMap<VkDescriptorImageInfo>());
+        BindingMap<VkDescriptorImageInfo> imageInfoMapping;
+        auto                              descriptorSet =
+            std::make_shared<DescriptorSet>(m_renderer->device, m_renderer->descriptorPool, pipelineLayout->descriptorSetLayout, bufferInfoMapping, imageInfoMapping);
         descriptorSets.push_back(descriptorSet);
     }
 }
@@ -145,10 +168,16 @@ void Sandbox::Editor::Update()
 
 void Sandbox::Editor::UpdateInputs(const std::shared_ptr<GlfwCallbackBridge>& glfwInputBridge)
 {
-    m_renderer->viewAndProjection->view = camera->GetViewMatrix();
+    std::shared_ptr<RendererSource> rendererSource;
+    if (!m_renderer->TryGetRendererSource(m_renderer->viewMode, rendererSource))
+    {
+        LOGF("Renderer source for view mode '{}' not found", VIEW_MODE_NAMES[static_cast<uint32_t>(m_renderer->viewMode)])
+    }
+    rendererSource->viewAndProjection->view = camera->GetViewMatrix();
+
     auto projection = camera->GetProjectionMatrix();
     projection[1][1] *= -1;
-    m_renderer->viewAndProjection->projection = projection;
+    rendererSource->viewAndProjection->projection = projection;
 
     auto glfwWindow = window->glfwWindow;
 

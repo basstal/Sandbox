@@ -7,10 +7,10 @@
 
 bool Sandbox::IntersectRayBoundingBox(const Ray& ray, const BoundingBox& boundingBox, float& factor, glm::vec3& intersectPoint)
 {
-    factor = 0.0f;
+    factor     = 0.0f;
     float tmax = FLT_MAX;
-    auto d = ray.direction;
-    auto p = ray.origin;
+    auto  d    = ray.direction;
+    auto  p    = ray.origin;
     for (int i = 0; i < 3; i++)
     {
         if (glm::abs(d[i]) < FLT_EPSILON)
@@ -23,16 +23,16 @@ bool Sandbox::IntersectRayBoundingBox(const Ray& ray, const BoundingBox& boundin
         else
         {
             float ood = 1.0f / d[i];
-            float t1 = (boundingBox.min[i] - p[i]) * ood;
-            float t2 = (boundingBox.max[i] - p[i]) * ood;
+            float t1  = (boundingBox.min[i] - p[i]) * ood;
+            float t2  = (boundingBox.max[i] - p[i]) * ood;
             if (t1 > t2)
             {
                 float temp = t1;
-                t1 = t2;
-                t2 = temp;
+                t1         = t2;
+                t2         = temp;
             }
             factor = glm::max(factor, t1);
-            tmax = glm::min(tmax, t2);
+            tmax   = glm::min(tmax, t2);
             if (factor > tmax)
             {
                 return false;

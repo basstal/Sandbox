@@ -11,6 +11,7 @@ namespace Sandbox
     {
         friend class ImageView;
         friend class Texture;
+
     public:
         Image(const std::shared_ptr<Device>& device, const VkImage& image, const VkExtent3D& extent3D, VkFormat format, VkImageUsageFlags usage,
               VkSampleCountFlagBits sampleCount = VK_SAMPLE_COUNT_1_BIT);
@@ -24,20 +25,20 @@ namespace Sandbox
 
         void Cleanup();
 
-        VkImage vkImage;
+        VkImage        vkImage;
         VkDeviceMemory vkDeviceMemory;
 
-        VkImageType type;
-        VkExtent3D extent;
-        VkFormat format;
-        VkImageUsageFlags usage;
+        VkImageType           type;
+        VkExtent3D            extent;
+        VkFormat              format;
+        VkImageUsageFlags     usage;
         VkSampleCountFlagBits sampleCount;
-        VkImageTiling tiling;
-        uint32_t arrayLayerCount;
-        VkImageSubresource subresource;
+        VkImageTiling         tiling;
+        uint32_t              arrayLayerCount;
+        VkImageSubresource    subresource;
 
     private:
         std::shared_ptr<Device> m_device;
-        bool m_cleaned = false;
+        bool                    m_cleaned = false;
     };
-}
+}  // namespace Sandbox

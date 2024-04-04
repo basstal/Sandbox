@@ -1,7 +1,8 @@
 ﻿#include "pch.hpp"
 
-#include "Generated/Transform.rfks.h"
 #include "Transform.hpp"
+
+#include "Generated/Transform.rfks.h"
 
 void Sandbox::Transform::Cleanup() {}
 

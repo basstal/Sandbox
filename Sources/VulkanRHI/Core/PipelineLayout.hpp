@@ -19,12 +19,12 @@ namespace Sandbox
 
         void Cleanup();
 
-        VkPipelineLayout vkPipelineLayout;
+        VkPipelineLayout                     vkPipelineLayout;
         std::shared_ptr<DescriptorSetLayout> descriptorSetLayout;
-        std::vector<VkPushConstantRange> pushConstantRanges;
+        std::vector<VkPushConstantRange>     pushConstantRanges;
 
     private:
         std::shared_ptr<Device> m_device;
-        bool m_cleaned = false;
+        bool                    m_cleaned = false;
     };
-}
+}  // namespace Sandbox

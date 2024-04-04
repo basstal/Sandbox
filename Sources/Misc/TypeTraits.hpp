@@ -1,10 +1,10 @@
 ﻿#pragma once
 
-#include <type_traits>
 #include <memory>
+#include <type_traits>
 
 template <typename T>
-struct ExtractType; // 未定义通用版本
+struct ExtractType;  // 未定义通用版本
 
 
 template <typename T>

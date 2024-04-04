@@ -5,7 +5,7 @@
 #ifdef _WIN64
 #include <windows.h>
 
-std::string LPWSTRToString(WCHAR *lpwstr)
+std::string LPWSTRToString(WCHAR* lpwstr)
 {
     if (lpwstr == nullptr)
         return std::string();

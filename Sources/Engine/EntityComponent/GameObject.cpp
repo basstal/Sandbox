@@ -16,11 +16,11 @@ void Sandbox::GameObject::Cleanup()
     {
         return;
     }
-    m_cleaned = true;
     for (auto& component : m_components)
     {
         component->Cleanup();
     }
+    m_cleaned = true;
 }
 
 void Sandbox::GameObject::AddComponent(std::shared_ptr<IComponent> component) { m_components.push_back(component); }

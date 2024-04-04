@@ -4,8 +4,8 @@
 namespace Sandbox
 {
     /**
- * \brief 光源
- */
+     * \brief 光源
+     */
     struct Light
     {
         /**

@@ -11,34 +11,34 @@ namespace Sandbox NAMESPACE()
     {
     public:
         FIELD()
-        char *rawString = nullptr;
+        char* rawString = nullptr;
 
         String() = default;
 
-        String(const std::string &string);
+        String(const std::string& string);
 
-        String(const char *string);
+        String(const char* string);
 
-        String(const String &other);
+        String(const String& other);
 
-        String(String &&other) noexcept;
+        String(String&& other) noexcept;
 
-        String &operator=(const char *inString);
+        String& operator=(const char* inString);
 
-        static std::vector<std::string> Split(const std::string &source, const char &seperator);
+        static std::vector<std::string> Split(const std::string& source, const char& seperator);
 
-        static std::string Replace(const std::string &source, const std::string &from, const std::string &to);
+        static std::string Replace(const std::string& source, const std::string& from, const std::string& to);
 
         std::string ToStdString();
 
         METHOD()
-        void Construct(const std::string &inString);
+        void Construct(const std::string& inString);
 
     private:
         std::string m_string;
-        void Sync();
+        void        Sync();
         Sandbox_String_GENERATED
     };
-} // namespace Sandbox
+}  // namespace Sandbox NAMESPACE()
 
 File_String_GENERATED

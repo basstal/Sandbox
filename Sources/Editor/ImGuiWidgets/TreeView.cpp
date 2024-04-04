@@ -2,15 +2,9 @@
 
 #include "TreeView.hpp"
 
-bool Sandbox::TreeViewItem::IsLeaf()
-{
-    return items.size() == 0;
-}
+bool Sandbox::TreeViewItem::IsLeaf() { return items.size() == 0; }
 
-void Sandbox::TreeView::Prepare()
-{
-    IImGuiWindow::Prepare();
-}
+void Sandbox::TreeView::Prepare() { IImGuiWindow::Prepare(); }
 
 void Sandbox::TreeView::OnGui()
 {
@@ -22,21 +16,19 @@ void Sandbox::TreeView::OnGui()
         // (process outside of tree loop to avoid visual inconsistencies during the clicking frame)
         if (ImGui::GetIO().KeyCtrl)
         {
-            m_selections.emplace(m_singleClicked); // CTRL+click to toggle
+            m_selections.emplace(m_singleClicked);  // CTRL+click to toggle
         }
         else
         {
-            //if (!(selection_mask & (1 << node_clicked))) // Depending on selection behavior you want, may want to preserve selection when clicking on item that is part of the selection
+            // if (!(selection_mask & (1 << node_clicked))) // Depending on selection behavior you want, may want to preserve selection when clicking on item that is part of the
+            // selection
             m_selections.clear();
-            m_selections.emplace(m_singleClicked); // Click to single-select
+            m_selections.emplace(m_singleClicked);  // Click to single-select
         }
     }
 }
 
-void Sandbox::TreeView::Tick(float deltaTime)
-{
-    IImGuiWindow::Tick(deltaTime);
-}
+void Sandbox::TreeView::Tick(float deltaTime) { IImGuiWindow::Tick(deltaTime); }
 
 void Sandbox::TreeView::Cleanup()
 {
@@ -67,12 +59,12 @@ void Sandbox::TreeView::ConstructImGuiTreeNodes(const std::shared_ptr<Sandbox::T
     auto treeViewItem = std::dynamic_pointer_cast<TreeViewItem>(target);
     if (treeViewItem->IsLeaf())
     {
-        static ImGuiTreeNodeFlags baseFlags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick | ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_Leaf
-                                              |
-                                              ImGuiTreeNodeFlags_NoTreePushOnOpen; // ImGuiTreeNodeFlags_Bullet;
-        auto leafId = CreateLeafId(treeViewItem);
+        static ImGuiTreeNodeFlags baseFlags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick | ImGuiTreeNodeFlags_SpanAvailWidth |
+            ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen;  // ImGuiTreeNodeFlags_Bullet;
+        auto leafId    = CreateLeafId(treeViewItem);
         auto nodeFlags = m_selections.contains(leafId) ? baseFlags | ImGuiTreeNodeFlags_Selected : baseFlags;
-        ImGui::TreeNodeEx(reinterpret_cast<void*>(leafId), nodeFlags, treeViewItem->source->name.c_str()); // NOLINT(clang-diagnostic-format-security, performance-no-int-to-ptr)
+        ImGui::TreeNodeEx(reinterpret_cast<void*>(leafId), nodeFlags,
+                          treeViewItem->source->name.c_str());  // NOLINT(clang-diagnostic-format-security, performance-no-int-to-ptr)
         if (ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen())
         {
             m_singleClicked = leafId;
@@ -85,7 +77,7 @@ void Sandbox::TreeView::ConstructImGuiTreeNodes(const std::shared_ptr<Sandbox::T
             ImGui::EndDragDropSource();
         }
     }
-    else if (target == root) // root 不展示
+    else if (target == root)  // root 不展示
     {
         for (auto& item : target->items)
         {

@@ -28,13 +28,13 @@ namespace Sandbox
 
         void Cleanup();
 
-        VkRenderPass vkRenderPass;
-        std::vector<Attachment> attachments;
+        VkRenderPass               vkRenderPass;
+        std::vector<Attachment>    attachments;
         std::vector<LoadStoreInfo> loadStoreInfo;
-        std::vector<SubpassInfo> subpasses;
+        std::vector<SubpassInfo>   subpasses;
 
     private:
         std::shared_ptr<Device> m_device;
-        bool m_cleaned = false;
+        bool                    m_cleaned = false;
     };
-}
+}  // namespace Sandbox

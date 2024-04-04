@@ -4,15 +4,9 @@
 
 #include "File.hpp"
 
-Sandbox::Directory::Directory(const std::string& inPath)
-{
-    path = std::filesystem::path(inPath);
-}
+Sandbox::Directory::Directory(const std::string& inPath) { path = std::filesystem::path(inPath); }
 
-Sandbox::File Sandbox::Directory::GetFile(const std::string& name) const
-{
-    return File((path / name).string());
-}
+Sandbox::File Sandbox::Directory::GetFile(const std::string& name) const { return File((path / name).string()); }
 
 std::vector<Sandbox::FileSystemBase> Sandbox::Directory::DirectoryIterator()
 {
@@ -58,18 +52,8 @@ std::vector<Sandbox::Directory> Sandbox::Directory::GetDirectories() const
     return result;
 }
 
-std::string Sandbox::Directory::GetName() const
-{
-    return path.filename().string();
-}
+std::string Sandbox::Directory::GetName() const { return path.filename().string(); }
 
-Sandbox::Directory Sandbox::Directory::GetAssetsDirectory()
-{
+Sandbox::Directory Sandbox::Directory::GetAssetsDirectory() { return Directory(GetProjectRoot().append("Assets").string()); }
 
-    return Directory(GetProjectRoot().append("Assets").string());
-}
-
-Sandbox::Directory Sandbox::Directory::GetLibraryDirectory()
-{
-    return Directory(GetProjectRoot().append("Library").string());
-}
+Sandbox::Directory Sandbox::Directory::GetLibraryDirectory() { return Directory(GetProjectRoot().append("Library").string()); }

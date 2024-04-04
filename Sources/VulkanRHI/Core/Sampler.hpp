@@ -17,8 +17,9 @@ namespace Sandbox
         void Cleanup();
 
         VkSampler vkSampler;
+
     private:
         std::shared_ptr<Device> m_device;
-        bool m_cleaned = false;
+        bool                    m_cleaned = false;
     };
-}
+}  // namespace Sandbox

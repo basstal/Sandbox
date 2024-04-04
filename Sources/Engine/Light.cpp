@@ -1,1 +1,3 @@
-﻿#include "Light.hpp"
+﻿#include "pch.hpp"
+
+#include "Light.hpp"

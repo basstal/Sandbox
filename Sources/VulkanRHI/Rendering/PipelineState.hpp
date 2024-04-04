@@ -9,8 +9,8 @@ namespace Sandbox
     class ShaderModule;
     class RenderPass;
     /**
-    * \brief 顶点输入状态
-    */
+     * \brief 顶点输入状态
+     */
     struct VertexInputState
     {
         /**
@@ -35,14 +35,14 @@ namespace Sandbox
 
     struct DepthStencilState
     {
-        VkBool32 depthTestEnable = VK_TRUE;
+        VkBool32 depthTestEnable  = VK_TRUE;
         VkBool32 depthWriteEnable = VK_TRUE;
     };
 
     struct PushConstantsInfo
     {
-        uint32_t size = 0;
-        void* data = nullptr;
+        uint32_t              size  = 0;
+        void*                 data  = nullptr;
         VkShaderStageFlagBits stage = VK_SHADER_STAGE_ALL;
     };
 
@@ -55,14 +55,14 @@ namespace Sandbox
         ~PipelineState() = default;
 
         InputAssemblyState inputAssemblyState;
-        VertexInputState vertexInputState;
+        VertexInputState   vertexInputState;
         RasterizationState rasterizationState;
-        DepthStencilState depthStencilState;
+        DepthStencilState  depthStencilState;
 
         PushConstantsInfo pushConstantsInfo;
 
         std::vector<std::shared_ptr<ShaderModule>> shaderModules;
-        std::shared_ptr<PipelineLayout> pipelineLayout;
+        std::shared_ptr<PipelineLayout>            pipelineLayout;
         std::shared_ptr<RenderPass> renderPass;
     };
 }

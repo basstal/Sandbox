@@ -6,15 +6,21 @@
 typedef void (*ImGuiDemoMarkerCallback1)(const char* file, int line, const char* section, void* user_data);
 
 extern ImGuiDemoMarkerCallback1 GImGuiDemoMarkerCallback1;
-extern void* GImGuiDemoMarkerCallbackUserData1;
-ImGuiDemoMarkerCallback1 GImGuiDemoMarkerCallback1 = NULL;
-void* GImGuiDemoMarkerCallbackUserData1 = NULL;
+extern void*                    GImGuiDemoMarkerCallbackUserData1;
+ImGuiDemoMarkerCallback1        GImGuiDemoMarkerCallback1         = NULL;
+void*                           GImGuiDemoMarkerCallbackUserData1 = NULL;
 
-#define IMGUI_DEMO_MARKER(section)  do { if (GImGuiDemoMarkerCallback1 != NULL) GImGuiDemoMarkerCallback1(__FILE__, __LINE__, section, GImGuiDemoMarkerCallbackUserData1); } while (0)
+#define IMGUI_DEMO_MARKER(section)                                                                     \
+    do                                                                                                 \
+    {                                                                                                  \
+        if (GImGuiDemoMarkerCallback1 != NULL)                                                         \
+            GImGuiDemoMarkerCallback1(__FILE__, __LINE__, section, GImGuiDemoMarkerCallbackUserData1); \
+    }                                                                                                  \
+    while (0)
 
 static ImGuizmo::OPERATION mCurrentGizmoOperation(ImGuizmo::TRANSLATE);
-static bool useWindow = true;
-static float camDistance = 8.f;
+static bool                useWindow   = true;
+static float               camDistance = 8.f;
 
 
 void Sandbox::ShowExampleMenuFile()
@@ -59,11 +65,10 @@ void Sandbox::ShowExampleMenuFile()
         static bool enabled = true;
         ImGui::MenuItem("Enabled", "", &enabled);
         ImGui::BeginChild("child", ImVec2(0, 60), ImGuiChildFlags_Border);
-        for (int i = 0; i < 10; i++)
-            ImGui::Text("Scrolling Text %d", i);
+        for (int i = 0; i < 10; i++) ImGui::Text("Scrolling Text %d", i);
         ImGui::EndChild();
         static float f = 0.5f;
-        static int n = 0;
+        static int   n = 0;
         ImGui::SliderFloat("Value", &f, 0.0f, 1.0f);
         ImGui::InputFloat("Input", &f, 0.1f);
         ImGui::Combo("Combo", &n, "Yes\0No\0Maybe\0\0");
@@ -77,7 +82,7 @@ void Sandbox::ShowExampleMenuFile()
         for (int i = 0; i < ImGuiCol_COUNT; i++)
         {
             const char* name = ImGui::GetStyleColorName((ImGuiCol)i);
-            ImVec2 p = ImGui::GetCursorScreenPos();
+            ImVec2      p    = ImGui::GetCursorScreenPos();
             ImGui::GetWindowDrawList()->AddRectFilled(p, ImVec2(p.x + sz, p.y + sz), ImGui::GetColorU32((ImGuiCol)i));
             ImGui::Dummy(ImVec2(sz, sz));
             ImGui::SameLine();
@@ -89,7 +94,7 @@ void Sandbox::ShowExampleMenuFile()
     // Here we demonstrate appending again to the "Options" menu (which we already created above)
     // Of course in this demo it is a little bit silly that this function calls BeginMenu("Options") twice.
     // In a real code-base using it would make senses to use this feature from very different code locations.
-    if (ImGui::BeginMenu("Options")) // <-- Append!
+    if (ImGui::BeginMenu("Options"))  // <-- Append!
     {
         IMGUI_DEMO_MARKER("Examples/Menu/Append to an existing menu");
         static bool b = true;
@@ -97,7 +102,7 @@ void Sandbox::ShowExampleMenuFile()
         ImGui::EndMenu();
     }
 
-    if (ImGui::BeginMenu("Disabled", false)) // Disabled
+    if (ImGui::BeginMenu("Disabled", false))  // Disabled
     {
         IM_ASSERT(0);
     }
@@ -113,12 +118,12 @@ void Sandbox::ShowExampleMenuFile()
 void Sandbox::EditTransform(float* cameraView, float const* cameraProjection, float* matrix, bool editTransformDecomposition)
 {
     static ImGuizmo::MODE mCurrentGizmoMode(ImGuizmo::LOCAL);
-    static bool useSnap = false;
-    static float snap[3] = {1.f, 1.f, 1.f};
-    static float bounds[] = {-0.5f, -0.5f, -0.5f, 0.5f, 0.5f, 0.5f};
-    static float boundsSnap[] = {0.1f, 0.1f, 0.1f};
-    static bool boundSizing = false;
-    static bool boundSizingSnap = false;
+    static bool           useSnap         = false;
+    static float          snap[3]         = {1.f, 1.f, 1.f};
+    static float          bounds[]        = {-0.5f, -0.5f, -0.5f, 0.5f, 0.5f, 0.5f};
+    static float          boundsSnap[]    = {0.1f, 0.1f, 0.1f};
+    static bool           boundSizing     = false;
+    static bool           boundSizingSnap = false;
 
     if (editTransformDecomposition)
     {
@@ -126,7 +131,7 @@ void Sandbox::EditTransform(float* cameraView, float const* cameraProjection, fl
             mCurrentGizmoOperation = ImGuizmo::TRANSLATE;
         if (ImGui::IsKeyPressed(ImGuiKey_E))
             mCurrentGizmoOperation = ImGuizmo::ROTATE;
-        if (ImGui::IsKeyPressed(ImGuiKey_R)) // r Key
+        if (ImGui::IsKeyPressed(ImGuiKey_R))  // r Key
             mCurrentGizmoOperation = ImGuizmo::SCALE;
         if (ImGui::RadioButton("Translate", mCurrentGizmoOperation == ImGuizmo::TRANSLATE))
             mCurrentGizmoOperation = ImGuizmo::TRANSLATE;
@@ -158,19 +163,19 @@ void Sandbox::EditTransform(float* cameraView, float const* cameraProjection, fl
         ImGui::Checkbox("##UseSnap", &useSnap);
         ImGui::SameLine();
 
-        switch (mCurrentGizmoOperation) // NOLINT(clang-diagnostic-switch, clang-diagnostic-switch-enum)
+        switch (mCurrentGizmoOperation)  // NOLINT(clang-diagnostic-switch, clang-diagnostic-switch-enum)
         {
-        case ImGuizmo::TRANSLATE:
-            ImGui::InputFloat3("Snap", &snap[0]);
-            break;
-        case ImGuizmo::ROTATE:
-            ImGui::InputFloat("Angle Snap", &snap[0]);
-            break;
-        case ImGuizmo::SCALE:
-            ImGui::InputFloat("Scale Snap", &snap[0]);
-            break;
-        default:
-            break;
+            case ImGuizmo::TRANSLATE:
+                ImGui::InputFloat3("Snap", &snap[0]);
+                break;
+            case ImGuizmo::ROTATE:
+                ImGui::InputFloat("Angle Snap", &snap[0]);
+                break;
+            case ImGuizmo::SCALE:
+                ImGui::InputFloat("Scale Snap", &snap[0]);
+                break;
+            default:
+                break;
         }
         ImGui::Checkbox("Bound Sizing", &boundSizing);
         if (boundSizing)
@@ -183,10 +188,10 @@ void Sandbox::EditTransform(float* cameraView, float const* cameraProjection, fl
         }
     }
 
-    ImGuiIO& io = ImGui::GetIO();
-    float viewManipulateRight = io.DisplaySize.x;
-    float viewManipulateTop = 0;
-    static ImGuiWindowFlags gizmoWindowFlags = 0;
+    ImGuiIO&                io                  = ImGui::GetIO();
+    float                   viewManipulateRight = io.DisplaySize.x;
+    float                   viewManipulateTop   = 0;
+    static ImGuiWindowFlags gizmoWindowFlags    = 0;
     if (useWindow)
     {
         ImGui::SetNextWindowSize(ImVec2(800, 400), ImGuiCond_Appearing);
@@ -194,13 +199,13 @@ void Sandbox::EditTransform(float* cameraView, float const* cameraProjection, fl
         ImGui::PushStyleColor(ImGuiCol_WindowBg, (ImVec4)ImColor(0.35f, 0.3f, 0.3f));
         ImGui::Begin("Gizmo", 0, gizmoWindowFlags);
         ImGuizmo::SetDrawlist();
-        float windowWidth = (float)ImGui::GetWindowWidth();
+        float windowWidth  = (float)ImGui::GetWindowWidth();
         float windowHeight = (float)ImGui::GetWindowHeight();
         ImGuizmo::SetRect(ImGui::GetWindowPos().x, ImGui::GetWindowPos().y, windowWidth, windowHeight);
         viewManipulateRight = ImGui::GetWindowPos().x + windowWidth;
-        viewManipulateTop = ImGui::GetWindowPos().y;
+        viewManipulateTop   = ImGui::GetWindowPos().y;
         ImGuiWindow* window = ImGui::GetCurrentWindow();
-        gizmoWindowFlags = ImGui::IsWindowHovered() && ImGui::IsMouseHoveringRect(window->InnerRect.Min, window->InnerRect.Max) ? ImGuiWindowFlags_NoMove : 0;
+        gizmoWindowFlags    = ImGui::IsWindowHovered() && ImGui::IsMouseHoveringRect(window->InnerRect.Min, window->InnerRect.Max) ? ImGuiWindowFlags_NoMove : 0;
     }
     else
     {

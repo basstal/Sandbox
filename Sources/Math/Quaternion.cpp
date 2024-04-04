@@ -1,4 +1,7 @@
+#include "pch.hpp"
+
 #include "Quaternion.hpp"
+
 #include "Generated/Quaternion.rfks.h"
 
 void Sandbox::Quaternion::Sync()
@@ -18,7 +21,4 @@ glm::quat Sandbox::Quaternion::ToGlmQuaternion()
     return m_quat;
 }
 
-glm::mat4 Sandbox::Quaternion::ToGlmMatrix4x4()
-{
-    return glm::mat4_cast(m_quat);
-}
+glm::mat4 Sandbox::Quaternion::ToGlmMatrix4x4() { return glm::mat4_cast(m_quat); }

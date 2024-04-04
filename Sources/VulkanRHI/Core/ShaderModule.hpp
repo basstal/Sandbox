@@ -1,8 +1,8 @@
 ﻿#pragma once
+#include <glslang/Public/ShaderLang.h>
 #include <map>
 #include <memory>
 #include <string>
-#include <glslang/Public/ShaderLang.h>
 
 #include "vulkan/vulkan_core.h"
 
@@ -14,12 +14,12 @@ namespace Sandbox
      */
     struct ShaderUniformReflection
     {
-        int32_t binding;
-        uint32_t bytes;
-        int32_t glDefineType;
-        int32_t offset;
-        uint32_t descriptorCount;
-        VkDescriptorType descriptorType;
+        int32_t            binding;
+        uint32_t           bytes;
+        int32_t            glDefineType;
+        int32_t            offset;
+        uint32_t           descriptorCount;
+        VkDescriptorType   descriptorType;
         VkShaderStageFlags stageFlags;
     };
 
@@ -28,12 +28,12 @@ namespace Sandbox
      */
     struct ShaderUniformBlockReflection
     {
-        int32_t binding;
-        uint32_t bytes;
-        VkShaderStageFlags stageFlags;
-        uint32_t descriptorCount;
-        VkDescriptorType descriptorType;
-        bool isLayoutPushConstant;
+        int32_t                                        binding;
+        uint32_t                                       bytes;
+        VkShaderStageFlags                             stageFlags;
+        uint32_t                                       descriptorCount;
+        VkDescriptorType                               descriptorType;
+        bool                                           isLayoutPushConstant;
         std::map<std::string, ShaderUniformReflection> uniforms;
     };
 
@@ -45,7 +45,7 @@ namespace Sandbox
         uint32_t layoutSet;
         uint32_t layoutLocation;
         uint32_t bytes;
-        int32_t glDefineType;
+        int32_t  glDefineType;
     };
 
     class Device;
@@ -59,6 +59,7 @@ namespace Sandbox
         ~ShaderModule();
 
         void Cleanup();
+        void Compile(const ShaderSource& glslSource, const std::string&preamble, VkShaderStageFlagBits stage);
 
         void ReflectDescriptorSetLayoutBindings(std::vector<VkDescriptorSetLayoutBinding>& vkDescriptorSetLayoutBindings, std::map<std::string, uint32_t>& nameToBinding,
                                                 std::map<uint32_t, VkDescriptorSetLayoutBinding>& bindingToLayoutBinding) const;
@@ -100,7 +101,7 @@ namespace Sandbox
         uint32_t ComputeBytes(const glslang::TType* tType);
 
         std::shared_ptr<Device> m_device;
-        bool m_cleaned = false;
+        bool                    m_cleaned = false;
 
         /**
          * \brief 保存统一缓冲区名称反射

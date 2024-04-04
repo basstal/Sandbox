@@ -25,7 +25,7 @@ public class FileReference : FileSystemBase, IEquatable<FileReference>, ICompara
             return false;
         }
 
-        return left.FullName.Equals(right.FullName, Comparison);
+        return Path.GetFullPath(left.FullName).Equals(Path.GetFullPath(right.FullName), Comparison);
     }
 
     public static bool operator !=(FileReference? left, FileReference? right)
@@ -72,7 +72,10 @@ public class FileReference : FileSystemBase, IEquatable<FileReference>, ICompara
     {
         // TODO: pattern match
 
-        return new[] { this };
+        return new[]
+        {
+            this
+        };
     }
 
     public override bool Exists()

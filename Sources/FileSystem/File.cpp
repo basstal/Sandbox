@@ -2,18 +2,11 @@
 
 #include "File.hpp"
 
-
 #include "Directory.hpp"
 
-Sandbox::File::File(const std::string& inPath)
-{
-    path = std::filesystem::path(inPath);
-}
+Sandbox::File::File(const std::string& inPath) { path = std::filesystem::path(inPath); }
 
-std::string Sandbox::File::GetName() const
-{
-    return path.filename().string();
-}
+std::string Sandbox::File::GetName() const { return path.filename().string(); }
 
 std::string Sandbox::File::GetNameWithoutExtension() const
 {
@@ -27,17 +20,8 @@ std::string Sandbox::File::ReadFile()
     return std::string(std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>());
 }
 
-Sandbox::Directory Sandbox::File::Parent() const
-{
-    return Directory(path.parent_path().string());
-}
+Sandbox::Directory Sandbox::File::Parent() const { return Directory(path.parent_path().string()); }
 
-bool Sandbox::File::Exists() const
-{
-    return std::filesystem::exists(path) && std::filesystem::is_regular_file(path);
-}
+bool Sandbox::File::Exists() const { return std::filesystem::exists(path) && std::filesystem::is_regular_file(path); }
 
-void Sandbox::File::CreateDirectory() const
-{
-    std::filesystem::create_directories(path.parent_path());
-}
+void Sandbox::File::CreateDirectory() const { std::filesystem::create_directories(path.parent_path()); }

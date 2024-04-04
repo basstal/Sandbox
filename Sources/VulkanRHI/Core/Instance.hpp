@@ -26,4 +26,4 @@ namespace Sandbox
     private:
         bool m_cleaned = false;
     };
-}
+}  // namespace Sandbox

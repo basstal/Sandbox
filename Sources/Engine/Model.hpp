@@ -1,9 +1,9 @@
 ﻿#pragma once
+#include <glm/vec2.hpp>
+#include <glm/vec3.hpp>
 #include <memory>
 #include <string>
 #include <vector>
-#include <glm/vec3.hpp>
-#include <glm/vec2.hpp>
 
 struct aiScene;
 struct aiMesh;
@@ -35,7 +35,7 @@ namespace Sandbox
     public:
         Model(const std::string& path);
 
-        std::vector<Vertex> vertices;
+        std::vector<Vertex>   vertices;
         std::vector<uint32_t> indices;
 
     private:
@@ -43,4 +43,4 @@ namespace Sandbox
 
         void ProcessMesh(aiMesh* mesh, const aiScene* scene);
     };
-}
+}  // namespace Sandbox

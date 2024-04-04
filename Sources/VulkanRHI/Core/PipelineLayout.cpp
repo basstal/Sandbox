@@ -4,8 +4,8 @@
 
 #include "DescriptorSetLayout.hpp"
 #include "Device.hpp"
-#include "ShaderModule.hpp"
 #include "FileSystem/Logger.hpp"
+#include "ShaderModule.hpp"
 
 Sandbox::PipelineLayout::PipelineLayout(const std::shared_ptr<Device>& device, const std::vector<std::shared_ptr<ShaderModule>>& shaderModules,
                                         const std::vector<uint32_t>& dynamicBindings)
@@ -19,11 +19,11 @@ Sandbox::PipelineLayout::PipelineLayout(const std::shared_ptr<Device>& device, c
         shaderModule->ReflectPushConstantRanges(pushConstantRanges);
     }
     VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
-    pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-    pipelineLayoutInfo.setLayoutCount = 1;
-    pipelineLayoutInfo.pSetLayouts = &descriptorSetLayout->vkDescriptorSetLayout;
+    pipelineLayoutInfo.sType                  = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+    pipelineLayoutInfo.setLayoutCount         = 1;
+    pipelineLayoutInfo.pSetLayouts            = &descriptorSetLayout->vkDescriptorSetLayout;
     pipelineLayoutInfo.pushConstantRangeCount = static_cast<uint32_t>(pushConstantRanges.size());
-    pipelineLayoutInfo.pPushConstantRanges = pushConstantRanges.data();
+    pipelineLayoutInfo.pPushConstantRanges    = pushConstantRanges.data();
 
     if (vkCreatePipelineLayout(m_device->vkDevice, &pipelineLayoutInfo, nullptr, &vkPipelineLayout) != VK_SUCCESS)
     {
@@ -31,10 +31,7 @@ Sandbox::PipelineLayout::PipelineLayout(const std::shared_ptr<Device>& device, c
     }
 }
 
-Sandbox::PipelineLayout::~PipelineLayout()
-{
-    Cleanup();
-}
+Sandbox::PipelineLayout::~PipelineLayout() { Cleanup(); }
 
 void Sandbox::PipelineLayout::Cleanup()
 {

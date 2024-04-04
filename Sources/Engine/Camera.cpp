@@ -1,8 +1,6 @@
 ﻿#include "pch.hpp"
 
-#include "FileSystem/Directory.hpp"
 #include "Generated/Camera.rfks.h"
-
 #include "Misc/GlmExtensions.hpp"
 
 /**
@@ -18,8 +16,8 @@ Sandbox::Camera::Camera(glm::vec3 inWorldUp, float inAspectRatio)
 {
     // inProperty->aspectRatio = aspectRatio;
     aspectRatio = inAspectRatio;
-    worldUp = inWorldUp;
-    worldUp1 = inWorldUp;
+    worldUp     = inWorldUp;
+    worldUp1    = inWorldUp;
     // property = inProperty;
     UpdateCameraVectors();
 }
@@ -35,13 +33,13 @@ glm::mat4 Sandbox::Camera::GetProjectionMatrix() { return glm::perspective(glm::
 
 void Sandbox::Camera::ProcessKeyboard(ECameraMovement direction, float deltaTime)
 {
-    float velocity = SPEED * deltaTime;
+    float         velocity = SPEED * deltaTime;
     const Vector3 directionMapping[ECameraMovement::MAX]{
-        front1,   // FORWARD
+        front1,  // FORWARD
         -front1,  // BACKWARD
         -right1,  // LEFT
-        right1,   // RIGHT
-        worldUp1, // UP
+        right1,  // RIGHT
+        worldUp1,  // UP
     };
     this->position += directionMapping[direction] * velocity;
 }
@@ -85,7 +83,7 @@ void Sandbox::Camera::ProcessMouseMovement(float xOffset, float yOffset, bool co
 
 void Sandbox::Camera::Reset()
 {
-    position = Vector3(0.0f);
+    position  = Vector3(0.0f);
     rotationX = 0.0f;
     rotationZ = 0.0f;
     UpdateCameraVectors();
@@ -93,19 +91,19 @@ void Sandbox::Camera::Reset()
 
 void Sandbox::Camera::UpdateCameraVectors()
 {
-    auto rx = glm::radians(this->rotationX);
-    auto rz = glm::radians(this->rotationZ);
+    auto rx    = glm::radians(this->rotationX);
+    auto rz    = glm::radians(this->rotationZ);
     auto cosrx = cos(rx);
     // Calculate the new Front vector
     front.x = sin(rz) * cosrx;
     front.y = cos(rz) * cosrx;
     front.z = sin(rx);
-    front = glm::normalize(front);
-    front1 = front;
+    front   = glm::normalize(front);
+    front1  = front;
 
     // Assuming WorldUp is glm::vec3(0, 0, 1) since Z is up
-    right = glm::normalize(glm::cross(front, worldUp)); // Recalculate the Right vector
+    right  = glm::normalize(glm::cross(front, worldUp));  // Recalculate the Right vector
     right1 = right;
-    up = glm::normalize(glm::cross(right, front)); // Recalculate the Up vector, it should be noted that cross product order is changed to maintain the right-hand rule
+    up     = glm::normalize(glm::cross(right, front));  // Recalculate the Up vector, it should be noted that cross product order is changed to maintain the right-hand rule
     up1 = up;
 }

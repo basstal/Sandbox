@@ -29,12 +29,12 @@ void Sandbox::Logger::RedirectOutputToFile(const std::string& filePath)
         return;
     }
     m_outputStream = &m_fileStream;
-    m_useColor = false; // 文件输出不使用颜色
+    m_useColor     = false;  // 文件输出不使用颜色
 }
 
 void Sandbox::Logger::SetOutputToConsole()
 {
     CloseLogFile();
     m_outputStream = &std::cout;
-    m_useColor = true; // 控制台输出使用颜色
+    m_useColor     = true; // 控制台输出使用颜色
 }

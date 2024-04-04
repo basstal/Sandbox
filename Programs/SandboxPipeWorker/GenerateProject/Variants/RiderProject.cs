@@ -1,8 +1,9 @@
 ﻿using SandboxPipeWorker.Common;
+using SandboxPipeWorker.GenerateProject.CppProject;
 
-namespace SandboxPipeWorker.GenerateProject.CppProject;
+namespace SandboxPipeWorker.GenerateProject.Variants;
 
-public class VcxProject : Project
+public class RiderProject : Project
 {
 
     public FileReference? GeneratedProjectPath;
@@ -19,6 +20,7 @@ public class VcxProject : Project
             return CreateGuidFromPath(ProjectDirectory!.FullName).ToString(); // 没有对应项目文件则使用项目路径
         }
     }
+
     public static readonly Dictionary<ProjectType, string> ProjectTypeExtensionMapping = new()
     {
         {
@@ -29,9 +31,9 @@ public class VcxProject : Project
         },
     };
 
-    public VcxProject(string name) : base(name)
+    public RiderProject(string name) : base(name)
     {
-        ProjectInstanceType = typeof(VcxProject);
+        ProjectInstanceType = typeof(RiderProject);
     }
 
     public void GenerateVcxproj()
@@ -46,7 +48,9 @@ public class VcxProject : Project
         var additionalDependencies = PrimaryCompileEnvironment.ProjectDependencies.SelectMany(module => module.PrecompileEnvironment?.LibPaths ?? FileReference.EmptyList).ToList();
         var dllPaths = PrimaryCompileEnvironment.ProjectDependencies.SelectMany(module => module.PrecompileEnvironment?.DllPaths ?? FileReference.EmptyList).ToList();
         cppSourceInfos.AddRange(
-            PrimaryCompileEnvironment.SourceFiles.Select(file => new CppSourceInfo(file.GetRelativePath(sourceRelativeTo), additionalIncludeDirectoriesParameter)));
+            PrimaryCompileEnvironment.SourceFiles
+                .Where(file => file != PrecompileEnvironment?.PrecompiledSourceFile) // 过滤掉预编译头文件
+                .Select(file => new CppSourceInfo(file.GetRelativePath(sourceRelativeTo), additionalIncludeDirectoriesParameter)));
         foreach (var dependency in PrimaryCompileEnvironment.ProjectDependencies.Where(project => project.CppSubType != CppSubType.None))
         {
             includeDirectoryReferences.AddRange(dependency.PrimaryCompileEnvironment.AdditionalIncludePaths);
@@ -72,7 +76,7 @@ public class VcxProject : Project
         var referenceProjects = PrimaryCompileEnvironment.ProjectDependencies.Where(dependProject => dependProject.ProjectType == ProjectType.Cpp)
             .Select(dependProject =>
             {
-                if (dependProject is VcxProject vcxProject)
+                if (dependProject is RiderProject vcxProject)
                 {
                     return new
                     {
@@ -81,10 +85,11 @@ public class VcxProject : Project
                         RelativePathToProject = vcxProject.GeneratedProjectPath!.GetRelativePath(ProjectDirectory.FullName)
                     };
                 }
+
                 throw new Exception("Project is not VcxProject");
             });
         RawFiles.Add(ParsedFile!);
-        RawFiles.Add(Sandbox.RootDirectory.GetFile(".editorconfig"));
+        // RawFiles.Add(Sandbox.RootDirectory.GetFile(".editorconfig"));
         // 添加着色器源码
         RawFiles.AddRange(ProjectDirectory.GetFiles("*.frag"));
         RawFiles.AddRange(ProjectDirectory.GetFiles("*.vert"));
@@ -107,7 +112,8 @@ public class VcxProject : Project
         };
 
         // TODO:Only windows have Dbghelp.lib
-        var dependLibs = new List<string>{
+        var dependLibs = new List<string>
+        {
             "Dbghelp.lib"
         };
         string primaryProjectFile = vcxprojTemplate.Render(new
@@ -116,7 +122,14 @@ public class VcxProject : Project
             AllowMultiProcessorCompilation = true,
             Project = this,
             CppSourceInfos = cppSourceInfos,
-            RelativeHeaderPaths = PrimaryCompileEnvironment.IncludePaths.Select(include => include.GetRelativePath(sourceRelativeTo)),
+            RelativeHeaderPaths = PrimaryCompileEnvironment.IncludePaths
+                .Where(include => include != PrecompileEnvironment?.PrecompiledHeaderFile) // 过滤掉预编译头文件
+                .Select(include => include.GetRelativePath(sourceRelativeTo)),
+            PrecompiledHeader = new
+            {
+                Header = PrecompileEnvironment?.PrecompiledHeaderFile?.GetRelativePath(ProjectDirectory.FullName),
+                Source = PrecompileEnvironment?.PrecompiledSourceFile?.GetRelativePath(ProjectDirectory.FullName),
+            },
             Configurations = new[]
             {
                 "Debug", "Release"
@@ -146,7 +159,7 @@ public class VcxProject : Project
     {
         foreach (var subProject in SubProjects)
         {
-            if (!(subProject is VcxProject vcxProject))
+            if (!(subProject is RiderProject vcxProject))
             {
                 throw new Exception("SubProject is not VcxProject");
             }
@@ -165,6 +178,7 @@ public class VcxProject : Project
         {
             fileName += ProjectTypeExtensionMapping[ProjectType];
         }
+
         GeneratedProjectPath = fileReference.GetDirectory().GetFile(fileName);
     }
 

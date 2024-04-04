@@ -1,6 +1,7 @@
 ﻿using SandboxPipeWorker.Common;
+using SandboxPipeWorker.GenerateProject.CppProject;
 
-namespace SandboxPipeWorker.GenerateProject.CppProject;
+namespace SandboxPipeWorker.GenerateProject.Variants;
 
 public class CMakeProject : Project
 {
@@ -76,7 +77,7 @@ public class CMakeProject : Project
                 // dependProject.Guid,
             });
         RawFiles.Add(ParsedFile!);
-        RawFiles.Add(Sandbox.RootDirectory.GetFile(".editorconfig"));
+        // RawFiles.Add(Sandbox.RootDirectory.GetFile(".editorconfig"));
         // 添加着色器源码
         RawFiles.AddRange(ProjectDirectory.GetFiles("*.frag"));
         RawFiles.AddRange(ProjectDirectory.GetFiles("*.vert"));

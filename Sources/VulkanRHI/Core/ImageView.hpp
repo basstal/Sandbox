@@ -1,6 +1,5 @@
 ﻿#pragma once
 #include <memory>
-
 #include <vulkan/vulkan.hpp>
 
 
@@ -22,11 +21,11 @@ namespace Sandbox
 
         VkImageView vkImageView;
 
-        VkFormat format;
+        VkFormat                format;
         VkImageSubresourceRange subresourceRange;
 
     private:
         std::shared_ptr<Device> m_device;
-        bool m_cleaned = false;
+        bool                    m_cleaned = false;
     };
-}
+}  // namespace Sandbox

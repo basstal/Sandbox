@@ -1,9 +1,9 @@
 ﻿#pragma once
 #include <format>
-#include <stdexcept>
-#include <string>
 #include <fstream>
 #include <iostream>
+#include <stdexcept>
+#include <string>
 #include <vector>
 
 namespace Sandbox
@@ -36,8 +36,8 @@ namespace Sandbox
         };
 
         /**
-     * \brief 重定向输出到文件
-     */
+         * \brief 重定向输出到文件
+         */
         static void RedirectOutputToFile(const std::string& filePath);
 
         /**
@@ -98,31 +98,31 @@ namespace Sandbox
     template <typename... Args>
     void Logger::Log(LoggerLevel level, const std::string& format, Args&&... args)
     {
-        auto message = std::vformat(format, std::make_format_args(std::forward<Args>(args)...));
-        const char* prefix = "";
+        auto        message   = std::vformat(format, std::make_format_args(std::forward<Args>(args)...));
+        const char* prefix    = "";
         const char* colorCode = "";
         switch (level)
         {
-        case LevelFatal:
-            prefix = "[FATAL]: ";
-            colorCode = "\x1b[31m"; // 红色
-            break;
-        case LevelError:
-            prefix = "[ERROR]: ";
-            colorCode = "\x1b[31m"; // 红色
-            break;
-        case LevelWarning:
-            prefix = "[WARNING]: ";
-            colorCode = "\x1b[33m"; // 黄色
-            break;
-        case LevelInfo:
-            prefix = "[INFO]: ";
-            colorCode = "\x1b[32m"; // 绿色
-            break;
-        case LevelDebug:
-            prefix = "[DEBUG]: ";
-            colorCode = "";
-            break;
+            case LevelFatal:
+                prefix    = "[FATAL]: ";
+                colorCode = "\x1b[31m";  // 红色
+                break;
+            case LevelError:
+                prefix    = "[ERROR]: ";
+                colorCode = "\x1b[31m";  // 红色
+                break;
+            case LevelWarning:
+                prefix    = "[WARNING]: ";
+                colorCode = "\x1b[33m";  // 黄色
+                break;
+            case LevelInfo:
+                prefix    = "[INFO]: ";
+                colorCode = "\x1b[32m";  // 绿色
+                break;
+            case LevelDebug:
+                prefix    = "[DEBUG]: ";
+                colorCode = "";
+                break;
         }
 
         if (m_useColor)
@@ -172,7 +172,7 @@ namespace Sandbox
     {
         Log(LevelFatal, format, std::forward<Args>(args)...);
     }
-}
+}  // namespace Sandbox
 
 #define LOGI(...) Sandbox::Logger::Info(__VA_ARGS__);
 #define LOGW(...) Sandbox::Logger::Warning(__VA_ARGS__);

@@ -10,71 +10,87 @@
 #include "VulkanRHI/Rendering/PipelineState.hpp"
 
 
-const std::map<VkShaderStageFlagBits, EShLanguage> STAGE_TO_LANGUAGE = {
-    {VK_SHADER_STAGE_VERTEX_BIT, EShLangVertex},
-    {VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT, EShLangTessControl},
-    {VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT, EShLangTessEvaluation},
-    {VK_SHADER_STAGE_GEOMETRY_BIT, EShLangGeometry},
-    {VK_SHADER_STAGE_FRAGMENT_BIT, EShLangFragment},
-    {VK_SHADER_STAGE_COMPUTE_BIT, EShLangCompute}
-};
+const std::map<VkShaderStageFlagBits, EShLanguage> STAGE_TO_LANGUAGE = {{VK_SHADER_STAGE_VERTEX_BIT, EShLangVertex},
+                                                                        {VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT, EShLangTessControl},
+                                                                        {VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT, EShLangTessEvaluation},
+                                                                        {VK_SHADER_STAGE_GEOMETRY_BIT, EShLangGeometry},
+                                                                        {VK_SHADER_STAGE_FRAGMENT_BIT, EShLangFragment},
+                                                                        {VK_SHADER_STAGE_COMPUTE_BIT, EShLangCompute}};
+
 const std::map<glslang::TStorageQualifier, VkDescriptorType> STORAGE_QUALIFIER_TO_DESCRIPTOR_TYPE = {
     {glslang::EvqUniform, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER},
     {glslang::EvqBuffer, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER},
 };
 
 const std::map<int32_t, VkDescriptorType> GL_DEFINE_TYPE_TO_DESCRIPTOR_TYPE = {
-    {GL_SAMPLER_2D, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER}, // GL_SAMPLER_2D
-    {GL_IMAGE_2D, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER}, // GL_IMAGE_2D
-    {GL_SAMPLER_2D_MULTISAMPLE, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER}, // GL_SAMPLER_2D_MULTISAMPLE
-    {GL_IMAGE_2D_MULTISAMPLE, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER}, // GL_IMAGE_2D_MULTISAMPLE
-    {GL_SAMPLER_CUBE, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER}, // GL_SAMPLER_CUBE
-    {GL_IMAGE_CUBE, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER}, // GL_IMAGE_CUBE
-    {GL_IMAGE_CUBE_MAP_ARRAY, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER}, // GL_IMAGE_CUBE_MAP_ARRAY
+    {GL_SAMPLER_2D, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER},  // GL_SAMPLER_2D
+    {GL_IMAGE_2D, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER},  // GL_IMAGE_2D
+    {GL_SAMPLER_2D_MULTISAMPLE, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER},  // GL_SAMPLER_2D_MULTISAMPLE
+    {GL_IMAGE_2D_MULTISAMPLE, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER},  // GL_IMAGE_2D_MULTISAMPLE
+    {GL_SAMPLER_CUBE, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER},  // GL_SAMPLER_CUBE
+    {GL_IMAGE_CUBE, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER},  // GL_IMAGE_CUBE
+    {GL_IMAGE_CUBE_MAP_ARRAY, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER},  // GL_IMAGE_CUBE_MAP_ARRAY
 };
 
 const std::map<int32_t, VkFormat> GL_DEFINE_TYPE_TO_FORMAT = {
-    {GL_FLOAT, VK_FORMAT_R32_SFLOAT}, // GL_FLOAT
-    {GL_FLOAT_VEC2, VK_FORMAT_R32G32_SFLOAT}, // GL_FLOAT_VEC2
-    {GL_FLOAT_VEC3, VK_FORMAT_R32G32B32_SFLOAT}, // GL_FLOAT_VEC3
-    {GL_FLOAT_VEC4, VK_FORMAT_R32G32B32A32_SFLOAT}, // GL_FLOAT_VEC4
-    {GL_INT, VK_FORMAT_R32_SINT}, // GL_INT
-    {GL_INT_VEC2, VK_FORMAT_R32G32_SINT}, // GL_INT_VEC2
-    {GL_INT_VEC3, VK_FORMAT_R32G32B32_SINT}, // GL_INT_VEC3
-    {GL_INT_VEC4, VK_FORMAT_R32G32B32A32_SINT}, // GL_INT_VEC4
-    {GL_UNSIGNED_INT, VK_FORMAT_R32_UINT}, // GL_UNSIGNED_INT
-    {GL_UNSIGNED_INT_VEC2, VK_FORMAT_R32G32_UINT}, // GL_UNSIGNED_INT_VEC2
-    {GL_UNSIGNED_INT_VEC3, VK_FORMAT_R32G32B32_UINT}, // GL_UNSIGNED_INT_VEC3
-    {GL_UNSIGNED_INT_VEC4, VK_FORMAT_R32G32B32A32_UINT}, // GL_UNSIGNED_INT_VEC4
-    {GL_BOOL, VK_FORMAT_R32_SINT}, // GL_BOOL
-    {GL_BOOL_VEC2, VK_FORMAT_R32G32_SINT}, // GL_BOOL_VEC2
-    {GL_BOOL_VEC3, VK_FORMAT_R32G32B32_SINT}, // GL_BOOL_VEC3
-    {GL_BOOL_VEC4, VK_FORMAT_R32G32B32A32_SINT}, // GL_BOOL_VEC4
-    {GL_FLOAT_MAT2, VK_FORMAT_R32G32_SFLOAT}, // GL_FLOAT_MAT2
-    {GL_FLOAT_MAT3, VK_FORMAT_R32G32B32_SFLOAT}, // GL_FLOAT_MAT3
-    {GL_FLOAT_MAT4, VK_FORMAT_R32G32B32A32_SFLOAT}, // GL_FLOAT_MAT4
-    {GL_FLOAT_MAT2x3, VK_FORMAT_R32G32_SFLOAT}, // GL_FLOAT_MAT2x3
-    {GL_FLOAT_MAT2x4, VK_FORMAT_R32G32_SFLOAT}, // GL_FLOAT_MAT2x4
+    {GL_FLOAT, VK_FORMAT_R32_SFLOAT},  // GL_FLOAT
+    {GL_FLOAT_VEC2, VK_FORMAT_R32G32_SFLOAT},  // GL_FLOAT_VEC2
+    {GL_FLOAT_VEC3, VK_FORMAT_R32G32B32_SFLOAT},  // GL_FLOAT_VEC3
+    {GL_FLOAT_VEC4, VK_FORMAT_R32G32B32A32_SFLOAT},  // GL_FLOAT_VEC4
+    {GL_INT, VK_FORMAT_R32_SINT},  // GL_INT
+    {GL_INT_VEC2, VK_FORMAT_R32G32_SINT},  // GL_INT_VEC2
+    {GL_INT_VEC3, VK_FORMAT_R32G32B32_SINT},  // GL_INT_VEC3
+    {GL_INT_VEC4, VK_FORMAT_R32G32B32A32_SINT},  // GL_INT_VEC4
+    {GL_UNSIGNED_INT, VK_FORMAT_R32_UINT},  // GL_UNSIGNED_INT
+    {GL_UNSIGNED_INT_VEC2, VK_FORMAT_R32G32_UINT},  // GL_UNSIGNED_INT_VEC2
+    {GL_UNSIGNED_INT_VEC3, VK_FORMAT_R32G32B32_UINT},  // GL_UNSIGNED_INT_VEC3
+    {GL_UNSIGNED_INT_VEC4, VK_FORMAT_R32G32B32A32_UINT},  // GL_UNSIGNED_INT_VEC4
+    {GL_BOOL, VK_FORMAT_R32_SINT},  // GL_BOOL
+    {GL_BOOL_VEC2, VK_FORMAT_R32G32_SINT},  // GL_BOOL_VEC2
+    {GL_BOOL_VEC3, VK_FORMAT_R32G32B32_SINT},  // GL_BOOL_VEC3
+    {GL_BOOL_VEC4, VK_FORMAT_R32G32B32A32_SINT},  // GL_BOOL_VEC4
+    {GL_FLOAT_MAT2, VK_FORMAT_R32G32_SFLOAT},  // GL_FLOAT_MAT2
+    {GL_FLOAT_MAT3, VK_FORMAT_R32G32B32_SFLOAT},  // GL_FLOAT_MAT3
+    {GL_FLOAT_MAT4, VK_FORMAT_R32G32B32A32_SFLOAT},  // GL_FLOAT_MAT4
+    {GL_FLOAT_MAT2x3, VK_FORMAT_R32G32_SFLOAT},  // GL_FLOAT_MAT2x3
+    {GL_FLOAT_MAT2x4, VK_FORMAT_R32G32_SFLOAT},  // GL_FLOAT_MAT2x4
 };
 
 Sandbox::ShaderModule::ShaderModule(const std::shared_ptr<Device>& device, const ShaderSource& glslSource, const std::string& preamble, VkShaderStageFlagBits stage)
 {
     m_device = device;
+    Compile(glslSource, preamble, stage);
+}
+
+Sandbox::ShaderModule::~ShaderModule() { Cleanup(); }
+
+void Sandbox::ShaderModule::Cleanup()
+{
+    if (m_cleaned)
+    {
+        return;
+    }
+    vkDestroyShaderModule(m_device->vkDevice, vkShaderModule, nullptr);
+    m_cleaned = true;
+}
+
+void Sandbox::ShaderModule::Compile(const ShaderSource& glslSource, const std::string& preamble, VkShaderStageFlagBits stage)
+{
     if (!STAGE_TO_LANGUAGE.contains(stage))
     {
-        Logger::Fatal("Stage " + std::to_string(stage) + " not supported");
+        LOGF("Stage {} not supported", std::to_string(stage))
     }
-    glslang::TProgram program;
-    glslang::TShader shader(STAGE_TO_LANGUAGE.at(stage));
+    glslang::TProgram       program;
+    glslang::TShader        shader(STAGE_TO_LANGUAGE.at(stage));
     const TBuiltInResource* resource = GetDefaultResources();
 
-    std::string shaderName = glslSource.filePath;
-    std::string shaderSource = glslSource.source;
-    const char* shaderNameCStr = shaderName.c_str();
+    std::string shaderName       = glslSource.filePath;
+    std::string shaderSource     = glslSource.source;
+    const char* shaderNameCStr   = shaderName.c_str();
     const char* shaderSourceCStr = shaderSource.c_str();
-    auto vulkanVersion = glslang::EShTargetVulkan_1_3;
-    shader.setStringsWithLengthsAndNames(&shaderSourceCStr, nullptr, &shaderNameCStr, 1);
+    auto        vulkanVersion    = glslang::EShTargetVulkan_1_3;
     shader.setPreamble(preamble.c_str());
+    shader.setStringsWithLengthsAndNames(&shaderSourceCStr, nullptr, &shaderNameCStr, 1);
     shader.setEnvInput(glslang::EShSourceGlsl, shader.getStage(), glslang::EShClientVulkan, 110);
     shader.setEnvClient(glslang::EShClientVulkan, vulkanVersion);
     shader.setEnvTarget(glslang::EShTargetSpv, glslang::EShTargetSpv_1_0);
@@ -84,21 +100,21 @@ Sandbox::ShaderModule::ShaderModule(const std::shared_ptr<Device>& device, const
     messages = static_cast<EShMessages>(messages | EShMsgDebugInfo);
 #endif
     ShaderIncluder includer;
-    std::string outputs;
+    std::string    outputs;
     if (!shader.preprocess(resource, vulkanVersion, ENoProfile, false, false, messages, &outputs, includer))
     {
-        Logger::Fatal("GLSL Preprocessing failed for " + shaderName + ":\n" + shader.getInfoLog() + '\n' + shader.getInfoDebugLog());
+        LOGF("GLSL Preprocessing failed for {} : \n{}\n{}", shaderName, shader.getInfoLog(), shader.getInfoDebugLog())
     }
     if (!shader.parse(resource, vulkanVersion, true, messages, includer))
     {
-        Logger::Fatal("GLSL Parsing failed for " + shaderName + ":\n" + shader.getInfoLog() + '\n' + shader.getInfoDebugLog());
+        LOGF("GLSL Parsing failed for {} :\n{}\n{}", shaderName, shader.getInfoLog(), shader.getInfoDebugLog())
     }
 
     program.addShader(&shader);
 
     if (!program.link(messages) || !program.mapIO())
     {
-        Logger::Fatal("GLSL Linking failed for " + shaderName + ":\n" + program.getInfoLog() + '\n' + program.getInfoDebugLog());
+        LOGF("GLSL Linking failed for {} :\n{}\n{}", shaderName, program.getInfoLog(), program.getInfoDebugLog())
     }
 
     program.buildReflection();
@@ -116,7 +132,7 @@ Sandbox::ShaderModule::ShaderModule(const std::shared_ptr<Device>& device, const
     }
     for (int32_t i = 0; i < program.getNumLiveAttributes(); i++)
     {
-        //NOTE: 由于 死代码消除（DCE） 机制，无法反射未使用的属性，这会导致 vulkan 报错因为描述符资源无法与 shader 对齐而报错，目前解决方案为修改 shader 删除未使用的属性
+        // NOTE: 由于 死代码消除（DCE） 机制，无法反射未使用的属性，这会导致 vulkan 报错因为描述符资源无法与 shader 对齐而报错，目前解决方案为修改 shader 删除未使用的属性
         auto attribute = program.getPipeInput(i);
         LoadAttribute(attribute);
     }
@@ -124,46 +140,31 @@ Sandbox::ShaderModule::ShaderModule(const std::shared_ptr<Device>& device, const
     glslang::SpvOptions spvOptions;
 #if defined(_DEBUG)
     spvOptions.generateDebugInfo = true;
-    spvOptions.disableOptimizer = true;
-    spvOptions.optimizeSize = false;
+    spvOptions.disableOptimizer  = true;
+    spvOptions.optimizeSize      = false;
 #else
-	spvOptions.generateDebugInfo = false;
-	spvOptions.disableOptimizer = false;
-	spvOptions.optimizeSize = true;
+    spvOptions.generateDebugInfo = false;
+    spvOptions.disableOptimizer  = false;
+    spvOptions.optimizeSize      = true;
 #endif
 
-    spv::SpvBuildLogger logger;
+    spv::SpvBuildLogger   logger;
     std::vector<uint32_t> spirv;
     glslang::GlslangToSpv(*program.getIntermediate(shader.getStage()), spirv, &logger, &spvOptions);
 
     VkShaderModuleCreateInfo createInfo{};
-    createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+    createInfo.sType    = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
     createInfo.codeSize = spirv.size() * sizeof(uint32_t);
-    createInfo.pCode = spirv.data();
+    createInfo.pCode    = spirv.data();
 
     if (vkCreateShaderModule(m_device->vkDevice, &createInfo, nullptr, &vkShaderModule) != VK_SUCCESS)
     {
-        Logger::Fatal("Failed to create shader module!");
+        LOGF("Failed to create shader module!")
     }
     vkShaderStage = stage;
 }
-
-Sandbox::ShaderModule::~ShaderModule()
-{
-    Cleanup();
-}
-
-void Sandbox::ShaderModule::Cleanup()
-{
-    if (m_cleaned)
-    {
-        return;
-    }
-    vkDestroyShaderModule(m_device->vkDevice, vkShaderModule, nullptr);
-    m_cleaned = true;
-}
-
-void Sandbox::ShaderModule::ReflectDescriptorSetLayoutBindings(std::vector<VkDescriptorSetLayoutBinding>& vkDescriptorSetLayoutBindings, std::map<std::string, uint32_t>& nameToBinding,
+void Sandbox::ShaderModule::ReflectDescriptorSetLayoutBindings(std::vector<VkDescriptorSetLayoutBinding>&        vkDescriptorSetLayoutBindings,
+                                                               std::map<std::string, uint32_t>&                  nameToBinding,
                                                                std::map<uint32_t, VkDescriptorSetLayoutBinding>& bindingToLayoutBinding) const
 {
     for (const auto& [uniformBlockName, uniformBlock] : m_uniformBlocks)
@@ -172,11 +173,11 @@ void Sandbox::ShaderModule::ReflectDescriptorSetLayoutBindings(std::vector<VkDes
         {
             nameToBinding[uniformBlockName] = uniformBlock.binding;
             VkDescriptorSetLayoutBinding layoutBinding{};
-            layoutBinding.binding = uniformBlock.binding;
-            layoutBinding.descriptorType = uniformBlock.descriptorType;
-            layoutBinding.descriptorCount = uniformBlock.descriptorCount;
-            layoutBinding.stageFlags = uniformBlock.stageFlags;
-            layoutBinding.pImmutableSamplers = nullptr; // Optional
+            layoutBinding.binding            = uniformBlock.binding;
+            layoutBinding.descriptorType     = uniformBlock.descriptorType;
+            layoutBinding.descriptorCount    = uniformBlock.descriptorCount;
+            layoutBinding.stageFlags         = uniformBlock.stageFlags;
+            layoutBinding.pImmutableSamplers = nullptr;  // Optional
             vkDescriptorSetLayoutBindings.emplace_back(layoutBinding);
             bindingToLayoutBinding.emplace(uniformBlock.binding, layoutBinding);
         }
@@ -185,11 +186,11 @@ void Sandbox::ShaderModule::ReflectDescriptorSetLayoutBindings(std::vector<VkDes
     {
         nameToBinding[uniformName] = uniform.binding;
         VkDescriptorSetLayoutBinding layoutBinding{};
-        layoutBinding.binding = uniform.binding;
-        layoutBinding.descriptorType = uniform.descriptorType;
-        layoutBinding.descriptorCount = uniform.descriptorCount;
-        layoutBinding.stageFlags = uniform.stageFlags;
-        layoutBinding.pImmutableSamplers = nullptr; // Optional
+        layoutBinding.binding            = uniform.binding;
+        layoutBinding.descriptorType     = uniform.descriptorType;
+        layoutBinding.descriptorCount    = uniform.descriptorCount;
+        layoutBinding.stageFlags         = uniform.stageFlags;
+        layoutBinding.pImmutableSamplers = nullptr;  // Optional
         vkDescriptorSetLayoutBindings.emplace_back(layoutBinding);
         bindingToLayoutBinding.emplace(uniform.binding, layoutBinding);
     }
@@ -204,8 +205,8 @@ void Sandbox::ShaderModule::ReflectPushConstantRanges(std::vector<VkPushConstant
         {
             VkPushConstantRange pushConstantRange{};
             pushConstantRange.stageFlags = uniformBlock.stageFlags;
-            pushConstantRange.offset = pushConstantOffset;
-            pushConstantRange.size = uniformBlock.bytes;
+            pushConstantRange.offset     = pushConstantOffset;
+            pushConstantRange.size       = uniformBlock.bytes;
             pushConstantOffset += uniformBlock.bytes;
             vkPushConstantRanges.emplace_back(pushConstantRange);
         }
@@ -217,18 +218,15 @@ void Sandbox::ShaderModule::ReflectVertexInputState(VertexInputState& vertexInpu
     uint32_t offset = 0;
     // 按照 layoutLocation 排序
     std::vector<std::pair<std::string, ShaderAttributeReflection>> sortedAttributes{m_attributes.begin(), m_attributes.end()};
-    std::sort(sortedAttributes.begin(), sortedAttributes.end(), [](const auto& a, const auto& b)
-    {
-        return a.second.layoutLocation < b.second.layoutLocation;
-    });
+    std::sort(sortedAttributes.begin(), sortedAttributes.end(), [](const auto& a, const auto& b) { return a.second.layoutLocation < b.second.layoutLocation; });
     for (const auto& [attributeName, attribute] : sortedAttributes)
     {
         VkVertexInputAttributeDescription vertexInputAttributeDescription{};
         vertexInputAttributeDescription.location = attribute.layoutLocation;
-        vertexInputAttributeDescription.binding = 0;
+        vertexInputAttributeDescription.binding  = 0;
         if (!GL_DEFINE_TYPE_TO_FORMAT.contains(attribute.glDefineType))
         {
-            Logger::Fatal("Attribute " + attributeName + " has unsupported glDefineType " + std::to_string(attribute.glDefineType) + " for VkFormat");
+            LOGF("Attribute {} has unsupported glDefineType {} for VkFormat", attributeName, std::to_string(attribute.glDefineType))
         }
         vertexInputAttributeDescription.format = GL_DEFINE_TYPE_TO_FORMAT.at(attribute.glDefineType);
         vertexInputAttributeDescription.offset = offset;
@@ -236,39 +234,39 @@ void Sandbox::ShaderModule::ReflectVertexInputState(VertexInputState& vertexInpu
         vertexInputState.attributes.emplace_back(vertexInputAttributeDescription);
     }
 
-    assert(vertexInputState.bindings.empty()); // 仅支持单个 binding（即 binding 为 0 的情况）
+    assert(vertexInputState.bindings.empty());  // 仅支持单个 binding（即 binding 为 0 的情况）
     vertexInputState.bindings.emplace_back();
-    vertexInputState.bindings[0].binding = 0;
-    vertexInputState.bindings[0].stride = offset;
+    vertexInputState.bindings[0].binding   = 0;
+    vertexInputState.bindings[0].stride    = offset;
     vertexInputState.bindings[0].inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
 }
 
 void Sandbox::ShaderModule::LoadUniform(const glslang::TObjectReflection& uniform, VkShaderStageFlagBits stage)
 {
     ShaderUniformReflection u;
-    u.binding = uniform.getBinding();
-    u.bytes = ComputeBytes(uniform.getType());
-    u.glDefineType = uniform.glDefineType;
-    u.offset = uniform.offset;
-    u.stageFlags = stage;
+    u.binding         = uniform.getBinding();
+    u.bytes           = ComputeBytes(uniform.getType());
+    u.glDefineType    = uniform.glDefineType;
+    u.offset          = uniform.offset;
+    u.stageFlags      = stage;
     u.descriptorCount = uniform.topLevelArrayStride > 0 ? uniform.topLevelArrayStride : 1;
     if (uniform.getBinding() == -1)
     {
         auto splitResult = String::Split(uniform.name, '.');
         if (splitResult.size() <= 1)
         {
-            Logger::Fatal("Uniform " + uniform.name + " has no binding");
+            LOGF("Uniform {} has no binding", uniform.name)
         }
-        auto uniformBlockName = splitResult[0];
-        auto uniformName = String::Replace(uniform.name, uniformBlockName + ".", "");
+        auto uniformBlockName  = splitResult[0];
+        auto uniformName       = String::Replace(uniform.name, uniformBlockName + ".", "");
         auto existUniformBlock = m_uniformBlocks.find(uniformBlockName);
         if (existUniformBlock != m_uniformBlocks.end())
         {
-            u.descriptorType = VK_DESCRIPTOR_TYPE_MAX_ENUM;
+            u.descriptorType                                = VK_DESCRIPTOR_TYPE_MAX_ENUM;
             existUniformBlock->second.uniforms[uniformName] = u;
             return;
         }
-        Logger::Fatal("Uniform block " + uniformBlockName + " not found for uniform " + uniform.name);
+        LOGF("Uniform block {} not found for uniform {}", uniformBlockName, uniform.name)
     }
     auto existUniform = m_uniforms.find(uniform.name);
     if (existUniform != m_uniforms.end())
@@ -278,9 +276,9 @@ void Sandbox::ShaderModule::LoadUniform(const glslang::TObjectReflection& unifor
     }
     if (!GL_DEFINE_TYPE_TO_DESCRIPTOR_TYPE.contains(uniform.glDefineType))
     {
-        Logger::Fatal("Uniform " + uniform.name + " has unsupported glDefineType " + std::to_string(uniform.glDefineType) + " for VkDescriptorType");
+        LOGF("Uniform {} has unsupported glDefineType {} for VkDescriptorType", uniform.name, std::to_string(uniform.glDefineType))
     }
-    u.descriptorType = GL_DEFINE_TYPE_TO_DESCRIPTOR_TYPE.at(uniform.glDefineType);
+    u.descriptorType         = GL_DEFINE_TYPE_TO_DESCRIPTOR_TYPE.at(uniform.glDefineType);
     m_uniforms[uniform.name] = u;
 }
 
@@ -288,19 +286,19 @@ void Sandbox::ShaderModule::LoadAttribute(const glslang::TObjectReflection& attr
 {
     if (attribute.name.empty())
     {
-        return; // do not add empty named attributes
+        return;  // do not add empty named attributes
     }
     auto existAttribute = m_attributes.find(attribute.name);
     if (existAttribute != m_attributes.end())
     {
         return;
     }
-    auto& qualifier = attribute.getType()->getQualifier();
+    auto&                     qualifier = attribute.getType()->getQualifier();
     ShaderAttributeReflection a;
-    a.layoutSet = qualifier.layoutSet;
-    a.layoutLocation = qualifier.layoutLocation;
-    a.bytes = ComputeBytes(attribute.getType());
-    a.glDefineType = attribute.glDefineType;
+    a.layoutSet                  = qualifier.layoutSet;
+    a.layoutLocation             = qualifier.layoutLocation;
+    a.bytes                      = ComputeBytes(attribute.getType());
+    a.glDefineType               = attribute.glDefineType;
     m_attributes[attribute.name] = a;
 }
 
@@ -313,17 +311,17 @@ void Sandbox::ShaderModule::LoadUniformBlock(const glslang::TObjectReflection& u
         return;
     }
     ShaderUniformBlockReflection block;
-    block.binding = uniformBlock.getBinding();
-    block.bytes = ComputeBytes(uniformBlock.getType());
+    block.binding    = uniformBlock.getBinding();
+    block.bytes      = ComputeBytes(uniformBlock.getType());
     block.stageFlags = stage;
-    auto& qualifier = uniformBlock.getType()->getQualifier();
+    auto& qualifier  = uniformBlock.getType()->getQualifier();
     if (!STORAGE_QUALIFIER_TO_DESCRIPTOR_TYPE.contains(qualifier.storage))
     {
-        Logger::Fatal("Uniform block " + uniformBlock.name + " has unsupported storage " + std::to_string(qualifier.storage) + " for VkDescriptorType");
+        LOGF("Uniform block {} has unsupported storage {} for VkDescriptorType", uniformBlock.name, std::to_string(qualifier.storage))
     }
-    block.descriptorCount = uniformBlock.topLevelArrayStride > 0 ? uniformBlock.topLevelArrayStride : 1;
-    block.descriptorType = STORAGE_QUALIFIER_TO_DESCRIPTOR_TYPE.at(qualifier.storage);
-    block.isLayoutPushConstant = qualifier.layoutPushConstant;
+    block.descriptorCount              = uniformBlock.topLevelArrayStride > 0 ? uniformBlock.topLevelArrayStride : 1;
+    block.descriptorType               = STORAGE_QUALIFIER_TO_DESCRIPTOR_TYPE.at(qualifier.storage);
+    block.isLayoutPushConstant         = qualifier.layoutPushConstant;
     m_uniformBlocks[uniformBlock.name] = block;
 }
 

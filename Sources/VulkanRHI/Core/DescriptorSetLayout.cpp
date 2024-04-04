@@ -3,8 +3,8 @@
 #include "DescriptorSetLayout.hpp"
 
 #include "Device.hpp"
-#include "ShaderModule.hpp"
 #include "FileSystem/Logger.hpp"
+#include "ShaderModule.hpp"
 
 Sandbox::DescriptorSetLayout::DescriptorSetLayout(const std::shared_ptr<Device>& device, const std::vector<std::shared_ptr<ShaderModule>>& shaderModules,
                                                   const std::vector<uint32_t>& dynamicBindings)
@@ -29,9 +29,9 @@ Sandbox::DescriptorSetLayout::DescriptorSetLayout(const std::shared_ptr<Device>&
         m_bindingToLayoutBinding[dynamicBinding].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
     }
     VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo{};
-    descriptorSetLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+    descriptorSetLayoutCreateInfo.sType        = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
     descriptorSetLayoutCreateInfo.bindingCount = static_cast<uint32_t>(vkDescriptorSetLayoutBindings.size());
-    descriptorSetLayoutCreateInfo.pBindings = vkDescriptorSetLayoutBindings.data();
+    descriptorSetLayoutCreateInfo.pBindings    = vkDescriptorSetLayoutBindings.data();
 
     if (vkCreateDescriptorSetLayout(m_device->vkDevice, &descriptorSetLayoutCreateInfo, nullptr, &vkDescriptorSetLayout) != VK_SUCCESS)
     {
@@ -39,10 +39,7 @@ Sandbox::DescriptorSetLayout::DescriptorSetLayout(const std::shared_ptr<Device>&
     }
 }
 
-Sandbox::DescriptorSetLayout::~DescriptorSetLayout()
-{
-    Cleanup();
-}
+Sandbox::DescriptorSetLayout::~DescriptorSetLayout() { Cleanup(); }
 
 void Sandbox::DescriptorSetLayout::Cleanup()
 {

@@ -6,8 +6,8 @@
 #include <unordered_set>
 
 #include "Delegate.hpp"
-#include "TypeTraits.hpp"
 #include "FileSystem/Logger.hpp"
+#include "TypeTraits.hpp"
 
 namespace Sandbox
 {
@@ -43,7 +43,7 @@ namespace Sandbox
     public:
         ~TDataBinding() override;
 
-        typedef Delegate<AbstractData> DelegateType; // 用于创建绑定函数的TDelegate签名
+        typedef Delegate<AbstractData> DelegateType;  // 用于创建绑定函数的TDelegate签名
         /**
          * 添加数据的绑定函数
          *
@@ -52,9 +52,10 @@ namespace Sandbox
          */
         DelegateHandle Bind(DelegateType InDelegate);
 
+        // 使用std::function绑定
+        DelegateHandle Bind(const std::function<void(AbstractData)>& func);
 
-        template <typename Instance,
-                  void(Instance::*Func)(AbstractData)>
+        template <typename Instance, void (Instance::*Func)(AbstractData)>
         DelegateHandle BindMember(Instance* obj);
 
         //~Begin IDataBinding interface
@@ -77,10 +78,7 @@ namespace Sandbox
         TDataBinding(std::string InName, AbstractData InData);
 
     protected:
-        const std::type_info &GetType() const
-        {
-            return typeid(AbstractData);
-        }
+        const std::type_info& GetType() const { return typeid(AbstractData); }
 
         AbstractData data;
 
@@ -97,7 +95,7 @@ namespace Sandbox
     public:
         ~TDataBinding() override = default;
 
-        typedef Delegate<void> DelegateType; // 用于创建绑定函数的TDelegate签名
+        typedef Delegate<void> DelegateType;  // 用于创建绑定函数的TDelegate签名
         /**
          * 添加数据的绑定函数
          *
@@ -106,9 +104,11 @@ namespace Sandbox
          */
         DelegateHandle Bind(DelegateType InDelegate);
 
+        // 使用std::function绑定
+        DelegateHandle Bind(const std::function<void(void)>& func);
+
         // 用于没有参数的成员函数
-        template <typename Instance,
-                  void(Instance::*Func)()>
+        template <typename Instance, void (Instance::*Func)()>
         DelegateHandle BindMember(Instance* obj);
 
 
@@ -158,12 +158,10 @@ namespace Sandbox
          * @param InData 数据原型
          * @return 数据绑定
          */
-        template <typename AbstractData,
-                  typename std::enable_if<IsSharedPtr<AbstractData>::value, int>::type = 0>
+        template <typename AbstractData, typename std::enable_if<IsSharedPtr<AbstractData>::value, int>::type = 0>
         static auto Create(std::string InName, AbstractData InData) -> std::shared_ptr<TDataBinding<std::shared_ptr<typename ExtractType<AbstractData>::type>>>;
 
-        template <typename AbstractData,
-                  typename std::enable_if<!IsSharedPtr<AbstractData>::value, int>::type = 0>
+        template <typename AbstractData, typename std::enable_if<!IsSharedPtr<AbstractData>::value, int>::type = 0>
         static auto Create(std::string InName, AbstractData InData) -> std::shared_ptr<TDataBinding<AbstractData>>;
 
         static auto Create(std::string InName) -> std::shared_ptr<TDataBinding<void>>;
@@ -269,9 +267,15 @@ namespace Sandbox
         }
         return DelegateHandle;
     }
+    template <typename AbstractData>
+    DelegateHandle TDataBinding<AbstractData>::Bind(const std::function<void(AbstractData)>& func)
+    {
+        Delegate<AbstractData> delegate(func);
+        return Bind(delegate);
+    }
 
     template <typename AbstractData>
-    template <typename Instance, void(Instance::*Func)(AbstractData)>
+    template <typename Instance, void (Instance::*Func)(AbstractData)>
     DelegateHandle TDataBinding<AbstractData>::BindMember(Instance* obj)
     {
         // 使用 std::bind 创建一个绑定了成员函数和对象的 Delegate
@@ -341,14 +345,13 @@ namespace Sandbox
     }
 
     template <typename AbstractData>
-    TDataBinding<AbstractData>::TDataBinding(std::string InName, AbstractData InData):
-        IDataBinding(InName)
+    TDataBinding<AbstractData>::TDataBinding(std::string InName, AbstractData InData) : IDataBinding(InName)
     {
         data = InData;
     }
 
 
-    template <typename Instance, void(Instance::*Func)()>
+    template <typename Instance, void (Instance::*Func)()>
     DelegateHandle TDataBinding<void>::BindMember(Instance* obj)
     {
         // 使用 std::bind 创建一个绑定了成员函数和对象的 Delegate
@@ -378,8 +381,8 @@ namespace Sandbox
                 Logger::Fatal("Failed to cast binding to the requested type for name: " + InName);
             }
         }
-        std::shared_ptr<TDataBinding<std::shared_ptr<typename ExtractType<AbstractData>::type>>> CreatedDataBinding = std::make_shared<TDataBinding<std::shared_ptr<typename ExtractType<
-            AbstractData>::type>>>(InName, InData);
+        std::shared_ptr<TDataBinding<std::shared_ptr<typename ExtractType<AbstractData>::type>>> CreatedDataBinding =
+            std::make_shared<TDataBinding<std::shared_ptr<typename ExtractType<AbstractData>::type>>>(InName, InData);
         DataBinding::DataBindingMap.emplace(InName, CreatedDataBinding);
         return CreatedDataBinding;
     }

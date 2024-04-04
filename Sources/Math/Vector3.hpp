@@ -1,8 +1,8 @@
 ﻿#pragma once
 
 #include "Generated/Vector3.rfkh.h"
-#include "glm/vec3.hpp"
 #include "Serialization/ISerializable.hpp"
+#include "glm/vec3.hpp"
 
 namespace Sandbox NAMESPACE()
 {
@@ -38,9 +38,9 @@ namespace Sandbox NAMESPACE()
 
         glm::vec3 ToGlmVec3();
 
-    private:
-        glm::vec3 m_vec = glm::vec3(0.0f);
+        glm::vec3 vec = glm::vec3(0.0f);
 
+    private:
         void Sync();
 
         Sandbox_Vector3_GENERATED

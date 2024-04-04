@@ -18,4 +18,4 @@ namespace Sandbox
 #endif
         return data;
     }
-}
+}  // namespace Sandbox

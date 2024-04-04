@@ -1,4 +1,6 @@
-﻿#include "Generated/ISerializable.rfks.h"
+﻿#include "pch.hpp"
+
+#include "Generated/ISerializable.rfks.h"
 // #include "FileSystem/Logger.hpp"
 // #include "glm/vec3.hpp"
 // #include "Refureku/Object.h"

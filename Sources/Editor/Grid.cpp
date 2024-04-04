@@ -4,26 +4,26 @@
 
 #include "Editor.hpp"
 #include "Engine/Camera.hpp"
-#include "VulkanRHI/Renderer.hpp"
 #include "VulkanRHI/Core/Buffer.hpp"
 #include "VulkanRHI/Core/CommandBuffer.hpp"
 #include "VulkanRHI/Core/ShaderModule.hpp"
+#include "VulkanRHI/Renderer.hpp"
 
 constexpr float UNIT_SIZE = 1.0f;
 constexpr float GRID_SIZE = 10.0f;
 // constexpr glm::vec2 OFFSET = glm::vec2(0.0f, 0.0f);
 // constexpr glm::vec2 SCALE = glm::vec2(1.0f, 1.0f);
 // constexpr glm::vec2 CENTER = glm::vec2(0.0f, 0.0f);
-constexpr glm::vec2 TOTAL_AREA = glm::vec2(100.0f, 100.0f);
-constexpr auto GRAY = glm::vec3(0.5f, 0.5f, 0.5f);
-constexpr auto DEEPER_GRAY = glm::vec3(0.3f, 0.3f, 0.3f);
-constexpr auto RED = glm::vec3(1.0f, 0.0f, 0.0f);
-constexpr auto GREEN = glm::vec3(0.0f, 1.0f, 0.0f);
+constexpr glm::vec2 TOTAL_AREA  = glm::vec2(100.0f, 100.0f);
+constexpr auto      GRAY        = glm::vec3(0.5f, 0.5f, 0.5f);
+constexpr auto      DEEPER_GRAY = glm::vec3(0.3f, 0.3f, 0.3f);
+constexpr auto      RED         = glm::vec3(1.0f, 0.0f, 0.0f);
+constexpr auto      GREEN       = glm::vec3(0.0f, 1.0f, 0.0f);
 
 std::vector<Sandbox::SimpleVertex> GetLineListProperties()
 {
     std::vector<Sandbox::SimpleVertex> lineListProperty;
-    auto halfSize = glm::vec2(TOTAL_AREA.x / 2, TOTAL_AREA.y / 2);
+    auto                               halfSize = glm::vec2(TOTAL_AREA.x / 2, TOTAL_AREA.y / 2);
     // 使中央的线段 x 方向用红色，y 方向用绿色
     float i = -halfSize.x;
     for (; i <= halfSize.x;)
@@ -74,12 +74,12 @@ std::vector<Sandbox::SimpleVertex> GetLineListProperties()
 
 void Sandbox::Grid::Prepare(const std::shared_ptr<Renderer>& renderer, const std::shared_ptr<Editor>& editor)
 {
-    m_editor = editor;
+    m_editor           = editor;
     lineListProperties = GetLineListProperties();
-    device = renderer->device;
+    device             = renderer->device;
     // auto pipelineLayout = renderer->pipelineLayout;
-    auto commandBuffer = renderer->commandBuffers[0];
-    VkDeviceSize bufferSize = sizeof(SimpleVertex) * lineListProperties.size();
+    auto         commandBuffer = renderer->commandBuffers[0];
+    VkDeviceSize bufferSize    = sizeof(SimpleVertex) * lineListProperties.size();
     lineListBuffer = std::make_shared<Buffer>(device, bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
     commandBuffer->CopyDataToBuffer(lineListProperties.data(), bufferSize, lineListBuffer);
     m_prepared = true;

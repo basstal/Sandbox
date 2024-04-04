@@ -5,42 +5,43 @@
 #include "Editor/IImGuiWindow.hpp"
 #include "Editor/ImGuiWidgets/TreeView.hpp"
 
-namespace Sandbox {
-class File;
-class Directory;
-
-struct Meta
+namespace Sandbox
 {
-};
+    class File;
+    class Directory;
 
-struct AssetFileTreeViewSource : public TreeViewSource
-{
-    std::shared_ptr<File> file;
-    std::shared_ptr<Meta> meta;
-};
+    struct Meta
+    {
+    };
 
-struct AssetDirectoryTreeViewSource : public TreeViewSource
-{
-    std::shared_ptr<Directory> directory;
-    std::shared_ptr<Meta> meta;
-};
+    struct AssetFileTreeViewSource : public TreeViewSource
+    {
+        std::shared_ptr<File> file;
+        std::shared_ptr<Meta> meta;
+    };
 
-struct AssetTreeViewItem : public TreeViewItem
-{
-};
+    struct AssetDirectoryTreeViewSource : public TreeViewSource
+    {
+        std::shared_ptr<Directory> directory;
+        std::shared_ptr<Meta>      meta;
+    };
 
-class ContentBrowser : public TreeView
-{
-  public:
-    ContentBrowser();
-    void Prepare() override;
+    struct AssetTreeViewItem : public TreeViewItem
+    {
+    };
 
-    std::vector<std::shared_ptr<Sandbox::TreeViewItem>> ScanAndConstructContentBrowserTreeViewItems(const std::shared_ptr<Directory>& directory);
+    class ContentBrowser : public TreeView
+    {
+    public:
+             ContentBrowser();
+        void Prepare() override;
 
-    void Tick(float deltaTime) override;
+        std::vector<std::shared_ptr<Sandbox::TreeViewItem>> ScanAndConstructContentBrowserTreeViewItems(const std::shared_ptr<Directory>& directory);
 
-    void OnGui() override;
+        void Tick(float deltaTime) override;
 
-    void Cleanup() override;
-};
-} // namespace Sandbox
+        void OnGui() override;
+
+        void Cleanup() override;
+    };
+}  // namespace Sandbox

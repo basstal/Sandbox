@@ -33,9 +33,9 @@ namespace Sandbox
 
         void Cleanup();
 
-        std::shared_ptr<Buffer> lineListBuffer;
+        std::shared_ptr<Buffer>            lineListBuffer;
         std::vector<Sandbox::SimpleVertex> lineListProperties;
-        std::shared_ptr<Device> device;
+        std::shared_ptr<Device>            device;
 
     private:
         std::shared_ptr<Editor> m_editor;

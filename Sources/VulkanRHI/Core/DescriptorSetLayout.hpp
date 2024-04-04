@@ -13,7 +13,8 @@ namespace Sandbox
     class DescriptorSetLayout
     {
     public:
-        DescriptorSetLayout(const std::shared_ptr<Device>& device, const std::vector<std::shared_ptr<ShaderModule>>& shaderModules, const std::vector<uint32_t>& dynamicBindings);
+        DescriptorSetLayout(const std::shared_ptr<Device>& device, const std::vector<std::shared_ptr<ShaderModule>>& shaderModules,
+                            const std::vector<uint32_t>& dynamicBindings);
 
         ~DescriptorSetLayout();
 
@@ -28,7 +29,7 @@ namespace Sandbox
 
     private:
         std::map<uint32_t, VkDescriptorSetLayoutBinding> m_bindingToLayoutBinding;
-        std::shared_ptr<Device> m_device;
-        bool m_cleaned = false;
+        std::shared_ptr<Device>                          m_device;
+        bool                                             m_cleaned = false;
     };
 }
