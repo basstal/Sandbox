@@ -22,6 +22,7 @@ namespace Sandbox NAMESPACE()
 
         void Cleanup();
 
+        void Tick();
     private:
         bool m_cleaned = false;
 

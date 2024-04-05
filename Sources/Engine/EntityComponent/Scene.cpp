@@ -20,3 +20,4 @@ void Sandbox::Scene::Cleanup()
         gameObject->Cleanup();
     }
 }
+void Sandbox::Scene::Tick() {}

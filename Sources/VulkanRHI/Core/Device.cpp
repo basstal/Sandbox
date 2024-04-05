@@ -33,7 +33,7 @@ void Sandbox::Device::SelectPhysicalDevice(const VkInstance& instance, const VkS
     vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr);
     if (deviceCount == 0)
     {
-        LOGF("failed to find GPUs with Vulkan support!")
+        LOGF_OLD("failed to find GPUs with Vulkan support!")
     }
     std::vector<VkPhysicalDevice> devices(deviceCount);
     vkEnumeratePhysicalDevices(instance, &deviceCount, devices.data());

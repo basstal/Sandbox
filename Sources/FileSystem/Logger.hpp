@@ -1,10 +1,11 @@
 ﻿#pragma once
 #include <format>
 #include <fstream>
-#include <iostream>
 #include <stdexcept>
 #include <string>
 #include <vector>
+
+#include "Misc/Event.hpp"
 
 namespace Sandbox
 {
@@ -35,6 +36,13 @@ namespace Sandbox
             LevelDebug,
         };
 
+        struct LogMessage
+        {
+            LoggerLevel level;
+            std::string tag;
+            std::string message;
+        };
+
         /**
          * \brief 重定向输出到文件
          */
@@ -56,6 +64,10 @@ namespace Sandbox
         static void Log(LoggerLevel level, const std::string& format, Args&&... args);
 
         template <typename... Args>
+        static void Log(LoggerLevel level, const std::string& tag, const std::string& format, Args&&... args);
+
+
+        template <typename... Args>
         static void Debug(const std::string& format, Args&&... args);
 
         template <typename... Args>
@@ -69,6 +81,32 @@ namespace Sandbox
 
         template <typename... Args>
         static void Fatal(const std::string& format, Args&&... args);
+
+
+        template <typename... Args>
+        static void DebugTag(const std::string& tag, const std::string& format, Args&&... args);
+
+        template <typename... Args>
+        static void InfoTag(const std::string& tag, const std::string& format, Args&&... args);
+
+        template <typename... Args>
+        static void WarningTag(const std::string& tag, const std::string& format, Args&&... args);
+
+        template <typename... Args>
+        static void ErrorTag(const std::string& tag, const std::string& format, Args&&... args);
+
+        template <typename... Args>
+        static void FatalTag(const std::string& tag, const std::string& format, Args&&... args);
+
+        static std::vector<LogMessage> GetMessagesByTag(const std::string& tag);
+        /**
+         * \brief 日志消息
+         */
+        static std::vector<LogMessage> messages;
+
+        static std::map<LoggerLevel, std::tuple<std::string, std::string>> levelDetails;
+
+        static Event<const LogMessage&> onLogMessage;
 
     private:
         /**
@@ -88,55 +126,33 @@ namespace Sandbox
          * \brief 是否使用颜色
          */
         static bool m_useColor;
-        /**
-         * \brief 日志消息
-         */
-        static std::vector<std::string> m_messages;
     };
 
 
     template <typename... Args>
     void Logger::Log(LoggerLevel level, const std::string& format, Args&&... args)
     {
-        auto        message   = std::vformat(format, std::make_format_args(std::forward<Args>(args)...));
-        const char* prefix    = "";
-        const char* colorCode = "";
-        switch (level)
-        {
-            case LevelFatal:
-                prefix    = "[FATAL]: ";
-                colorCode = "\x1b[31m";  // 红色
-                break;
-            case LevelError:
-                prefix    = "[ERROR]: ";
-                colorCode = "\x1b[31m";  // 红色
-                break;
-            case LevelWarning:
-                prefix    = "[WARNING]: ";
-                colorCode = "\x1b[33m";  // 黄色
-                break;
-            case LevelInfo:
-                prefix    = "[INFO]: ";
-                colorCode = "\x1b[32m";  // 绿色
-                break;
-            case LevelDebug:
-                prefix    = "[DEBUG]: ";
-                colorCode = "";
-                break;
-        }
-
+        Log(level, "", format, std::forward<Args>(args)...);
+    }
+    template <typename... Args>
+    void Logger::Log(LoggerLevel level, const std::string& tag, const std::string& format, Args&&... args)
+    {
+        auto message                  = std::vformat(format, std::make_format_args(std::forward<Args>(args)...));
+        auto [levelPrefix, colorCode] = levelDetails[level];
+        auto formattedTag             = tag.empty() ? tag : std::vformat("[{}] ", std::make_format_args(tag));
         if (m_useColor)
         {
-            *m_outputStream << colorCode << prefix << message << "\x1b[0m" << std::endl;
+            *m_outputStream << colorCode << levelPrefix << formattedTag << message << "\x1b[0m" << std::endl;
         }
         else
         {
-            *m_outputStream << prefix << message << std::endl;
+            *m_outputStream << levelPrefix << formattedTag << message << std::endl;
         }
 
-        // 存储日志消息以便稍后写入文件
-        m_messages.push_back(std::string(prefix) + message);
-
+        // 将消息添加到 m_messages，现在包含 tag
+        LogMessage logMessage = {level, formattedTag, message};
+        messages.push_back(logMessage);
+        onLogMessage.Trigger(logMessage);
         if (level == LevelFatal)
         {
             throw std::runtime_error(message);
@@ -172,10 +188,46 @@ namespace Sandbox
     {
         Log(LevelFatal, format, std::forward<Args>(args)...);
     }
+    template <typename... Args>
+    void Logger::DebugTag(const std::string& tag, const std::string& format, Args&&... args)
+    {
+        Log(LevelDebug, tag, format, std::forward<Args>(args)...);
+    }
+    template <typename... Args>
+    void Logger::InfoTag(const std::string& tag, const std::string& format, Args&&... args)
+    {
+        Log(LevelInfo, tag, format, std::forward<Args>(args)...);
+    }
+
+    template <typename... Args>
+    void Logger::WarningTag(const std::string& tag, const std::string& format, Args&&... args)
+    {
+        Log(LevelWarning, tag, format, std::forward<Args>(args)...);
+    }
+
+    template <typename... Args>
+    void Logger::ErrorTag(const std::string& tag, const std::string& format, Args&&... args)
+    {
+        Log(LevelError, tag, format, std::forward<Args>(args)...);
+    }
+
+    template <typename... Args>
+    void Logger::FatalTag(const std::string& tag, const std::string& format, Args&&... args)
+    {
+        Log(LevelFatal, tag, format, std::forward<Args>(args)...);
+    }
+
+
 }  // namespace Sandbox
 
-#define LOGI(...) Sandbox::Logger::Info(__VA_ARGS__);
-#define LOGW(...) Sandbox::Logger::Warning(__VA_ARGS__);
-#define LOGE(...) Sandbox::Logger::Error("[{}:{}] {}", __FILE__, __LINE__, std::format(__VA_ARGS__));
-#define LOGF(...) Sandbox::Logger::Fatal("[{}:{}] {}", __FILE__, __LINE__, std::format(__VA_ARGS__));
-#define LOGD(...) Sandbox::Logger::Debug(__VA_ARGS__);
+#define LOGI_OLD(...) Sandbox::Logger::Info(__VA_ARGS__);
+#define LOGW_OLD(...) Sandbox::Logger::Warning(__VA_ARGS__);
+#define LOGE_OLD(...) Sandbox::Logger::Error("[{}:{}] {}", __FILE__, __LINE__, std::format(__VA_ARGS__));
+#define LOGF_OLD(...) Sandbox::Logger::Fatal("[{}:{}] {}", __FILE__, __LINE__, std::format(__VA_ARGS__));
+#define LOGD_OLD(...) Sandbox::Logger::Debug(__VA_ARGS__);
+
+#define LOGI(tag, ...) Sandbox::Logger::InfoTag(tag, __VA_ARGS__);
+#define LOGW(tag, ...) Sandbox::Logger::WarningTag(tag, __VA_ARGS__);
+#define LOGE(tag, ...) Sandbox::Logger::ErrorTag(tag, "[{}:{}] {}", __FILE__, __LINE__, std::format(__VA_ARGS__));
+#define LOGF(tag, ...) Sandbox::Logger::FatalTag(tag, "[{}:{}] {}", __FILE__, __LINE__, std::format(__VA_ARGS__));
+#define LOGD(tag, ...) Sandbox::Logger::DebugTag(tag, __VA_ARGS__);

@@ -61,7 +61,7 @@ Sandbox::Image::Image(const std::shared_ptr<Device>& device, const VkExtent3D& e
     auto vkDevice = m_device->vkDevice;
     if (vkCreateImage(vkDevice, &imageCreateInfo, nullptr, &vkImage) != VK_SUCCESS)
     {
-        LOGF("failed to create image!")
+        LOGF_OLD("failed to create image!")
     }
     // LOGI("{}\n{}", PtrToHexString(vkImage), GetCallStack())
 
@@ -75,7 +75,7 @@ Sandbox::Image::Image(const std::shared_ptr<Device>& device, const VkExtent3D& e
 
     if (vkAllocateMemory(vkDevice, &allocInfo, nullptr, &vkDeviceMemory) != VK_SUCCESS)
     {
-        LOGF("failed to allocate image memory!")
+        LOGF_OLD("failed to allocate image memory!")
     }
 
     vkBindImageMemory(vkDevice, vkImage, vkDeviceMemory, 0);

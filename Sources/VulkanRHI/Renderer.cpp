@@ -24,6 +24,7 @@
 
 void Sandbox::Renderer::Prepare(const std::shared_ptr<Window>& window)
 {
+    LOGD("Test", "测试一下中文字体")
     resolution                                = VkExtent2D{1920, 1080};
     instance                                  = std::make_shared<Instance>(VK_API_VERSION_1_0, "Sandbox");
     surface                                   = std::make_shared<Surface>(instance, window);
@@ -144,7 +145,7 @@ void Sandbox::Renderer::RecordCommandBuffer(std::shared_ptr<CommandBuffer>& comm
     std::shared_ptr<RendererSource> rendererSource;
     if (!TryGetRendererSource(viewMode, rendererSource))
     {
-        LOGF("Renderer source for view mode '{}' not found", VIEW_MODE_NAMES[static_cast<uint32_t>(viewMode)])
+        LOGF_OLD("Renderer source for view mode '{}' not found", VIEW_MODE_NAMES[static_cast<uint32_t>(viewMode)])
     }
     // 绘制场景
     {
@@ -228,7 +229,7 @@ void Sandbox::Renderer::OnViewModeChanged(EViewMode inViewMode)
     std::shared_ptr<RendererSource> rendererSource;
     if (!TryGetRendererSource(viewMode, rendererSource))
     {
-        LOGF("Renderer source for view mode '{}' not found", VIEW_MODE_NAMES[static_cast<uint32_t>(viewMode)])
+        LOGF_OLD("Renderer source for view mode '{}' not found", VIEW_MODE_NAMES[static_cast<uint32_t>(viewMode)])
 	}
 	auto shaderModules = rendererSource->shaderModules;
 	pipeline = rendererSource->pipeline;

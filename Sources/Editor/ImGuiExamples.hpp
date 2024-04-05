@@ -5,5 +5,5 @@ namespace Sandbox
 {
     void ShowExampleMenuFile();
 
-    void EditTransform(float* cameraView, float const* cameraProjection, float* matrix, bool editTransformDecomposition);
+    void EditTransform(float* cameraView, const float* cameraProjection, float* matrix, bool editTransformDecomposition);
 }  // namespace Sandbox

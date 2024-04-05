@@ -2,11 +2,10 @@
 
 #include "Editor.hpp"
 
-#include "Engine/Camera.hpp"
+#include "Engine/EntityComponent/Components/Camera.hpp"
 #include "Engine/RendererSource/RendererSource.hpp"
 #include "Engine/Timer.hpp"
 #include "FileSystem/Directory.hpp"
-#include "FileSystem/File.hpp"
 #include "Grid.hpp"
 #include "ImGuiRenderer.hpp"
 #include "ImGuiWindows/Viewport.hpp"
@@ -26,8 +25,6 @@
 #include "VulkanRHI/Rendering/PipelineState.hpp"
 #include "VulkanRHI/Rendering/UniformBuffer.hpp"
 
-static Sandbox::File editorCameraConfigCache = Sandbox::Directory::GetLibraryDirectory().GetFile("EditorCamera.yaml");
-
 void Sandbox::Editor::Prepare(const std::shared_ptr<Renderer>& renderer, const std::shared_ptr<Timer>& timer, const std::vector<std::shared_ptr<Models>>& inModels,
                               const std::shared_ptr<Window>& inWindow)
 {
@@ -38,35 +35,16 @@ void Sandbox::Editor::Prepare(const std::shared_ptr<Renderer>& renderer, const s
     imGuiRenderer = std::make_shared<ImGuiRenderer>();
     imGuiRenderer->Prepare(renderer, shared_from_this());
 
-    auto&           resolution       = renderer->resolution;
-    auto            aspectRatio      = static_cast<float>(resolution.width) / static_cast<float>(resolution.height);
-    const glm::vec3 DEFAULT_WORLD_UP = glm::vec3(0.0f, 0.0f, 1.0f);
-    // TODO:将 camera 移到 viewport 内
-    camera = std::make_shared<Camera>(DEFAULT_WORLD_UP, aspectRatio);
-    camera->LoadFromFile(editorCameraConfigCache);
-    camera->UpdateCameraVectors();
-    imGuiRenderer->viewport->mainCamera = camera;
-    BindCameraPosition(renderer->viewMode);
+
     grid = std::make_shared<Grid>();
     grid->Prepare(renderer, shared_from_this());
     renderer->onBeforeRendererDraw.BindMember<Grid, &Grid::DrawGrid>(grid);
-    renderer->onViewModeChanged.BindMember<Editor, &Editor::BindCameraPosition>(this);
 
     PrepareOnGui();
 }
 
-void Sandbox::Editor::BindCameraPosition(EViewMode inViewMode)
-{
-    std::shared_ptr<RendererSource> rendererSource;
-    if (m_renderer->TryGetRendererSource(inViewMode, rendererSource))
-    {
-        // TODO:因为这里 position 是 Vector3 派生自 rfk::Object 虚函数表指针要求 8 字节对齐，因此不满足传递给 GPU 对齐要求
-        rendererSource->pipeline->pipelineState->pushConstantsInfo.data = &camera->position.vec;
-    }
-}
 void Sandbox::Editor::Cleanup()
 {
-    camera->SaveToFile(editorCameraConfigCache);
     imGuiRenderer->Cleanup();
     CleanupOnGui();
 }
@@ -121,7 +99,7 @@ void Sandbox::Editor::UpdateDescriptorSets(EViewMode inViewMode)
     std::shared_ptr<RendererSource> rendererSource;
     if (!m_renderer->TryGetRendererSource(inViewMode, rendererSource))
     {
-        LOGF("Renderer source for view mode '{}' not found", VIEW_MODE_NAMES[static_cast<uint32_t>(inViewMode)])
+        LOGF_OLD("Renderer source for view mode '{}' not found", VIEW_MODE_NAMES[static_cast<uint32_t>(inViewMode)])
     }
     auto     uniformMvpObjects = rendererSource->uboMvp;
     uint32_t dynamicAlignment  = GetUniformDynamicAlignment(sizeof(glm::mat4));
@@ -161,25 +139,6 @@ void Sandbox::Editor::Draw()
 
 void Sandbox::Editor::Update()
 {
-    UpdateInputs(nullptr);
     float deltaTime = m_timer->GetDeltaTime();
     imGuiRenderer->Tick(deltaTime);
-}
-
-void Sandbox::Editor::UpdateInputs(const std::shared_ptr<GlfwCallbackBridge>& glfwInputBridge)
-{
-    std::shared_ptr<RendererSource> rendererSource;
-    if (!m_renderer->TryGetRendererSource(m_renderer->viewMode, rendererSource))
-    {
-        LOGF("Renderer source for view mode '{}' not found", VIEW_MODE_NAMES[static_cast<uint32_t>(m_renderer->viewMode)])
-    }
-    rendererSource->viewAndProjection->view = camera->GetViewMatrix();
-
-    auto projection = camera->GetProjectionMatrix();
-    projection[1][1] *= -1;
-    rendererSource->viewAndProjection->projection = projection;
-
-    auto glfwWindow = window->glfwWindow;
-
-    onUpdateInputs.Trigger(glfwWindow, camera, window->callbackBridge);
 }

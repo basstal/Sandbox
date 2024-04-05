@@ -22,6 +22,27 @@
 #include <Refureku/TypeInfo/Archetypes/Template/TemplateTemplateArgument.h>
 
 
+#define Sandbox_Mesh_GENERATED	\
+RFK_UNPACK_IF_NOT_PARSING(friend rfk::internal::CodeGenerationHelpers;\
+friend rfk::internal::implements_template1__rfk_registerChildClass<Mesh, void, void(rfk::Struct&)>; \
+\
+private: template <typename ChildClass> static void _rfk_registerChildClass(rfk::Struct& childClass) noexcept {\
+rfk::Struct const& thisClass = staticGetArchetype();\
+if constexpr (!std::is_same_v<ChildClass, Mesh>)const_cast<rfk::Struct&>(thisClass).addSubclass(childClass, rfk::internal::CodeGenerationHelpers::computeClassPointerOffset<ChildClass, Mesh>());\
+else\
+{\
+childClass.setFieldsCapacity(0u + rfk::internal::CodeGenerationHelpers::getReflectedFieldsCount< IComponent>()+rfk::internal::CodeGenerationHelpers::getReflectedFieldsCount< ISerializable<Mesh>>()); childClass.setStaticFieldsCapacity(0u + rfk::internal::CodeGenerationHelpers::getReflectedStaticFieldsCount< IComponent>()+rfk::internal::CodeGenerationHelpers::getReflectedStaticFieldsCount< ISerializable<Mesh>>()); \
+}\
+rfk::internal::CodeGenerationHelpers::registerChildClass<IComponent, ChildClass>(childClass);\
+rfk::internal::CodeGenerationHelpers::registerChildClass<ISerializable<Mesh>, ChildClass>(childClass);\
+}\
+\
+public:  static rfk::Class const& staticGetArchetype() noexcept;\
+\
+)\
+
+
 #define File_Mesh_GENERATED	\
+template <>  rfk::Archetype const* rfk::getArchetype<Sandbox::Mesh>() noexcept;\
 
 

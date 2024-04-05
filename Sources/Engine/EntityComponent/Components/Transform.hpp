@@ -28,6 +28,8 @@ namespace Sandbox NAMESPACE()
 
         glm::mat4 GetModelTranslate();
 
+        std::string GetDerivedClassName() override;
+
         Sandbox_Transform_GENERATED
     };
 }  // namespace Sandbox NAMESPACE()

@@ -33,7 +33,7 @@ Sandbox::CommandBuffer::CommandBuffer(const std::shared_ptr<Device>& device, con
     {
         Logger::Fatal("failed to allocate command buffers!");
     }
-    LOGI("{}\n{}", PtrToHexString(vkCommandBuffer), GetCallStack())
+    LOGI_OLD("{}\n{}", PtrToHexString(vkCommandBuffer), GetCallStack())
 }
 
 Sandbox::CommandBuffer::~CommandBuffer() { Cleanup(); }
@@ -77,7 +77,7 @@ void Sandbox::CommandBuffer::EndAndSubmit()
     Submit(nullptr, {}, {}, {});
     if (vkQueueWaitIdle(m_device->graphicsQueue) != VK_SUCCESS)
     {
-        LOGF("failed to wait for queue idle!")
+        LOGF_OLD("failed to wait for queue idle!")
     }
 }
 

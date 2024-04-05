@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../Engine/Camera.hpp"
+#include "../Engine/EntityComponent/Components/Camera.hpp"
 
 #include <type_traits>
 #include <Refureku/TypeInfo/Entity/DefaultEntityRegisterer.h>
@@ -13,7 +13,7 @@
 #include <Refureku/TypeInfo/Archetypes/Template/TemplateTemplateParameter.h>
 
 namespace rfk::generated { 
- static rfk::NamespaceFragment const& getNamespaceFragment_7028080843842788705u_15521859494802656014() noexcept {
+ static rfk::NamespaceFragment const& getNamespaceFragment_7028080843842788705u_16941572252408940794() noexcept {
 static rfk::NamespaceFragment fragment("Sandbox", 7028080843842788705u);
 static bool initialized = false;
 if (!initialized) {
@@ -22,14 +22,15 @@ fragment.setNestedEntitiesCapacity(1u);
 fragment.addNestedEntity(*rfk::getArchetype<Sandbox::Camera>());
 }
 return fragment; }
-static rfk::NamespaceFragmentRegisterer const namespaceFragmentRegisterer_7028080843842788705u_15521859494802656014(rfk::generated::getNamespaceFragment_7028080843842788705u_15521859494802656014());
+static rfk::NamespaceFragmentRegisterer const namespaceFragmentRegisterer_7028080843842788705u_16941572252408940794(rfk::generated::getNamespaceFragment_7028080843842788705u_16941572252408940794());
  }
 rfk::Class const& Sandbox::Camera::staticGetArchetype() noexcept {
 static bool initialized = false;
 static rfk::Class type("Camera", 10866052711324808399u, sizeof(Camera), 1);
 if (!initialized) {
 initialized = true;
-type.setDirectParentsCapacity(1);
+type.setDirectParentsCapacity(2);
+type.addDirectParent(rfk::getArchetype<IComponent>(), static_cast<rfk::EAccessSpecifier>(1));
 type.addDirectParent(rfk::getArchetype<ISerializable<Camera>>(), static_cast<rfk::EAccessSpecifier>(1));
 Camera::_rfk_registerChildClass<Camera>(type);
 static rfk::StaticMethod defaultSharedInstantiator("", 0u, rfk::getType<rfk::SharedPtr<Camera>>(),new rfk::NonMemberFunction<rfk::SharedPtr<Camera>()>(&rfk::internal::CodeGenerationHelpers::defaultSharedInstantiator<Camera>),rfk::EMethodFlags::Default, nullptr);

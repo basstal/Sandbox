@@ -27,9 +27,12 @@ class RefurekuGenerator(whiterice.ITable):
             )
         else:
             logger.info("未检测到错误信息，视为成功。")
+            sync_to_dir = os.path.join(cook.config.project, "Sources/Generated")
+            if not os.path.exists(sync_to_dir):
+                os.makedirs(sync_to_dir)
             sync_folders_filecmp(
                 generated_dir,
-                os.path.join(cook.config.project, "Sources/Generated"),
+                sync_to_dir,
             )
             shutil.rmtree(generated_dir)
         return super().make(cook)

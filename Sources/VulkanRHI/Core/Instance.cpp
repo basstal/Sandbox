@@ -24,7 +24,7 @@ static void CheckExtensionsSupport(uint32_t extensionsCount, const char** extens
         }
         if (!isContained)
         {
-            LOGF("{} is not supported in vkExtensionProperties.", extensions[i])
+            LOGF_OLD("{} is not supported in vkExtensionProperties.", extensions[i])
         }
     }
 }
@@ -63,7 +63,7 @@ Sandbox::Instance::Instance(uint32_t inApiVersion, const char* applicationName) 
 
     if (vkCreateInstance(&createInfo, nullptr, &vkInstance) != VK_SUCCESS)
     {
-        LOGF("failed to create instance!")
+        LOGF_OLD("failed to create instance!")
     }
 }
 

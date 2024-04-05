@@ -1,5 +1,7 @@
 ﻿#include "pch.hpp"
 
+#include "Camera.hpp"
+
 #include "Generated/Camera.rfks.h"
 #include "Misc/GlmExtensions.hpp"
 
@@ -12,12 +14,20 @@ constexpr float SPEED = 2.5f;
  */
 constexpr float SENSITIVITY = 0.05f;
 
-Sandbox::Camera::Camera(glm::vec3 inWorldUp, float inAspectRatio)
+const glm::vec3 DEFAULT_WORLD_UP = glm::vec3(0.0f, 0.0f, 1.0f);
+
+Sandbox::Camera::Camera()
+{
+    worldUp     = DEFAULT_WORLD_UP;
+    worldUp1    = DEFAULT_WORLD_UP;
+    UpdateCameraVectors();
+}
+Sandbox::Camera::Camera(float inAspectRatio)
 {
     // inProperty->aspectRatio = aspectRatio;
     aspectRatio = inAspectRatio;
-    worldUp     = inWorldUp;
-    worldUp1    = inWorldUp;
+    worldUp     = DEFAULT_WORLD_UP;
+    worldUp1    = DEFAULT_WORLD_UP;
     // property = inProperty;
     UpdateCameraVectors();
 }
@@ -105,5 +115,7 @@ void Sandbox::Camera::UpdateCameraVectors()
     right  = glm::normalize(glm::cross(front, worldUp));  // Recalculate the Right vector
     right1 = right;
     up     = glm::normalize(glm::cross(right, front));  // Recalculate the Up vector, it should be noted that cross product order is changed to maintain the right-hand rule
-    up1 = up;
+    up1    = up;
 }
+
+std::string Sandbox::Camera::GetDerivedClassName() { return getArchetype().getName(); }

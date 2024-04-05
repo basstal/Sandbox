@@ -49,7 +49,7 @@ bool Sandbox::MenuBar::Draw(const std::vector<std::shared_ptr<IImGuiWindow>>& wi
         {
             if (ImGui::MenuItem("CreateRenderer"))
             {
-                LOGD("CreateRenderer Clicked")
+                LOGD_OLD("CreateRenderer Clicked")
                 DataBinding::Get<void>("Engine/Reload")->Trigger();
             }
 

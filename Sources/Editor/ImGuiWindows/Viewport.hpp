@@ -6,6 +6,7 @@
 
 #include "Editor/IImGuiWindow.hpp"
 #include "Misc/Delegate.hpp"
+#include "VulkanRHI/Common/ViewMode.hpp"
 
 struct ImGuiWindow;
 
@@ -15,7 +16,6 @@ namespace Sandbox
     class Camera;
     class Renderer;
     class Sampler;
-    class TransformInspector;
 
     class Viewport : public IImGuiWindow
     {
@@ -42,16 +42,16 @@ namespace Sandbox
 
         void OnRecreateFramebuffer();
 
-        void                         InspectTarget(std::shared_ptr<GameObject> inTarget);
+        void InspectTarget(std::shared_ptr<GameObject> inTarget);
+
         std::vector<VkDescriptorSet> presentDescriptorSets;
         std::shared_ptr<Sampler>     presentSampler;
 
         std::shared_ptr<Camera> mainCamera;
 
-        std::shared_ptr<TransformInspector> transformInspector;
-
     private:
         ImVec2 CalculateStartPosition(int aspectWidth, int aspectHeight, int resolutionWidth, int resolutionHeight, uint32_t& adjustedWidth, uint32_t& adjustedHeight);
+        void   BindCameraPosition(EViewMode inViewMode);
         std::shared_ptr<GameObject> m_referenceGameObject;
         ImVec2                      m_startPosition;
         bool                        m_isMouseHoveringInnerRect;

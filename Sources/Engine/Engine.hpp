@@ -21,7 +21,8 @@ namespace Sandbox
     public:
         std::shared_ptr<Renderer>                   renderer;
         std::shared_ptr<Editor>                     editor;
-        std::shared_ptr<Timer>                      timer;
+        std::shared_ptr<Timer>                      rendererTimer;
+        std::shared_ptr<Timer>                      logicTimer;
         std::vector<std::shared_ptr<MVPUboObjects>> mvpObjects;
 
         // std::vector<std::shared_ptr<GameObject>> gameObjects;

@@ -52,7 +52,7 @@ void Sandbox::DescriptorSet::Prepare(const std::map<uint32_t, std::vector<VkDesc
 {
     if (!writeDescriptorSets.empty())
     {
-        LOGW("DescriptorSet::Prepare() called more than once")
+        LOGW_OLD("DescriptorSet::Prepare() called more than once")
         return;
     }
     m_imageInfoMapping                            = inImageInfoMapping;

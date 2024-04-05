@@ -79,6 +79,7 @@ namespace Sandbox
                 it->second(args...);
             }
         }
+        void Cleanup() { registeredDelegates.clear(); }
     };
 
 

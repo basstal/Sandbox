@@ -19,7 +19,7 @@ std::vector<std::shared_ptr<Sandbox::TreeViewItem>> Sandbox::Hierarchy::CreateTr
         auto item   = std::make_shared<HierarchyTreeViewItem>();
         auto source = std::make_shared<HierarchyTreeViewSource>();
         // TODO: restore gameObject as ptr
-        LOGD("gameObject.name: {}", gameObject->name.ToStdString())
+        LOGD_OLD("gameObject.name: {}", gameObject->name.ToStdString())
         source->name       = gameObject->name.ToStdString();
         source->gameObject = gameObject.ToStdSharedPtr();
         item->items        = ChildGameObjects(gameObject);

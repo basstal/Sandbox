@@ -2,7 +2,7 @@
 
 #include "PbrRendererSource.hpp"
 
-#include "Engine/Camera.hpp"
+#include "Engine/EntityComponent/Components/Camera.hpp"
 #include "Engine/Image.hpp"
 #include "Engine/Light.hpp"
 #include "FileSystem/Directory.hpp"

@@ -78,7 +78,7 @@ void Sandbox::ShaderModule::Compile(const ShaderSource& glslSource, const std::s
 {
     if (!STAGE_TO_LANGUAGE.contains(stage))
     {
-        LOGF("Stage {} not supported", std::to_string(stage))
+        LOGF_OLD("Stage {} not supported", std::to_string(stage))
     }
     glslang::TProgram       program;
     glslang::TShader        shader(STAGE_TO_LANGUAGE.at(stage));
@@ -103,18 +103,18 @@ void Sandbox::ShaderModule::Compile(const ShaderSource& glslSource, const std::s
     std::string    outputs;
     if (!shader.preprocess(resource, vulkanVersion, ENoProfile, false, false, messages, &outputs, includer))
     {
-        LOGF("GLSL Preprocessing failed for {} : \n{}\n{}", shaderName, shader.getInfoLog(), shader.getInfoDebugLog())
+        LOGF_OLD("GLSL Preprocessing failed for {} : \n{}\n{}", shaderName, shader.getInfoLog(), shader.getInfoDebugLog())
     }
     if (!shader.parse(resource, vulkanVersion, true, messages, includer))
     {
-        LOGF("GLSL Parsing failed for {} :\n{}\n{}", shaderName, shader.getInfoLog(), shader.getInfoDebugLog())
+        LOGF_OLD("GLSL Parsing failed for {} :\n{}\n{}", shaderName, shader.getInfoLog(), shader.getInfoDebugLog())
     }
 
     program.addShader(&shader);
 
     if (!program.link(messages) || !program.mapIO())
     {
-        LOGF("GLSL Linking failed for {} :\n{}\n{}", shaderName, program.getInfoLog(), program.getInfoDebugLog())
+        LOGF_OLD("GLSL Linking failed for {} :\n{}\n{}", shaderName, program.getInfoLog(), program.getInfoDebugLog())
     }
 
     program.buildReflection();
@@ -159,7 +159,7 @@ void Sandbox::ShaderModule::Compile(const ShaderSource& glslSource, const std::s
 
     if (vkCreateShaderModule(m_device->vkDevice, &createInfo, nullptr, &vkShaderModule) != VK_SUCCESS)
     {
-        LOGF("Failed to create shader module!")
+        LOGF_OLD("Failed to create shader module!")
     }
     vkShaderStage = stage;
 }
@@ -226,7 +226,7 @@ void Sandbox::ShaderModule::ReflectVertexInputState(VertexInputState& vertexInpu
         vertexInputAttributeDescription.binding  = 0;
         if (!GL_DEFINE_TYPE_TO_FORMAT.contains(attribute.glDefineType))
         {
-            LOGF("Attribute {} has unsupported glDefineType {} for VkFormat", attributeName, std::to_string(attribute.glDefineType))
+            LOGF_OLD("Attribute {} has unsupported glDefineType {} for VkFormat", attributeName, std::to_string(attribute.glDefineType))
         }
         vertexInputAttributeDescription.format = GL_DEFINE_TYPE_TO_FORMAT.at(attribute.glDefineType);
         vertexInputAttributeDescription.offset = offset;
@@ -255,7 +255,7 @@ void Sandbox::ShaderModule::LoadUniform(const glslang::TObjectReflection& unifor
         auto splitResult = String::Split(uniform.name, '.');
         if (splitResult.size() <= 1)
         {
-            LOGF("Uniform {} has no binding", uniform.name)
+            LOGF_OLD("Uniform {} has no binding", uniform.name)
         }
         auto uniformBlockName  = splitResult[0];
         auto uniformName       = String::Replace(uniform.name, uniformBlockName + ".", "");
@@ -266,7 +266,7 @@ void Sandbox::ShaderModule::LoadUniform(const glslang::TObjectReflection& unifor
             existUniformBlock->second.uniforms[uniformName] = u;
             return;
         }
-        LOGF("Uniform block {} not found for uniform {}", uniformBlockName, uniform.name)
+        LOGF_OLD("Uniform block {} not found for uniform {}", uniformBlockName, uniform.name)
     }
     auto existUniform = m_uniforms.find(uniform.name);
     if (existUniform != m_uniforms.end())
@@ -276,7 +276,7 @@ void Sandbox::ShaderModule::LoadUniform(const glslang::TObjectReflection& unifor
     }
     if (!GL_DEFINE_TYPE_TO_DESCRIPTOR_TYPE.contains(uniform.glDefineType))
     {
-        LOGF("Uniform {} has unsupported glDefineType {} for VkDescriptorType", uniform.name, std::to_string(uniform.glDefineType))
+        LOGF_OLD("Uniform {} has unsupported glDefineType {} for VkDescriptorType", uniform.name, std::to_string(uniform.glDefineType))
     }
     u.descriptorType         = GL_DEFINE_TYPE_TO_DESCRIPTOR_TYPE.at(uniform.glDefineType);
     m_uniforms[uniform.name] = u;
@@ -317,7 +317,7 @@ void Sandbox::ShaderModule::LoadUniformBlock(const glslang::TObjectReflection& u
     auto& qualifier  = uniformBlock.getType()->getQualifier();
     if (!STORAGE_QUALIFIER_TO_DESCRIPTOR_TYPE.contains(qualifier.storage))
     {
-        LOGF("Uniform block {} has unsupported storage {} for VkDescriptorType", uniformBlock.name, std::to_string(qualifier.storage))
+        LOGF_OLD("Uniform block {} has unsupported storage {} for VkDescriptorType", uniformBlock.name, std::to_string(qualifier.storage))
     }
     block.descriptorCount              = uniformBlock.topLevelArrayStride > 0 ? uniformBlock.topLevelArrayStride : 1;
     block.descriptorType               = STORAGE_QUALIFIER_TO_DESCRIPTOR_TYPE.at(qualifier.storage);

@@ -3,9 +3,11 @@
 #include "Viewport.hpp"
 
 #include "ComponentInspectors/TransformInspector.hpp"
-#include "Engine/Camera.hpp"
+#include "Engine/EntityComponent/Components/Camera.hpp"
 #include "Engine/EntityComponent/Components/Transform.hpp"
 #include "Engine/EntityComponent/GameObject.hpp"
+#include "Engine/RendererSource/RendererSource.hpp"
+#include "FileSystem/Directory.hpp"
 #include "Misc/Debug.hpp"
 #include "Misc/GlmExtensions.hpp"
 #include "Misc/TypeCasting.hpp"
@@ -13,10 +15,12 @@
 #include "Platform/Window.hpp"
 #include "VulkanRHI/Common/ViewMode.hpp"
 #include "VulkanRHI/Core/ImageView.hpp"
+#include "VulkanRHI/Core/Pipeline.hpp"
 #include "VulkanRHI/Core/Sampler.hpp"
 #include "VulkanRHI/Core/Surface.hpp"
 #include "VulkanRHI/Core/Swapchain.hpp"
 #include "VulkanRHI/Renderer.hpp"
+#include "VulkanRHI/Rendering/PipelineState.hpp"
 #include "VulkanRHI/Rendering/RenderAttachments.hpp"
 
 void Sandbox::Viewport::OnCursorPosition(GLFWwindow* window, double xPos, double yPos)
@@ -37,13 +41,15 @@ void Sandbox::Viewport::OnCursorPosition(GLFWwindow* window, double xPos, double
 
 Sandbox::Viewport::Viewport(const std::shared_ptr<Renderer>& inRenderer)
 {
-    LOGD("Construct Viewport\n{}", GetCallStack())
+    LOGD_OLD("Construct Viewport\n{}", GetCallStack())
     name           = "Viewport";
     flags          = ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse;
     m_renderer     = inRenderer;
     presentSampler = std::make_shared<Sampler>(m_renderer->device, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE);
     m_renderer->swapchain->onAfterRecreateSwapchain.BindMember<Viewport, &Viewport::OnRecreateFramebuffer>(this);
     m_renderer->surface->window->callbackBridge->onMouseButton.BindMember<Viewport, &Viewport::SwitchCursorForCameraMovement>(this);
+    BindCameraPosition(inRenderer->viewMode);
+    inRenderer->onViewModeChanged.BindMember<Viewport, &Viewport::BindCameraPosition>(this);
 }
 
 void Sandbox::Viewport::Prepare()
@@ -92,44 +98,56 @@ void Sandbox::Viewport::OnGui()
 void Sandbox::Viewport::Tick(float deltaTime)
 {
     IImGuiWindow::Tick(deltaTime);
-    if (m_isCameraMovementEnabled && m_glfwWindow)
+    if (mainCamera != nullptr)
     {
-        if (glfwGetKey(m_glfwWindow, GLFW_KEY_W) == GLFW_PRESS)
+        if (m_isCameraMovementEnabled && m_glfwWindow)
         {
-            mainCamera->ProcessKeyboard(ECameraMovement::FORWARD, deltaTime);
+            if (glfwGetKey(m_glfwWindow, GLFW_KEY_W) == GLFW_PRESS)
+            {
+                mainCamera->ProcessKeyboard(Camera::ECameraMovement::FORWARD, deltaTime);
+            }
+            if (glfwGetKey(m_glfwWindow, GLFW_KEY_S) == GLFW_PRESS)
+            {
+                mainCamera->ProcessKeyboard(Camera::ECameraMovement::BACKWARD, deltaTime);
+            }
+            if (glfwGetKey(m_glfwWindow, GLFW_KEY_A) == GLFW_PRESS)
+            {
+                mainCamera->ProcessKeyboard(Camera::ECameraMovement::LEFT, deltaTime);
+            }
+            if (glfwGetKey(m_glfwWindow, GLFW_KEY_D) == GLFW_PRESS)
+            {
+                mainCamera->ProcessKeyboard(Camera::ECameraMovement::RIGHT, deltaTime);
+            }
+            if (glfwGetKey(m_glfwWindow, GLFW_KEY_SPACE) == GLFW_PRESS)
+            {
+                mainCamera->ProcessKeyboard(Camera::ECameraMovement::UP, deltaTime);
+            }
         }
-        if (glfwGetKey(m_glfwWindow, GLFW_KEY_S) == GLFW_PRESS)
+        std::shared_ptr<RendererSource> rendererSource;
+        if (!m_renderer->TryGetRendererSource(m_renderer->viewMode, rendererSource))
         {
-            mainCamera->ProcessKeyboard(ECameraMovement::BACKWARD, deltaTime);
+            LOGF("Editor", "Renderer source for view mode '{}' not found", VIEW_MODE_NAMES[static_cast<uint32_t>(m_renderer->viewMode)])
         }
-        if (glfwGetKey(m_glfwWindow, GLFW_KEY_A) == GLFW_PRESS)
-        {
-            mainCamera->ProcessKeyboard(ECameraMovement::LEFT, deltaTime);
-        }
-        if (glfwGetKey(m_glfwWindow, GLFW_KEY_D) == GLFW_PRESS)
-        {
-            mainCamera->ProcessKeyboard(ECameraMovement::RIGHT, deltaTime);
-        }
-        if (glfwGetKey(m_glfwWindow, GLFW_KEY_SPACE) == GLFW_PRESS)
-        {
-            mainCamera->ProcessKeyboard(ECameraMovement::UP, deltaTime);
-        }
+        rendererSource->viewAndProjection->view = mainCamera->GetViewMatrix();
+        auto projection                         = mainCamera->GetProjectionMatrix();
+        projection[1][1] *= -1;
+        rendererSource->viewAndProjection->projection = projection;
     }
 }
 
 void Sandbox::Viewport::SwitchCursorForCameraMovement(GLFWwindow* inWindow, int button, int action, int mods)
 {
-    if (button != GLFW_MOUSE_BUTTON_RIGHT)
+    if (button != GLFW_MOUSE_BUTTON_RIGHT || mainCamera == nullptr)
     {
         return;
     }
-    auto shouldEnabled = action == 1;
+    auto enabled = action == 1;
     if (inWindow != m_glfwWindow || !m_isMouseHoveringInnerRect)
     {
         DisableCameraMovement();
         return;
     }
-    if (m_isCameraMovementEnabled == shouldEnabled)
+    if (m_isCameraMovementEnabled == enabled)
     {
         return;
     }
@@ -171,20 +189,21 @@ void Sandbox::Viewport::SetTarget(const std::shared_ptr<GameObject>& target) { m
 
 void Sandbox::Viewport::DrawGizmo(VkExtent2D extent2D)
 {
-    if (m_imguiWindow == nullptr)
+    if (m_imguiWindow == nullptr || mainCamera == nullptr)
     {
         return;
     }
 
-    if (transformInspector != nullptr && m_referenceGameObject != nullptr)
+    auto inspector = Inspector::GetInspector<Transform>();
+    if (inspector != nullptr && m_referenceGameObject != nullptr)
     {
         glm::mat4    model           = m_referenceGameObject->transform->GetModelMatrix();
         glm::mat4    view            = mainCamera->GetViewMatrix();
         glm::mat4    projection      = mainCamera->GetProjectionMatrix();
-        float const* cameraViewConst = glm::value_ptr(view);
+        const float* cameraViewConst = glm::value_ptr(view);
         float        cameraView[16];
         std::copy(cameraViewConst, cameraViewConst + 16, cameraView);
-        float const* cameraProjection = glm::value_ptr(projection);
+        const float* cameraProjection = glm::value_ptr(projection);
         auto         matrixConst      = glm::value_ptr(model);
         float        matrix[16];
         std::copy(matrixConst, matrixConst + 16, matrix);
@@ -202,6 +221,7 @@ void Sandbox::Viewport::DrawGizmo(VkExtent2D extent2D)
         auto rectPosition = m_imguiWindow->InnerRect.Min;
         // TODO: 双显示器的情况下， rectPosition.x 为负数会导致 gizmo 无法显示
         ImGuizmo::SetRect(rectPosition.x + m_startPosition.x, rectPosition.y + m_startPosition.y, ToFloat(extent2D.width), ToFloat(extent2D.height));
+        auto transformInspector = std::dynamic_pointer_cast<TransformInspector>(inspector);
         ImGuizmo::Manipulate(cameraView, cameraProjection, transformInspector->currentGizmoOperation, transformInspector->currentGizmoMode, matrix, nullptr,
                              transformInspector->useSnap ? &transformInspector->snap[0] : nullptr, boundSizing ? bounds : nullptr, boundSizingSnap ? boundsSnap : nullptr);
 
@@ -305,10 +325,7 @@ void Sandbox::Viewport::OnRecreateFramebuffer()
         presentDescriptorSets[i]     = ImGui_ImplVulkan_AddTexture(presentSampler->vkSampler, offlineImageView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
     }
 }
-void Sandbox::Viewport::InspectTarget(std::shared_ptr<GameObject> inTarget)
-{
-    transformInspector = inTarget == nullptr ? nullptr : std::dynamic_pointer_cast<TransformInspector>(Inspector::ComponentMapping["Transform"]);
-}
+void Sandbox::Viewport::InspectTarget(std::shared_ptr<GameObject> inTarget) {}
 
 /**
  * @brief 计算符合宽高比的起始位置
@@ -347,13 +364,24 @@ ImVec2 Sandbox::Viewport::CalculateStartPosition(int aspectWidth, int aspectHeig
         // float scaledHeight = viewportWidth / targetAspectRatio;
         // startY = static_cast<int>((viewportHeight - scaledHeight) / 2);
 
-		float scaleFactor = static_cast<float>(viewportWidth) / ToFloat(adjustedWidth);
-        adjustedWidth = viewportWidth;
-        adjustedHeight = ToUInt32(ToFloat(adjustedHeight) * scaleFactor);
+        float scaleFactor = static_cast<float>(viewportWidth) / ToFloat(adjustedWidth);
+        adjustedWidth     = viewportWidth;
+        adjustedHeight    = ToUInt32(ToFloat(adjustedHeight) * scaleFactor);
         // 重新计算起始Y坐标
         startY = (viewportHeight - ToInt32(adjustedHeight)) / 2;
     }
     // 如果实际宽高比等于目标宽高比，起始位置保持为0，0，不需要计算
 
     return ImVec2(ToFloat(startX), ToFloat(startY));
+}
+
+
+void Sandbox::Viewport::BindCameraPosition(EViewMode inViewMode)
+{
+    std::shared_ptr<RendererSource> rendererSource;
+    if (m_renderer->TryGetRendererSource(inViewMode, rendererSource))
+    {
+        // TODO:因为这里 position 是 Vector3 派生自 rfk::Object 虚函数表指针要求 8 字节对齐，因此不满足传递给 GPU 对齐要求
+        rendererSource->pipeline->pipelineState->pushConstantsInfo.data = mainCamera == nullptr ? nullptr : &mainCamera->position.vec;
+    }
 }

@@ -115,7 +115,7 @@ void Sandbox::ShowExampleMenuFile()
     }
 }
 
-void Sandbox::EditTransform(float* cameraView, float const* cameraProjection, float* matrix, bool editTransformDecomposition)
+void Sandbox::EditTransform(float* cameraView, const float* cameraProjection, float* matrix, bool editTransformDecomposition)
 {
     static ImGuizmo::MODE mCurrentGizmoMode(ImGuizmo::LOCAL);
     static bool           useSnap         = false;

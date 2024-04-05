@@ -57,7 +57,7 @@ void Sandbox::Swapchain::Create(const std::shared_ptr<Device>& device, const std
     createInfo.oldSwapchain   = VK_NULL_HANDLE;
     if (vkCreateSwapchainKHR(m_device->vkDevice, &createInfo, nullptr, &vkSwapchainKhr) != VK_SUCCESS)
     {
-        LOGF("failed to create swap chain!")
+        LOGF_OLD("failed to create swap chain!")
     }
     imageViews = CreateImageViews(surfaceFormat.format);
     m_cleaned  = false;
@@ -151,7 +151,7 @@ Sandbox::ESwapchainStatus Sandbox::Swapchain::AcquireNextImageIndex(const std::s
     }
     if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR)
     {
-        LOGF("failed to acquire swap chain image!")
+        LOGF_OLD("failed to acquire swap chain image!")
         return ESwapchainStatus::Failure;
     }
     return ESwapchainStatus::Continue;
@@ -198,7 +198,7 @@ Sandbox::ESwapchainStatus Sandbox::Swapchain::Preset(const std::vector<std::shar
     }
     else if (result != VK_SUCCESS)
     {
-        LOGF("failed to present swap chain image!")
+        LOGF_OLD("failed to present swap chain image!")
         return ESwapchainStatus::Failure;
     }
     return ESwapchainStatus::Continue;

@@ -22,6 +22,25 @@
 #include <Refureku/TypeInfo/Archetypes/Template/TemplateTemplateArgument.h>
 
 
+#define Sandbox_IComponent_GENERATED	\
+RFK_UNPACK_IF_NOT_PARSING(friend rfk::internal::CodeGenerationHelpers;\
+friend rfk::internal::implements_template1__rfk_registerChildClass<IComponent, void, void(rfk::Struct&)>; \
+\
+private: template <typename ChildClass> static void _rfk_registerChildClass(rfk::Struct& childClass) noexcept {\
+rfk::Struct const& thisClass = staticGetArchetype();\
+if constexpr (!std::is_same_v<ChildClass, IComponent>)const_cast<rfk::Struct&>(thisClass).addSubclass(childClass, rfk::internal::CodeGenerationHelpers::computeClassPointerOffset<ChildClass, IComponent>());\
+else\
+{\
+childClass.setFieldsCapacity(0u + 0); childClass.setStaticFieldsCapacity(0u + 0); \
+}\
+}\
+\
+public:  static rfk::Class const& staticGetArchetype() noexcept;\
+\
+)\
+
+
 #define File_IComponent_GENERATED	\
+template <>  rfk::Archetype const* rfk::getArchetype<Sandbox::IComponent>() noexcept;\
 
 

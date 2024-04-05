@@ -3,12 +3,15 @@
 #include "ImGuiRenderer.hpp"
 
 #include "Editor.hpp"
+#include "FileSystem/Directory.hpp"
 #include "IImGuiWindow.hpp"
 #include "ImGuiWidgets/MenuBar.hpp"
 #include "ImGuiWindows/ContentBrowser.hpp"
 #include "ImGuiWindows/DemoWindow.hpp"
 #include "ImGuiWindows/Hierarchy.hpp"
 #include "ImGuiWindows/Inspector.hpp"
+#include "ImGuiWindows/Logs.hpp"
+#include "ImGuiWindows/Stats.hpp"
 #include "ImGuiWindows/Viewport.hpp"
 #include "Misc/TypeCasting.hpp"
 #include "Platform/GlfwCallbackBridge.hpp"
@@ -81,6 +84,8 @@ void Sandbox::ImGuiRenderer::RegisterWindows(const std::shared_ptr<Renderer>& re
     hierarchy->onTargetChanged.BindMember<Viewport, &Viewport::InspectTarget>(viewport.get());
     RegisterWindow(hierarchy);
     RegisterWindow(inspector);
+    RegisterWindow(std::make_shared<Logs>());
+    RegisterWindow(std::make_shared<Stats>());
 }
 
 void Sandbox::ImGuiRenderer::UnregisterAllWindows()
@@ -104,6 +109,25 @@ void Sandbox::ImGuiRenderer::ImGuiPrepare(const std::shared_ptr<Renderer>& rende
     io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;  // Enable Docking
     io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;  // Enable Multi-Viewport / Platform Windows
     io.ConfigWindowsMoveFromTitleBarOnly = true;
+
+    float fontSize = 22.f;
+    auto  firaCode = Directory::GetAssetsDirectory().GetFile("Fonts/FiraCode-Regular.ttf");
+    // 加载主编程字体 - Fira Code
+    // ImFont* firaCodeFont =
+    io.Fonts->AddFontFromFileTTF(firaCode.path.generic_string().c_str(), fontSize);
+
+    // 加载中文字符支持的字体 - 微软雅黑
+    // 注意: 这里的大小和主字体大小相匹配是很重要的，以保证文本渲染时的一致性
+    static const ImWchar icons_ranges[] = {0x0020, 0xFFFF, 0};
+    ImFontConfig         icons_config;
+    icons_config.MergeMode  = true;
+    icons_config.PixelSnapH = true;
+    auto msyh               = Directory::GetAssetsDirectory().GetFile("Fonts/msyh.ttc");
+    io.Fonts->AddFontFromFileTTF(msyh.path.generic_string().c_str(), fontSize, &icons_config, icons_ranges);
+    io.Fonts->Build();
+
+    // // 可以添加其他字体作为备选，例如 Courier New
+    // io.Fonts->AddFontFromFileTTF("path_to_courier_new.ttf", 18.0f, &icons_config, icons_ranges);
 
     // Setup Dear ImGui style
     ImGui::StyleColorsDark();

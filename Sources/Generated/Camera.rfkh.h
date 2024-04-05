@@ -31,7 +31,7 @@ rfk::Struct const& thisClass = staticGetArchetype();\
 if constexpr (!std::is_same_v<ChildClass, Camera>)const_cast<rfk::Struct&>(thisClass).addSubclass(childClass, rfk::internal::CodeGenerationHelpers::computeClassPointerOffset<ChildClass, Camera>());\
 else\
 {\
-childClass.setFieldsCapacity(7u + rfk::internal::CodeGenerationHelpers::getReflectedFieldsCount< ISerializable<Camera>>()); childClass.setStaticFieldsCapacity(0u + rfk::internal::CodeGenerationHelpers::getReflectedStaticFieldsCount< ISerializable<Camera>>()); \
+childClass.setFieldsCapacity(7u + rfk::internal::CodeGenerationHelpers::getReflectedFieldsCount< IComponent>()+rfk::internal::CodeGenerationHelpers::getReflectedFieldsCount< ISerializable<Camera>>()); childClass.setStaticFieldsCapacity(0u + rfk::internal::CodeGenerationHelpers::getReflectedStaticFieldsCount< IComponent>()+rfk::internal::CodeGenerationHelpers::getReflectedStaticFieldsCount< ISerializable<Camera>>()); \
 }\
 [[maybe_unused]] rfk::Field* field = nullptr; [[maybe_unused]] rfk::StaticField* staticField = nullptr;\
 )\
@@ -46,7 +46,8 @@ field = childClass.addField("farPlane", std::hash<std::string>()(std::string("c:
 field = childClass.addField("aspectRatio", std::hash<std::string>()(std::string("c:@N@Sandbox@S@Camera@FI@aspectRatio") + rfk::internal::getTypename<ChildClass>()), rfk::getType<float>(), static_cast<rfk::EFieldFlags>(1), offsetof(ChildClass, aspectRatio), &thisClass);\
 )\
 __RFK_DISABLE_WARNING_POP \
-RFK_UNPACK_IF_NOT_PARSING(rfk::internal::CodeGenerationHelpers::registerChildClass<ISerializable<Camera>, ChildClass>(childClass);\
+RFK_UNPACK_IF_NOT_PARSING(rfk::internal::CodeGenerationHelpers::registerChildClass<IComponent, ChildClass>(childClass);\
+rfk::internal::CodeGenerationHelpers::registerChildClass<ISerializable<Camera>, ChildClass>(childClass);\
 }\
 \
 public:  static rfk::Class const& staticGetArchetype() noexcept;\

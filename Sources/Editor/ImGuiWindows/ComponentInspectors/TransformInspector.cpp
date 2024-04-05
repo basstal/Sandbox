@@ -2,22 +2,12 @@
 
 #include "TransformInspector.hpp"
 
+#include "Generated/TransformInspector.rfks.h"
 
-Sandbox::TransformInspector::TransformInspector() : currentGizmoOperation(ImGuizmo::TRANSLATE), currentGizmoMode(ImGuizmo::LOCAL), useSnap(false)
+Sandbox::TransformInspector::TransformInspector() : currentGizmoOperation(ImGuizmo::TRANSLATE), currentGizmoMode(ImGuizmo::LOCAL), useSnap(false) { name = "Transform"; }
+
+void Sandbox::TransformInspector::OnInspectorGui()
 {
-    name = "TransformInspector";
-}
-
-void Sandbox::TransformInspector::OnGui()
-{
-    // 创建一个子区域/子窗口
-    ImGui::BeginChild(name.c_str());
-    if (!ImGui::CollapsingHeader("Transform", ImGuiTreeNodeFlags_DefaultOpen))
-    {
-        ImGui::EndChild();
-        return;
-    }
-
     if (ImGui::IsKeyPressed(ImGuiKey_T))
         currentGizmoOperation = ImGuizmo::TRANSLATE;
     if (ImGui::IsKeyPressed(ImGuiKey_E))
@@ -99,5 +89,4 @@ void Sandbox::TransformInspector::OnGui()
     // 	ImGui::InputFloat3("Snap", boundsSnap);
     // 	ImGui::PopID();
     // }
-    ImGui::EndChild(); // 结束子区域/子窗口
 }

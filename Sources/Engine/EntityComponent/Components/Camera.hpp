@@ -3,14 +3,13 @@
 #include <glm/matrix.hpp>
 #include <memory>
 
+#include "Engine/EntityComponent/IComponent.hpp"
 #include "Generated/Camera.rfkh.h"
 #include "Math/Vector3.hpp"
 
 namespace Sandbox NAMESPACE()
 {
-    struct CameraProperty;
     class UniformBuffer;
-    class Buffer;
 
     struct ViewAndProjection
     {
@@ -31,21 +30,24 @@ namespace Sandbox NAMESPACE()
         std::shared_ptr<UniformBuffer> modelsUbo;
     };
 
-    // Defines several possible options for camera movement. Used as abstraction to stay away from window-system specific input methods
-    enum ECameraMovement
-    {
-        FORWARD = 0,
-        BACKWARD,
-        LEFT,
-        RIGHT,
-        UP,
-        MAX,
-    };
 
-    class CLASS() Camera : public ISerializable<Camera>
+    class CLASS() Camera : public IComponent, public ISerializable<Camera>
     {
     public:
-        Camera(glm::vec3 inWorldUp, float inAspectRatio);
+        // Defines several possible options for camera movement. Used as abstraction to stay away from window-system specific input methods
+        enum ECameraMovement
+        {
+            FORWARD = 0,
+            BACKWARD,
+            LEFT,
+            RIGHT,
+            UP,
+            MAX,
+        };
+
+        Camera();
+
+        Camera(float inAspectRatio);
 
         /**
          * Returns the view matrix calculated using Euler Angles and the LookAt Matrix
@@ -89,10 +91,6 @@ namespace Sandbox NAMESPACE()
          */
         void UpdateCameraVectors();
 
-        // std::shared_ptr<CameraProperty> property;
-
-        // glm::vec3 position = glm::vec3(0.0f);
-
         /**
          * \brief 位置
          */
@@ -127,8 +125,7 @@ namespace Sandbox NAMESPACE()
          * \brief 纵横比
          */
         FIELD()
-        float aspectRatio = 1.0f;
-        // CameraProperty_GENERATED
+        float aspectRatio = 16 / 9.0f;
 
         glm::vec3 worldUp;
         Vector3   worldUp1;
@@ -137,9 +134,11 @@ namespace Sandbox NAMESPACE()
         glm::vec3 right;
         Vector3   right1;
         glm::vec3 up;
-        Vector3 up1;
+        Vector3   up1;
 
-		Sandbox_Camera_GENERATED
+        std::string GetDerivedClassName() override;
+
+        Sandbox_Camera_GENERATED
 	};
 } // namespace Sandbox NAMESPACE()
 

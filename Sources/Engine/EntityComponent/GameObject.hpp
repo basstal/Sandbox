@@ -22,7 +22,7 @@ namespace Sandbox NAMESPACE()
         FIELD()
         SharedPtr<Transform> transform;
         FIELD()
-        String name;
+        String name = "Default";
 
         std::vector<std::shared_ptr<GameObject>> children;
 

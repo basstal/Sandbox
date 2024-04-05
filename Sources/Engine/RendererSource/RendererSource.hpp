@@ -1,5 +1,5 @@
 ﻿#pragma once
-#include "Engine/Camera.hpp"
+#include "Engine/EntityComponent/Components/Camera.hpp"
 
 namespace Sandbox
 {

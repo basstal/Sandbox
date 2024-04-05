@@ -195,7 +195,7 @@ namespace Sandbox
         auto it = DataBindingMap.find(inName);
         if (it == DataBindingMap.end())
         {
-            LOGF("No DataBinding found with name: {}", inName)
+            LOGF_OLD("No DataBinding found with name: {}", inName)
         }
 
         try
@@ -206,7 +206,7 @@ namespace Sandbox
         }
         catch (const std::bad_any_cast&)
         {
-            LOGF("Failed to cast binding to the requested type for name: {}", inName)
+            LOGF_OLD("Failed to cast binding to the requested type for name: {}", inName)
         }
         return nullptr;
     }
@@ -226,7 +226,7 @@ namespace Sandbox
             }
             catch (const std::bad_any_cast&)
             {
-                LOGF("Failed to cast binding to the requested type for name: {}", inName)
+                LOGF_OLD("Failed to cast binding to the requested type for name: {}", inName)
             }
         }
         return false;

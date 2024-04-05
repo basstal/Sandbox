@@ -33,7 +33,7 @@ Sandbox::ImageView::ImageView(const std::shared_ptr<Device>& device, VkImage ima
     viewInfo.subresourceRange = subresourceRange;
     if (vkCreateImageView(m_device->vkDevice, &viewInfo, nullptr, &vkImageView) != VK_SUCCESS)
     {
-        LOGF("failed to create image view!")
+        LOGF_OLD("failed to create image view!")
     }
 }
 

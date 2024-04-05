@@ -9,7 +9,32 @@ std::ostream* Sandbox::Logger::m_outputStream = &std::cout;
 
 bool Sandbox::Logger::m_useColor = true;
 
-std::vector<std::string> Sandbox::Logger::m_messages = {};
+std::vector<Sandbox::Logger::LogMessage> Sandbox::Logger::messages = {};
+
+std::map<Sandbox::Logger::LoggerLevel, std::tuple<std::string, std::string>> Sandbox::Logger::levelDetails = {
+    {LevelFatal, {"[FATAL] ", "\x1b[31m"}},  // 红色
+    {LevelError, {"[ERROR] ", "\x1b[31m"}},  // 红色
+    {LevelWarning, {"[WARNING] ", "\x1b[33m"}},  // 黄色
+    {LevelInfo, {"[INFO] ", "\x1b[32m"}},  // 绿色
+    {LevelDebug, {"[DEBUG] ", ""}},
+};
+
+Sandbox::Event<const Sandbox::Logger::LogMessage&> Sandbox::Logger::onLogMessage = {};
+
+std::vector<Sandbox::Logger::LogMessage> Sandbox::Logger::GetMessagesByTag(const std::string& tag)
+{
+    std::vector<LogMessage> filteredMessages;
+    auto                    formattedTag = tag.empty() ? tag : std::vformat("[{}] ", std::make_format_args(tag));
+    for (const auto& message : messages)
+    {
+        if (message.tag == formattedTag)
+        {
+            filteredMessages.push_back(message);
+        }
+    }
+
+    return filteredMessages;
+}
 
 void Sandbox::Logger::CloseLogFile()
 {

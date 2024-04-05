@@ -26,7 +26,7 @@ VkDescriptorImageInfo Sandbox::Texture::GetDescriptorImageInfo()
 {
     if (!imageView)
     {
-        LOGE("Texture::Update: imageView is nullptr")
+        LOGE_OLD("Texture::Update: imageView is nullptr")
         return {};
     }
     VkDescriptorImageInfo descriptorImageInfo;

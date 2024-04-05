@@ -2,13 +2,13 @@
 
 #include "Engine.hpp"
 
-#include "Camera.hpp"
 #include "Editor/Editor.hpp"
 #include "Editor/ImGuiRenderer.hpp"
 #include "Editor/ImGuiWindows/Hierarchy.hpp"
 #include "Editor/ImGuiWindows/Viewport.hpp"
 #include "Editor/TransformGizmo.hpp"
 #include "Engine/EntityComponent/Scene.hpp"
+#include "EntityComponent/Components/Camera.hpp"
 #include "EntityComponent/Components/Mesh.hpp"
 #include "EntityComponent/Components/Transform.hpp"
 #include "EntityComponent/GameObject.hpp"
@@ -16,6 +16,7 @@
 #include "FileSystem/File.hpp"
 #include "Misc/DataBinding.hpp"
 #include "Misc/String.hpp"
+#include "Misc/TypeCasting.hpp"
 #include "Model.hpp"
 #include "Platform/GlfwCallbackBridge.hpp"
 #include "Platform/Window.hpp"
@@ -51,7 +52,7 @@ void Sandbox::Engine::Prepare()
     // 初始化 glfw
     if (!glfwInit())
     {
-        LOGF("glfw init failed!")
+        LOGF_OLD("glfw init failed!")
     }
     // 创建和初始化渲染器
     window = std::make_shared<Window>();
@@ -66,16 +67,15 @@ void Sandbox::Engine::Prepare()
 void Sandbox::Engine::CreateEditor()
 {
     // 创建和初始化编辑器
-    editor = std::make_shared<Editor>();
-    timer  = std::make_shared<Timer>();
-    timer->SetInterval(60);
-
-    editor->Prepare(renderer, timer, models, window);
+    editor        = std::make_shared<Editor>();
+    rendererTimer = std::make_shared<Timer>();
+    logicTimer    = std::make_shared<Timer>();
+    editor->Prepare(renderer, rendererTimer, models, window);
 }
 void Sandbox::Engine::CreateRenderer()
 {
     renderer = std::make_shared<Renderer>();
-    LOGD("CreateRenderer render ptr {}", PtrToHexString(renderer.get()))
+    LOGD_OLD("CreateRenderer render ptr {}", PtrToHexString(renderer.get()))
     renderer->Prepare(window);
 
     auto maxFramesFlight = renderer->maxFramesFlight;
@@ -106,15 +106,28 @@ void Sandbox::Engine::CreateRenderer()
 void Sandbox::Engine::MainLoop()
 {
     // TODO:临时游戏对象
-    std::shared_ptr<Scene>      scene      = std::make_shared<Scene>();
-    std::shared_ptr<GameObject> gameObject = std::make_shared<GameObject>();
-    gameObject->name                       = "Test";
-    Scene::currentScene                    = scene;
+    std::shared_ptr<Scene>      scene            = std::make_shared<Scene>();
+    std::shared_ptr<GameObject> gameObject       = std::make_shared<GameObject>();
+    gameObject->name                             = "Test";
+    Scene::currentScene                          = scene;
     scene->rootGameObjects.push_back(gameObject);
+    
+    std::shared_ptr<GameObject> cameraGameObject = std::make_shared<GameObject>();
+    cameraGameObject->name                       = "Camera";
+    auto  camera                                 = cameraGameObject->AddComponent<Camera>();
+    auto& resolution                             = renderer->resolution;
+    auto  aspectRatio                            = static_cast<float>(resolution.width) / static_cast<float>(resolution.height);
+    camera->aspectRatio                          = aspectRatio;
+    static Sandbox::File editorCameraConfigCache = Sandbox::Directory::GetLibraryDirectory().GetFile("EditorCamera.yaml");
+    camera->LoadFromFile(editorCameraConfigCache);
+    camera->UpdateCameraVectors();
+    editor->imGuiRenderer->viewport->mainCamera = camera;
+    scene->rootGameObjects.push_back(cameraGameObject);
+    
     // TODO: 测试保存场景
     auto sceneFile = Directory::GetAssetsDirectory().GetFile("Test.scene");
-    // LOGD("begin serialize scene")
-    // scene->SaveToFile(sceneFile);
+    LOGD("Test", "begin serialize scene")
+    scene->SaveToFile(sceneFile);
     // LOGD("end serialize scene")
     // scene->LoadFromFile(sceneFile);
     editor->imGuiRenderer->hierarchy->SetScene(scene);
@@ -126,31 +139,46 @@ void Sandbox::Engine::MainLoop()
     // editor->transformGizmo->SetTarget(gameObject);
     editor->imGuiRenderer->viewport->SetTarget(gameObject);
     window->callbackBridge->onKey.BindMember<Engine, &Engine::Pause>(this);
+    auto                      fpsLimit = 60;
+    std::chrono::microseconds logicUpdateDeltaTime(ToUInt32(std::floor(1000000 / fpsLimit)));
+    std::chrono::microseconds rendererUpdateInterval(ToUInt32(std::floor(1000000 / fpsLimit)));
     while (!glfwWindowShouldClose(window->glfwWindow))
     {
         glfwPollEvents();
         editor->Update();
+
         if (pause)
         {
             continue;
         }
-        if (timer->ShouldTickFrame())
+
+        // 逻辑以固定步长（时长）更新
+        logicTimer->UpdateInFixed(logicUpdateDeltaTime);
+        while (logicTimer->BeginFixed())
+        {
+            scene->Tick();
+            logicTimer->EndFixed();
+        }
+
+        // 渲染以固定帧率更新
+        if (rendererTimer->UpdateInInterval(rendererUpdateInterval))
         {
             models[renderer->frameFlightIndex]->model[0] = gameObject->transform->GetModelMatrix();
             std::shared_ptr<RendererSource> rendererSource;
             if (!renderer->TryGetRendererSource(renderer->viewMode, rendererSource))
             {
-                LOGF("Renderer source for view mode '{}' not found", VIEW_MODE_NAMES[static_cast<uint32_t>(renderer->viewMode)])
+                LOGF_OLD("Renderer source for view mode '{}' not found", VIEW_MODE_NAMES[static_cast<uint32_t>(renderer->viewMode)])
             }
             rendererSource->uboMvp[renderer->frameFlightIndex]->modelsUbo->Update(models[renderer->frameFlightIndex]->model);
             // TODO:临时将 mesh 添加到队列中支持当帧绘制
             renderer->queuedMeshes.push(mesh);
             editor->Draw();
         }
-        timer->EndFrame();
+        rendererTimer->EndFrame();
         if (shouldRecreateRenderer)
         {
             shouldRecreateRenderer = false;
+            Logger::onLogMessage.Cleanup();
             editor->Cleanup();
             // TODO:临时放在这里清理
             mesh->Cleanup();

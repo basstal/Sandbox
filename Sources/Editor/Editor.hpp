@@ -13,7 +13,6 @@ namespace Sandbox
     class ShaderModule;
     class Grid;
     class Timer;
-    class Camera;
     class Renderer;
     class ImGuiRenderer;
     class DescriptorSet;
@@ -30,14 +29,10 @@ namespace Sandbox
     public:
         void Prepare(const std::shared_ptr<Renderer>& renderer, const std::shared_ptr<Timer>& timer, const std::vector<std::shared_ptr<Models>>& inModels,
                      const std::shared_ptr<Window>& inWindow);
-        void BindCameraPosition(EViewMode inViewMode);
 
         void Draw();
 
         void Update();
-
-
-        void UpdateInputs(const std::shared_ptr<GlfwCallbackBridge>& glfwInputBridge);
 
         void Cleanup();
 
@@ -50,7 +45,7 @@ namespace Sandbox
 
         std::shared_ptr<ImGuiRenderer> imGuiRenderer;
         std::shared_ptr<Grid>          grid;
-        std::shared_ptr<Camera>        camera;
+        // std::shared_ptr<Camera>        camera;
 
         std::vector<std::shared_ptr<ShaderModule>>  shaderModules;
         std::shared_ptr<PipelineLayout>             pipelineLayout;
@@ -60,7 +55,7 @@ namespace Sandbox
         std::shared_ptr<Pipeline>            pipelineLineList;
         std::shared_ptr<Pipeline>            pipelineGizmo;
         // std::shared_ptr<Pipeline> pipelineGizmoDebug;
-        Event<GLFWwindow*, const std::shared_ptr<Camera>&, const std::shared_ptr<GlfwCallbackBridge>&> onUpdateInputs;
+        // Event<GLFWwindow*, const std::shared_ptr<Camera>&, const std::shared_ptr<GlfwCallbackBridge>&> onUpdateInputs;
         std::shared_ptr<Window>                                                                        window;
 
     private:

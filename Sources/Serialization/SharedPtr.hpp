@@ -37,7 +37,7 @@ namespace Sandbox NAMESPACE()
         METHOD()
         bool DeserializeFromYaml(const YAML::Node& node);
 
-        rfk::Struct const& getArchetype() const noexcept override;
+        const rfk::Struct& getArchetype() const noexcept override;
 
         Sandbox_SharedPtr_GENERATED
     };
@@ -46,7 +46,7 @@ namespace Sandbox NAMESPACE()
     YAML::Node Sandbox::SharedPtr<T>::SerializeToYaml()
     {
         const rfk::Class& archeType = T::staticGetArchetype();
-        LOGD("[SharedPtr] objectType : {}, fieldsCount : {} ", archeType.getName(), std::to_string(archeType.getFieldsCount()))
+        LOGD_OLD("[SharedPtr] objectType : {}, fieldsCount : {} ", archeType.getName(), std::to_string(archeType.getFieldsCount()))
 
         // YAML::Node result;
         // for (auto it = this->begin(); it != this->end(); ++it)
@@ -68,16 +68,16 @@ namespace Sandbox NAMESPACE()
     bool Sandbox::SharedPtr<T>::DeserializeFromYaml(const YAML::Node& node)
     {
         const rfk::Class& archeType = T::staticGetArchetype();
-        LOGD("[SharedPtr] objectType : {}, fieldsCount : {} ", archeType.getName(), std::to_string(archeType.getFieldsCount()))
+        LOGD_OLD("[SharedPtr] objectType : {}, fieldsCount : {} ", archeType.getName(), std::to_string(archeType.getFieldsCount()))
         this->get()->DeserializeFromYaml(node);
         return true;
     }
 
     template <typename T>
-    rfk::Struct const& SharedPtr<T>::getArchetype() const noexcept
+    const rfk::Struct& SharedPtr<T>::getArchetype() const noexcept
     {
-        throw std::runtime_error("Not implemented");  // 为了避免头文件中的循环引用，而且暂时不需要根据 shared ptr 获取 T 的 原型信息，所以这里直接抛出异常
-		// return T::staticGetArchetype();
+        LOGF("Core", "SharedPtr<T>::getArchetype Not implemented");  // 为了避免头文件中的循环引用，而且暂时不需要根据 shared ptr 获取 T 的 原型信息，所以这里直接抛出异常
+		return T::staticGetArchetype();
 	}
 } // namespace Sandbox NAMESPACE()
 

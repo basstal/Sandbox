@@ -3,7 +3,7 @@
 #include "Grid.hpp"
 
 #include "Editor.hpp"
-#include "Engine/Camera.hpp"
+#include "Engine/EntityComponent/Components/Camera.hpp"
 #include "VulkanRHI/Core/Buffer.hpp"
 #include "VulkanRHI/Core/CommandBuffer.hpp"
 #include "VulkanRHI/Core/ShaderModule.hpp"

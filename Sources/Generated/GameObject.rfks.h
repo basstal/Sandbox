@@ -18,7 +18,8 @@ static rfk::NamespaceFragment fragment("Sandbox", 7028080843842788705u);
 static bool initialized = false;
 if (!initialized) {
 initialized = true;
-fragment.setNestedEntitiesCapacity(1u);
+fragment.setNestedEntitiesCapacity(2u);
+fragment.addNestedEntity(*rfk::getArchetype<Sandbox::IComponent>());
 fragment.addNestedEntity(*rfk::getArchetype<Sandbox::GameObject>());
 }
 return fragment; }

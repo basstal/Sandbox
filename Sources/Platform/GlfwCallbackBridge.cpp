@@ -80,7 +80,7 @@ static void KeyCallback(GLFWwindow* window, int key, int scancode, int action, i
     if (glfwInputBridge)
     {
         glfwInputBridge->onKey.Trigger(window, key, scancode, action, mods);
-        LOGD("key {}, scancode {}, action {}, mods {}", std::to_string(key), std::to_string(scancode), std::to_string(action), std::to_string(mods))
+        LOGD_OLD("key {}, scancode {}, action {}, mods {}", std::to_string(key), std::to_string(scancode), std::to_string(action), std::to_string(mods))
     }
 }
 
@@ -111,7 +111,7 @@ static void FramebufferSizeCallback(GLFWwindow* window, int width, int height)
     }
 }
 
-static void ErrorCallback(int error, const char* description) { LOGE("code {}\n{}", std::to_string(error), description) }
+static void ErrorCallback(int error, const char* description) { LOGE_OLD("code {}\n{}", std::to_string(error), description) }
 
 void Sandbox::GlfwCallbackBridge::BindCallbacks(GLFWwindow* window)
 {
@@ -179,7 +179,7 @@ Sandbox::Ray Sandbox::CursorPositionToWorldRay(GLFWwindow* window, const glm::ma
     float windowWidth = imGuiWindow->Size.x, windowHeight = imGuiWindow->Size.y;
     // glfwGetWindowSize(window, &windowWidth, &windowHeight);
     float relativeX = mouseX - imGuiWindow->Pos.x, relativeY = mouseY - imGuiWindow->Pos.y;
-    LOGD("mouseX {}, mouseY {}, relativeX {}, relativeY {}", std::to_string(mouseX), std::to_string(mouseY), std::to_string(relativeX), std::to_string(relativeY))
+    LOGD_OLD("mouseX {}, mouseY {}, relativeX {}, relativeY {}", std::to_string(mouseX), std::to_string(mouseY), std::to_string(relativeX), std::to_string(relativeY))
     float x = (2.0f * static_cast<float>(relativeX)) / static_cast<float>(windowWidth) - 1.0f;
     float y = 1.0f - (2.0f * static_cast<float>(mouseY)) / static_cast<float>(windowHeight);
     // float y = (2.0f * static_cast<float>(relativeY)) / static_cast<float>(windowHeight) - 1.0f;

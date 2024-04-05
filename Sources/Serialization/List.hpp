@@ -17,7 +17,7 @@ namespace Sandbox NAMESPACE()
         METHOD()
         bool DeserializeFromYaml(const YAML::Node& node);
 
-        rfk::Struct const& getArchetype() const noexcept override;
+        const rfk::Struct& getArchetype() const noexcept override;
 
         Sandbox_List_GENERATED
     };
@@ -26,7 +26,7 @@ namespace Sandbox NAMESPACE()
     YAML::Node Sandbox::List<T>::SerializeToYaml()
     {
         const rfk::Class& objectType = T::staticGetArchetype();
-        LOGD("[List] objectType : {} ", objectType.getName())
+        LOGD_OLD("[List] objectType : {} ", objectType.getName())
 
         // 将 vector 中每个元素按顺序存放到 YAML::Sequence 中
         YAML::Node result;
@@ -42,7 +42,7 @@ namespace Sandbox NAMESPACE()
     bool Sandbox::List<T>::DeserializeFromYaml(const YAML::Node& node)
     {
         const rfk::Class& objectType = T::staticGetArchetype();
-        LOGD("[List] Descrialize objectType : {} ", objectType.getName())
+        LOGD_OLD("[List] Descrialize objectType : {} ", objectType.getName())
 
         for (auto it = node.begin(); it != node.end(); ++it)
         {
@@ -54,7 +54,7 @@ namespace Sandbox NAMESPACE()
     }
 
     template <typename T>
-    rfk::Struct const& List<T>::getArchetype() const noexcept
+    const rfk::Struct& List<T>::getArchetype() const noexcept
     {
         return T::staticGetArchetype();
     }

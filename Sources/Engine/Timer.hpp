@@ -1,6 +1,5 @@
 ﻿#pragma once
 #include <chrono>
-#include <cstdint>
 
 namespace Sandbox
 {
@@ -15,22 +14,22 @@ namespace Sandbox
          */
         float GetDeltaTime();
 
-        /**
-         * \brief 设置每帧最短间隔时间
-         * \param fpsLimits 每秒帧数
-         */
-        void SetInterval(int32_t fpsLimits);
+        // /**
+        //  * \brief 设置每帧最短间隔时间
+        //  * \param fpsLimits 每秒帧数
+        //  */
+        // void SetInterval(int32_t fpsLimits);
 
         /**
          * \brief 结束一帧
          */
         void EndFrame();
 
-        /**
-         * \brief 是否应该进行下一帧
-         * \return 是否应该进行下一帧
-         */
-        bool ShouldTickFrame();
+        void UpdateInFixed(const std::chrono::microseconds& fixedDeltaTime);
+        bool BeginFixed();
+        void EndFixed();
+
+        bool UpdateInInterval(const std::chrono::microseconds& interval);
 
     private:
         /**
@@ -43,10 +42,15 @@ namespace Sandbox
          */
         std::chrono::high_resolution_clock::time_point m_lastIntervalTime;
 
-        /**
-         * \brief 每帧最短间隔时间
-         */
-        std::chrono::nanoseconds m_interval;
+        std::chrono::high_resolution_clock::time_point m_lastFixedTime;
+        // /**
+        //  * \brief 每帧最短间隔时间
+        //  */
+        // std::chrono::milliseconds m_interval;
+
+
+        std::chrono::microseconds m_fixedLag;
+        std::chrono::microseconds m_fixedDeltaTime;
 
         /**
          * \brief 上一帧耗时

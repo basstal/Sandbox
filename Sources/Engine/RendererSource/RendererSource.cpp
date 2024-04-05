@@ -2,7 +2,7 @@
 
 #include "RendererSource.hpp"
 
-#include "Engine/Camera.hpp"
+#include "Engine/EntityComponent/Components/Camera.hpp"
 #include "Misc/Memory.hpp"
 #include "VulkanRHI/Core/Device.hpp"
 #include "VulkanRHI/Core/Pipeline.hpp"
@@ -50,6 +50,7 @@ void Sandbox::RendererSource::UpdateModels(std::shared_ptr<Renderer>& renderer, 
 
     for (size_t i = 0; i < uboMvp.size(); ++i)
     {
+        // TODO: dynamic model value from scene objects
         inModels[i]->model    = static_cast<glm::mat4*>(AlignedAlloc(modelsBufferSize, dynamicAlignment));
         inModels[i]->model[0] = glm::translate(glm::mat4(1.0f), glm::vec3(1.5f, 0.0f, 0.0f));
         inModels[i]->model[1] = glm::mat4(1.0f);  // NOTE:grid 一直处在场景中央

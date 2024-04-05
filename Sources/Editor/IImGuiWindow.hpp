@@ -1,8 +1,8 @@
 ﻿#pragma once
-#include <Generated/IImGuiWindow.rfkh.h>
 #include <imgui.h>
 #include <string>
 
+#include "Generated/IImGuiWindow.rfkh.h"
 #include "Serialization/ISerializable.hpp"
 
 namespace Sandbox NAMESPACE()
@@ -10,7 +10,7 @@ namespace Sandbox NAMESPACE()
     class CLASS() IImGuiWindow : public ISerializable<IImGuiWindow>
     {
     public:
-        std::string name = "DEFAULT";
+        std::string name = "Default";
         FIELD()
         bool             isOpen = false;
         ImGuiWindowFlags flags  = 0;

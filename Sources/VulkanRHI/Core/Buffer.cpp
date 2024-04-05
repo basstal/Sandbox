@@ -22,7 +22,7 @@ Sandbox::Buffer::Buffer(const std::shared_ptr<Device>& device, VkDeviceSize inSi
     {
         Logger::Fatal("failed to create buffer!");
     }
-    LOGI("{}\n{}", PtrToHexString(vkBuffer), GetCallStack())
+    LOGI_OLD("{}\n{}", PtrToHexString(vkBuffer), GetCallStack())
 
     VkMemoryRequirements memRequirements;
     vkGetBufferMemoryRequirements(device->vkDevice, vkBuffer, &memRequirements);
