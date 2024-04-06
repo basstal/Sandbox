@@ -30,7 +30,7 @@ static rfk::Class type("IImGuiWindow", 18202984137645972520u, sizeof(IImGuiWindo
 if (!initialized) {
 initialized = true;
 type.setDirectParentsCapacity(1);
-type.addDirectParent(rfk::getArchetype<ISerializable<IImGuiWindow>>(), static_cast<rfk::EAccessSpecifier>(1));
+type.addDirectParent(rfk::getArchetype<ISerializable>(), static_cast<rfk::EAccessSpecifier>(1));
 IImGuiWindow::_rfk_registerChildClass<IImGuiWindow>(type);
 static rfk::StaticMethod defaultSharedInstantiator("", 0u, rfk::getType<rfk::SharedPtr<IImGuiWindow>>(),new rfk::NonMemberFunction<rfk::SharedPtr<IImGuiWindow>()>(&rfk::internal::CodeGenerationHelpers::defaultSharedInstantiator<IImGuiWindow>),rfk::EMethodFlags::Default, nullptr);
 type.addSharedInstantiator(defaultSharedInstantiator);
@@ -39,6 +39,8 @@ type.addUniqueInstantiator(defaultUniqueInstantiator);
 type.setMethodsCapacity(0u); type.setStaticMethodsCapacity(0u); 
 }
 return type; }
+
+rfk::Class const& Sandbox::IImGuiWindow::getArchetype() const noexcept { return IImGuiWindow::staticGetArchetype(); }
 
 template <> rfk::Archetype const* rfk::getArchetype<Sandbox::IImGuiWindow>() noexcept { return &Sandbox::IImGuiWindow::staticGetArchetype(); }
 

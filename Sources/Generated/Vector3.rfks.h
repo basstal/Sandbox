@@ -30,7 +30,7 @@ static rfk::Class type("Vector3", 8269834297046515124u, sizeof(Vector3), 1);
 if (!initialized) {
 initialized = true;
 type.setDirectParentsCapacity(1);
-type.addDirectParent(rfk::getArchetype<ISerializable<Vector3>>(), static_cast<rfk::EAccessSpecifier>(1));
+type.addDirectParent(rfk::getArchetype<ISerializable>(), static_cast<rfk::EAccessSpecifier>(1));
 Vector3::_rfk_registerChildClass<Vector3>(type);
 static rfk::StaticMethod defaultSharedInstantiator("", 0u, rfk::getType<rfk::SharedPtr<Vector3>>(),new rfk::NonMemberFunction<rfk::SharedPtr<Vector3>()>(&rfk::internal::CodeGenerationHelpers::defaultSharedInstantiator<Vector3>),rfk::EMethodFlags::Default, nullptr);
 type.addSharedInstantiator(defaultSharedInstantiator);
@@ -39,6 +39,8 @@ type.addUniqueInstantiator(defaultUniqueInstantiator);
 type.setMethodsCapacity(0u); type.setStaticMethodsCapacity(0u); 
 }
 return type; }
+
+rfk::Class const& Sandbox::Vector3::getArchetype() const noexcept { return Vector3::staticGetArchetype(); }
 
 template <> rfk::Archetype const* rfk::getArchetype<Sandbox::Vector3>() noexcept { return &Sandbox::Vector3::staticGetArchetype(); }
 

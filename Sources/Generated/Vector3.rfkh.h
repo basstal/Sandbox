@@ -31,7 +31,7 @@ rfk::Struct const& thisClass = staticGetArchetype();\
 if constexpr (!std::is_same_v<ChildClass, Vector3>)const_cast<rfk::Struct&>(thisClass).addSubclass(childClass, rfk::internal::CodeGenerationHelpers::computeClassPointerOffset<ChildClass, Vector3>());\
 else\
 {\
-childClass.setFieldsCapacity(3u + rfk::internal::CodeGenerationHelpers::getReflectedFieldsCount< ISerializable<Vector3>>()); childClass.setStaticFieldsCapacity(0u + rfk::internal::CodeGenerationHelpers::getReflectedStaticFieldsCount< ISerializable<Vector3>>()); \
+childClass.setFieldsCapacity(3u + rfk::internal::CodeGenerationHelpers::getReflectedFieldsCount< ISerializable>()); childClass.setStaticFieldsCapacity(0u + rfk::internal::CodeGenerationHelpers::getReflectedStaticFieldsCount< ISerializable>()); \
 }\
 [[maybe_unused]] rfk::Field* field = nullptr; [[maybe_unused]] rfk::StaticField* staticField = nullptr;\
 )\
@@ -42,10 +42,12 @@ field = childClass.addField("y", std::hash<std::string>()(std::string("c:@N@Sand
 field = childClass.addField("z", std::hash<std::string>()(std::string("c:@N@Sandbox@S@Vector3@FI@z") + rfk::internal::getTypename<ChildClass>()), rfk::getType<float>(), static_cast<rfk::EFieldFlags>(1), offsetof(ChildClass, z), &thisClass);\
 )\
 __RFK_DISABLE_WARNING_POP \
-RFK_UNPACK_IF_NOT_PARSING(rfk::internal::CodeGenerationHelpers::registerChildClass<ISerializable<Vector3>, ChildClass>(childClass);\
+RFK_UNPACK_IF_NOT_PARSING(rfk::internal::CodeGenerationHelpers::registerChildClass<ISerializable, ChildClass>(childClass);\
 }\
 \
 public:  static rfk::Class const& staticGetArchetype() noexcept;\
+\
+public:  virtual rfk::Class const& getArchetype() const noexcept override;\
 \
 )\
 

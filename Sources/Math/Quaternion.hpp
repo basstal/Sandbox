@@ -8,7 +8,7 @@
 
 namespace Sandbox NAMESPACE()
 {
-    class CLASS() Quaternion : public ISerializable<Quaternion>
+    class CLASS() Quaternion : public ISerializable  //<Quaternion>
     {
     public:
         FIELD()
@@ -35,14 +35,14 @@ namespace Sandbox NAMESPACE()
         // 从四个浮点数构造（w, x, y, z）
         Quaternion(float w, float x, float y, float z) : m_quat(w, x, y, z) { Sync(); }
 
-        // 析构函数
-        virtual ~Quaternion() = default;
+        // // 析构函数
+        // ~Quaternion() override = default;
 
         // 赋值运算符
         Quaternion& operator=(const Quaternion& other) = default;
 
         // 移动赋值运算符
-        Quaternion& operator=(Quaternion&& other) noexcept = default;
+        Quaternion& operator=(Quaternion&& other) noexcept;
 
         // 四元数乘法
         Quaternion operator*(const Quaternion& rhs) const { return Quaternion(m_quat * rhs.m_quat); }
@@ -53,6 +53,12 @@ namespace Sandbox NAMESPACE()
         // 其他四元数操作...
 
         glm::mat4 ToGlmMatrix4x4();
+
+        std::string ToString() const;
+
+        glm::vec3 GetEulerRadians() const;
+
+        glm::vec3 GetEulerDegrees() const;
 
     private:
         // 成员变量，使用glm::quat存储四元数

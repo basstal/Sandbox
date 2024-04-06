@@ -12,7 +12,8 @@ Sandbox::Inspector::Inspector() { name = "Inspector"; }
 
 void Sandbox::Inspector::Prepare()
 {
-    IImGuiWindow::Prepare();
+    // IImGuiWindow::Prepare();
+    LoadFromFile(GetConfigCachePath());
     std::map<std::string, const rfk::Class*> componentNameToInspectorClass;
     auto                                     inspectorDerivedClasses = Inspector::staticGetArchetype().getDirectSubclasses();
 
@@ -74,11 +75,11 @@ void Sandbox::Inspector::OnGui()
 
 void Sandbox::Inspector::DrawComponentInspectors()
 {
-    if (m_target == nullptr)
+    if (target == nullptr)
     {
         return;
     }
-    auto components = m_target->GetComponents();
+    auto components = target->GetComponents();
     for (auto component : components)
     {
         std::string className = component->GetDerivedClassName();
@@ -94,7 +95,7 @@ void Sandbox::Inspector::DrawComponentInspectors()
 
 void Sandbox::Inspector::InspectTarget(std::shared_ptr<GameObject> inTarget)
 {
-    m_target = inTarget;
+    target = inTarget;
     if (name == "Inspector")  // If the inspector is the main inspector
     {
         for (auto& pair : componentNameToInspector)

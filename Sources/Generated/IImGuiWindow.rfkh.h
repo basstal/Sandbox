@@ -31,7 +31,7 @@ rfk::Struct const& thisClass = staticGetArchetype();\
 if constexpr (!std::is_same_v<ChildClass, IImGuiWindow>)const_cast<rfk::Struct&>(thisClass).addSubclass(childClass, rfk::internal::CodeGenerationHelpers::computeClassPointerOffset<ChildClass, IImGuiWindow>());\
 else\
 {\
-childClass.setFieldsCapacity(1u + rfk::internal::CodeGenerationHelpers::getReflectedFieldsCount< ISerializable<IImGuiWindow>>()); childClass.setStaticFieldsCapacity(0u + rfk::internal::CodeGenerationHelpers::getReflectedStaticFieldsCount< ISerializable<IImGuiWindow>>()); \
+childClass.setFieldsCapacity(1u + rfk::internal::CodeGenerationHelpers::getReflectedFieldsCount< ISerializable>()); childClass.setStaticFieldsCapacity(0u + rfk::internal::CodeGenerationHelpers::getReflectedStaticFieldsCount< ISerializable>()); \
 }\
 [[maybe_unused]] rfk::Field* field = nullptr; [[maybe_unused]] rfk::StaticField* staticField = nullptr;\
 )\
@@ -40,10 +40,12 @@ __RFK_DISABLE_WARNING_OFFSETOF \
 RFK_UNPACK_IF_NOT_PARSING(field = childClass.addField("isOpen", std::hash<std::string>()(std::string("c:@N@Sandbox@S@IImGuiWindow@FI@isOpen") + rfk::internal::getTypename<ChildClass>()), rfk::getType<bool>(), static_cast<rfk::EFieldFlags>(1), offsetof(ChildClass, isOpen), &thisClass);\
 )\
 __RFK_DISABLE_WARNING_POP \
-RFK_UNPACK_IF_NOT_PARSING(rfk::internal::CodeGenerationHelpers::registerChildClass<ISerializable<IImGuiWindow>, ChildClass>(childClass);\
+RFK_UNPACK_IF_NOT_PARSING(rfk::internal::CodeGenerationHelpers::registerChildClass<ISerializable, ChildClass>(childClass);\
 }\
 \
 public:  static rfk::Class const& staticGetArchetype() noexcept;\
+\
+public:  virtual rfk::Class const& getArchetype() const noexcept override;\
 \
 )\
 

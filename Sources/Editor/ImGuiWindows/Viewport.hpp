@@ -5,20 +5,28 @@
 #include <vulkan/vulkan.hpp>
 
 #include "Editor/IImGuiWindow.hpp"
+#include "Generated/Viewport.rfkh.h"
 #include "Misc/Delegate.hpp"
 #include "VulkanRHI/Common/ViewMode.hpp"
 
 struct ImGuiWindow;
 
-namespace Sandbox
+namespace Sandbox NAMESPACE()
 {
     class GameObject;
     class Camera;
     class Renderer;
     class Sampler;
 
-    class Viewport : public IImGuiWindow
+    class CLASS() Viewport : public IImGuiWindow
     {
+        enum EViewportOverlay
+        {
+            NONE,
+            LEFT_TOP,
+            RIGHT_TOP,
+        };
+
     public:
         void OnCursorPosition(GLFWwindow* window, double xPos, double yPos);
 
@@ -39,6 +47,7 @@ namespace Sandbox
         void SetTarget(const std::shared_ptr<GameObject>& target);
 
         void DrawGizmo(VkExtent2D extent2D);
+        void DrawOverlay();
 
         void OnRecreateFramebuffer();
 
@@ -52,7 +61,7 @@ namespace Sandbox
     private:
         ImVec2 CalculateStartPosition(int aspectWidth, int aspectHeight, int resolutionWidth, int resolutionHeight, uint32_t& adjustedWidth, uint32_t& adjustedHeight);
         void   BindCameraPosition(EViewMode inViewMode);
-        std::shared_ptr<GameObject> m_referenceGameObject;
+        // std::shared_ptr<GameObject> m_referenceGameObject;
         ImVec2                      m_startPosition;
         bool                        m_isMouseHoveringInnerRect;
         bool                        m_mouseMoved              = true;
@@ -63,5 +72,15 @@ namespace Sandbox
         GLFWwindow*                 m_glfwWindow;
         ImGuiWindow*                m_imguiWindow;
         std::shared_ptr<Renderer>   m_renderer;
+        FIELD()
+        ImGuizmo::OPERATION m_currentGizmoOperation;
+        FIELD()
+        ImGuizmo::MODE m_currentGizmoMode;
+        bool           m_useSnap = false;
+        float          m_snap[3] = {1.f, 1.f, 1.f};
+
+        Sandbox_Viewport_GENERATED
     };
-}  // namespace Sandbox
+}  // namespace Sandbox NAMESPACE()
+
+File_Viewport_GENERATED

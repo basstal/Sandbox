@@ -42,6 +42,8 @@ type.setMethodsCapacity(0u); type.setStaticMethodsCapacity(0u);
 }
 return type; }
 
+rfk::Class const& Sandbox::CameraInspector::getArchetype() const noexcept { return CameraInspector::staticGetArchetype(); }
+
 template <> rfk::Archetype const* rfk::getArchetype<Sandbox::CameraInspector>() noexcept { return &Sandbox::CameraInspector::staticGetArchetype(); }
 
 

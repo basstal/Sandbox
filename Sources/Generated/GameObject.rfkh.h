@@ -31,7 +31,7 @@ rfk::Struct const& thisClass = staticGetArchetype();\
 if constexpr (!std::is_same_v<ChildClass, GameObject>)const_cast<rfk::Struct&>(thisClass).addSubclass(childClass, rfk::internal::CodeGenerationHelpers::computeClassPointerOffset<ChildClass, GameObject>());\
 else\
 {\
-childClass.setFieldsCapacity(2u + rfk::internal::CodeGenerationHelpers::getReflectedFieldsCount< ISerializable<GameObject>>()); childClass.setStaticFieldsCapacity(0u + rfk::internal::CodeGenerationHelpers::getReflectedStaticFieldsCount< ISerializable<GameObject>>()); \
+childClass.setFieldsCapacity(2u + rfk::internal::CodeGenerationHelpers::getReflectedFieldsCount< ISerializable>()); childClass.setStaticFieldsCapacity(0u + rfk::internal::CodeGenerationHelpers::getReflectedStaticFieldsCount< ISerializable>()); \
 }\
 [[maybe_unused]] rfk::Field* field = nullptr; [[maybe_unused]] rfk::StaticField* staticField = nullptr;\
 )\
@@ -41,10 +41,12 @@ RFK_UNPACK_IF_NOT_PARSING(field = childClass.addField("transform", std::hash<std
 field = childClass.addField("name", std::hash<std::string>()(std::string("c:@N@Sandbox@S@GameObject@FI@name") + rfk::internal::getTypename<ChildClass>()), rfk::getType<String>(), static_cast<rfk::EFieldFlags>(1), offsetof(ChildClass, name), &thisClass);\
 )\
 __RFK_DISABLE_WARNING_POP \
-RFK_UNPACK_IF_NOT_PARSING(rfk::internal::CodeGenerationHelpers::registerChildClass<ISerializable<GameObject>, ChildClass>(childClass);\
+RFK_UNPACK_IF_NOT_PARSING(rfk::internal::CodeGenerationHelpers::registerChildClass<ISerializable, ChildClass>(childClass);\
 }\
 \
 public:  static rfk::Class const& staticGetArchetype() noexcept;\
+\
+public:  virtual rfk::Class const& getArchetype() const noexcept override;\
 \
 )\
 

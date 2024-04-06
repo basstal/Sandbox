@@ -38,6 +38,8 @@ rfk::internal::CodeGenerationHelpers::registerChildClass<IImGuiWindow, ChildClas
 \
 public:  static rfk::Class const& staticGetArchetype() noexcept;\
 \
+public:  virtual rfk::Class const& getArchetype() const noexcept override;\
+\
 )\
 
 

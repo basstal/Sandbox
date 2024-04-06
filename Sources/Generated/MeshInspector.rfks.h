@@ -42,6 +42,8 @@ type.setMethodsCapacity(0u); type.setStaticMethodsCapacity(0u);
 }
 return type; }
 
+rfk::Class const& Sandbox::MeshInspector::getArchetype() const noexcept { return MeshInspector::staticGetArchetype(); }
+
 template <> rfk::Archetype const* rfk::getArchetype<Sandbox::MeshInspector>() noexcept { return &Sandbox::MeshInspector::staticGetArchetype(); }
 
 

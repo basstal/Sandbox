@@ -7,7 +7,7 @@
 
 namespace Sandbox NAMESPACE()
 {
-    class CLASS() String : public ISerializable<String>
+    class CLASS() String : public ISerializable//<String>
     {
     public:
         FIELD()

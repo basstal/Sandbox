@@ -188,6 +188,7 @@ void Sandbox::Engine::MainLoop()
             CreateEditor();
             // 清理完后重新加载
             mesh->LoadFromModel(renderer->device, renderer->commandBuffers[0], model);
+            editor->imGuiRenderer->viewport->mainCamera = camera;
         }
     }
     ValidateVkResult(vkDeviceWaitIdle(renderer->device->vkDevice));

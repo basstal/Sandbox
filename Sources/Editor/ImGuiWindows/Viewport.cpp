@@ -2,12 +2,14 @@
 
 #include "Viewport.hpp"
 
-#include "ComponentInspectors/TransformInspector.hpp"
+#include "Editor/ImGuiRenderer.hpp"
 #include "Engine/EntityComponent/Components/Camera.hpp"
 #include "Engine/EntityComponent/Components/Transform.hpp"
 #include "Engine/EntityComponent/GameObject.hpp"
 #include "Engine/RendererSource/RendererSource.hpp"
 #include "FileSystem/Directory.hpp"
+#include "Generated/Viewport.rfks.h"
+#include "Inspector.hpp"
 #include "Misc/Debug.hpp"
 #include "Misc/GlmExtensions.hpp"
 #include "Misc/TypeCasting.hpp"
@@ -42,6 +44,7 @@ void Sandbox::Viewport::OnCursorPosition(GLFWwindow* window, double xPos, double
 Sandbox::Viewport::Viewport(const std::shared_ptr<Renderer>& inRenderer)
 {
     LOGD_OLD("Construct Viewport\n{}", GetCallStack())
+    // LoadFromFile()
     name           = "Viewport";
     flags          = ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse;
     m_renderer     = inRenderer;
@@ -132,6 +135,35 @@ void Sandbox::Viewport::Tick(float deltaTime)
         auto projection                         = mainCamera->GetProjectionMatrix();
         projection[1][1] *= -1;
         rendererSource->viewAndProjection->projection = projection;
+
+        if (ImGui::IsKeyPressed(ImGuiKey_G))
+            m_currentGizmoOperation = ImGuizmo::TRANSLATE;
+        if (ImGui::IsKeyPressed(ImGuiKey_R))
+            m_currentGizmoOperation = ImGuizmo::ROTATE;
+        // TODO:
+        // if (ImGui::IsKeyPressed(ImGuiKey_S))
+        // m_currentGizmoOperation = ImGuizmo::SCALE;
+
+
+        // if (ImGui::IsKeyPressed(ImGuiKey_X))
+        //     m_useSnap = !m_useSnap;
+        // ImGui::Checkbox("##UseSnap", &m_useSnap);
+        // ImGui::SameLine();
+        //
+        // switch (m_currentGizmoOperation)  // NOLINT(clang-diagnostic-switch, clang-diagnostic-switch-enum)
+        // {
+        //     case ImGuizmo::TRANSLATE:
+        //         ImGui::InputFloat3("Snap", &m_snap[0]);
+        //         break;
+        //     case ImGuizmo::ROTATE:
+        //         ImGui::InputFloat("Angle Snap", &m_snap[0]);
+        //         break;
+        //     case ImGuizmo::SCALE:
+        //         ImGui::InputFloat("Scale Snap", &m_snap[0]);
+        //         break;
+        //     default:
+        //         break;
+        // }
     }
 }
 
@@ -185,7 +217,10 @@ void Sandbox::Viewport::Cleanup()
     }
 }
 
-void Sandbox::Viewport::SetTarget(const std::shared_ptr<GameObject>& target) { m_referenceGameObject = target; }
+void Sandbox::Viewport::SetTarget(const std::shared_ptr<GameObject>& target)
+{
+    // m_referenceGameObject = target;
+}
 
 void Sandbox::Viewport::DrawGizmo(VkExtent2D extent2D)
 {
@@ -195,37 +230,66 @@ void Sandbox::Viewport::DrawGizmo(VkExtent2D extent2D)
     }
 
     auto inspector = Inspector::GetInspector<Transform>();
-    if (inspector != nullptr && m_referenceGameObject != nullptr)
+    if (inspector != nullptr && inspector->target != nullptr)
     {
-        glm::mat4    model           = m_referenceGameObject->transform->GetModelMatrix();
+        auto lastPosition = inspector->target->transform->position;
+        auto lastRotation = inspector->target->transform->rotation.GetEulerDegrees();
+        auto lastScale    = inspector->target->transform->scale;
+
+        float translation[3] = {lastPosition.x, lastPosition.y, lastPosition.z};
+        float rotation[3]    = {lastRotation.x, lastRotation.y, lastRotation.z};
+        float scale[3]       = {lastScale.x, lastScale.y, lastScale.z};
+        float matrix[16];
+        // LOGD("Editor", "lastPosition {}, lastRotation {}, lastScale {}", lastPosition.ToString(), lastRotation.ToString(), lastScale.ToString())
+        ImGuizmo::RecomposeMatrixFromComponents(translation, rotation, scale, matrix);
+
         glm::mat4    view            = mainCamera->GetViewMatrix();
         glm::mat4    projection      = mainCamera->GetProjectionMatrix();
         const float* cameraViewConst = glm::value_ptr(view);
         float        cameraView[16];
         std::copy(cameraViewConst, cameraViewConst + 16, cameraView);
         const float* cameraProjection = glm::value_ptr(projection);
-        auto         matrixConst      = glm::value_ptr(model);
-        float        matrix[16];
-        std::copy(matrixConst, matrixConst + 16, matrix);
+        // glm::mat4    model            = inspector->target->transform->GetModelMatrix();
+        // auto         matrixConst      = glm::value_ptr(model);
+        // float        matrix[16];
+        // std::copy(matrixConst, matrixConst + 16, matrix);
+        // for (size_t i = 0; i < 16; ++i)
+        // {
+        //     if (matrix1[i] != matrix[i])
+        //     {
+        //         LOGF("Editor", "matrix1[{}] {} != matrix[{}] {}", i, matrix1[i], i, matrix[i])
+        //     }
+        // }
 
-        // static ImGuizmo::OPERATION mCurrentGizmoOperation(ImGuizmo::TRANSLATE);
-
-        // static ImGuizmo::MODE mCurrentGizmoMode(ImGuizmo::LOCAL);
-        // static bool useSnap = false;
-        // static float snap[3] = {1.f, 1.f, 1.f};
         static float bounds[]        = {-0.5f, -0.5f, -0.5f, 0.5f, 0.5f, 0.5f};
         static float boundsSnap[]    = {0.1f, 0.1f, 0.1f};
         static bool  boundSizing     = false;
         static bool  boundSizingSnap = false;
         ImGuizmo::SetDrawlist(ImGui::GetWindowDrawList());
         auto rectPosition = m_imguiWindow->InnerRect.Min;
-        // TODO: 双显示器的情况下， rectPosition.x 为负数会导致 gizmo 无法显示
+        // TODO: 双显示器和 multi viewport 的情况下， rectPosition.x 为负数会导致 gizmo 无法显示
         ImGuizmo::SetRect(rectPosition.x + m_startPosition.x, rectPosition.y + m_startPosition.y, ToFloat(extent2D.width), ToFloat(extent2D.height));
-        auto transformInspector = std::dynamic_pointer_cast<TransformInspector>(inspector);
-        ImGuizmo::Manipulate(cameraView, cameraProjection, transformInspector->currentGizmoOperation, transformInspector->currentGizmoMode, matrix, nullptr,
-                             transformInspector->useSnap ? &transformInspector->snap[0] : nullptr, boundSizing ? bounds : nullptr, boundSizingSnap ? boundsSnap : nullptr);
+        ImGuizmo::Manipulate(cameraView, cameraProjection, m_currentGizmoOperation, m_currentGizmoMode, matrix, nullptr, m_useSnap ? &m_snap[0] : nullptr,
+                             boundSizing ? bounds : nullptr, boundSizingSnap ? boundsSnap : nullptr);
 
-        m_referenceGameObject->transform->position = glm::vec3(matrix[12], matrix[13], matrix[14]);
+        ImGuizmo::DecomposeMatrixToComponents(matrix, translation, rotation, scale);
+        inspector->target->transform->position = translation;
+        inspector->target->transform->rotation = glm::quat(glm::radians(glm::vec3(rotation[0], rotation[1], rotation[2])));
+        inspector->target->transform->scale    = scale;
+
+        // auto applyMatrix = [inspector](const float innerMatrix[16])
+        // {
+        //     inspector->target->transform->position = glm::vec3(innerMatrix[12], innerMatrix[13], innerMatrix[14]);
+        //     auto xAxis                             = glm::length(glm::vec3(innerMatrix[0], innerMatrix[4], innerMatrix[8]));
+        //     auto yAxis                             = glm::length(glm::vec3(innerMatrix[1], innerMatrix[5], innerMatrix[9]));
+        //     auto zAxis                             = glm::length(glm::vec3(innerMatrix[2], innerMatrix[6], innerMatrix[10]));
+        //     // 将 matrix 转为 glm::mat3
+        //     auto rotation = glm::mat3(innerMatrix[0] / xAxis, innerMatrix[1] / yAxis, innerMatrix[2] / zAxis, innerMatrix[4] / xAxis, innerMatrix[5] / yAxis,
+        //                               innerMatrix[6] / zAxis, innerMatrix[8] / xAxis, innerMatrix[9] / yAxis, innerMatrix[10] / zAxis);
+        //     inspector->target->transform->rotation = glm::quat_cast(rotation);
+        //     inspector->target->transform->scale    = glm::vec3(xAxis, yAxis, zAxis);
+        // };
+        // applyMatrix(matrix1);
         // static float camDistance = 8.f;
         // ImGuiIO& io = ImGui::GetIO();
         // float viewManipulateRight = io.DisplaySize.x;
@@ -235,36 +299,35 @@ void Sandbox::Viewport::DrawGizmo(VkExtent2D extent2D)
         // EditTransform(cameraView, cameraProjection, matrix, true);
     }
 
-    // static int location = 0;
-    // ImGuiIO& io = ImGui::GetIO();
+    DrawOverlay();
+}
+
+void Sandbox::Viewport::DrawOverlay()
+{
     ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing |
         ImGuiWindowFlags_NoNav | ImGuiWindowFlags_NoMove;
-    // ImVec2 childPos, childPosPivot;
-    const float padding = 10.0f;
-    // if (location >= 0)
-    // {
-    // 	// ImVec2 workPos = m_imguiWindow->InnerRect.GetTL();
-    // 	// ImVec2 workSize = m_imguiWindow->InnerRect.GetSize();
-    // 	// childPos.x = (location & 1) ? (workPos.x + workSize.x - pad) : (workPos.x + pad);
-    // 	// childPos.y = (location & 2) ? (workPos.y + workSize.y - pad) : (workPos.y + pad);
-    // 	// childPosPivot.x = (location & 1) ? 1.0f : 0.0f;
-    // 	// childPosPivot.y = (location & 2) ? 1.0f : 0.0f;
-    // }
-    // else if (location == -2)
-    // {
-    // 	// Center window
-    // 	// childPos = m_imguiWindow->InnerRect.GetCenter();
-    // 	// childPosPivot = ImVec2(0.5f, 0.5f);
-    // }
+    const float                              padding             = 10.0f;
+    ImVec2                                   innerRectTLPosition = m_imguiWindow->InnerRect.GetTL();
+    ImVec2                                   innerRectSize       = m_imguiWindow->InnerRect.GetSize();
+    const std::map<EViewportOverlay, ImVec2> overlayPositions    = {
+        {EViewportOverlay::LEFT_TOP, ImVec2(innerRectTLPosition.x + padding, innerRectTLPosition.y + padding)},
+        {EViewportOverlay::RIGHT_TOP, ImVec2(innerRectTLPosition.x + innerRectSize.x - padding, innerRectTLPosition.y + padding)},
+    };
+    const std::map<EViewportOverlay, ImVec2> overlayPivots = {
+        {EViewportOverlay::LEFT_TOP, ImVec2(0.0f, 0.0f)},
+        {EViewportOverlay::RIGHT_TOP, ImVec2(1.0f, 0.0f)},
+    };
     // 先保存当前的背景颜色
     ImVec4 prevChildBg = ImGui::GetStyle().Colors[ImGuiCol_ChildBg];
 
     // 设置新的背景颜色和透明度
     ImGui::GetStyle().Colors[ImGuiCol_ChildBg] = ImVec4(prevChildBg.x, prevChildBg.y, prevChildBg.z, 0.35f);  // 设置为半透明
+
     // 设置子窗口的起始位置
-    ImGui::SetCursorPos(ImVec2(padding, padding));
+    ImGui::SetNextWindowPos(overlayPositions.at(LEFT_TOP), ImGuiCond_Always, overlayPivots.at(LEFT_TOP));
+
     auto childFlags = ImGuiChildFlags_AlwaysAutoResize | ImGuiChildFlags_AutoResizeX | ImGuiChildFlags_AutoResizeY;
-    if (ImGui::BeginChild("Example: Simple overlay", ImVec2(0, 0), childFlags, windowFlags))
+    if (ImGui::BeginChild("ViewportOverlayLT", ImVec2(0, 0), childFlags, windowFlags))
     {
         auto viewModeName = VIEW_MODE_NAMES[m_renderer->viewMode];
         // Simple selection popup (if you want to show the current selection inside the Button itself,
@@ -284,31 +347,54 @@ void Sandbox::Viewport::DrawGizmo(VkExtent2D extent2D)
             }
             ImGui::EndPopup();
         }
-        // IMGUI_DEMO_MARKER("Examples/Simple Overlay");
-        // ImGui::Text("Simple overlay\n" "(right-click to change position)");
-        // ImGui::Separator();
-        // if (ImGui::IsMousePosValid())
-        // 	ImGui::Text("Mouse Position: (%.1f,%.1f)", io.MousePos.x, io.MousePos.y);
-        // else
-        // 	ImGui::Text("Mouse Position: <invalid>");
-        // if (ImGui::BeginPopupContextWindow())
-        // {
-        // 	if (ImGui::MenuItem("Custom", NULL, location == -1))
-        // 		location = -1;
-        // 	if (ImGui::MenuItem("Center", NULL, location == -2))
-        // 		location = -2;
-        // 	if (ImGui::MenuItem("Top-left", NULL, location == 0))
-        // 		location = 0;
-        // 	if (ImGui::MenuItem("Top-right", NULL, location == 1))
-        // 		location = 1;
-        // 	if (ImGui::MenuItem("Bottom-left", NULL, location == 2))
-        // 		location = 2;
-        // 	if (ImGui::MenuItem("Bottom-right", NULL, location == 3))
-        // 		location = 3;
-        // 	if (m_open && ImGui::MenuItem("Close"))
-        // 		m_open = false;
-        // 	ImGui::EndPopup();
-        // }
+    }
+    ImGui::EndChild();
+
+    ImGui::SetNextWindowPos(overlayPositions.at(RIGHT_TOP), ImGuiCond_Always, overlayPivots.at(RIGHT_TOP));
+    if (ImGui::BeginChild("ViewportOverlayRT", ImVec2(0, 0), childFlags, windowFlags))
+    {
+        // UV coordinates are often (0.0f, 0.0f) and (1.0f, 1.0f) to display an entire textures.
+        // Here are trying to display only a 32x32 pixels area of the texture, hence the UV computation.
+        // Read about UV coordinates here: https://github.com/ocornut/imgui/wiki/Image-Loading-and-Displaying-Examples
+        ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0, 0));
+        ImVec2 size                    = ImVec2(32.0f, 32.0f);  // Size of the image we want to make visible
+        ImVec2 uv0                     = ImVec2(0.0f, 0.0f);  // UV coordinates for lower-left
+        ImVec2 uv1                     = ImVec2(1.0f, 1.0f);
+        ImVec4 backgroundColor         = ImVec4(0.176f, 0.176f, 0.176f, 0.2f);  // gray
+        ImVec4 selectedBackgroundColor = ImVec4(0.04f, 0.35f, 0.8f, 0.8f);  // blue
+        auto   translateTextureId      = (ImTextureID)ImGuiRenderer::guiNameToTextureId["translate"];
+        if (ImGui::ImageButton("translate", translateTextureId, size, uv0, uv1, m_currentGizmoOperation == ImGuizmo::TRANSLATE ? selectedBackgroundColor : backgroundColor))
+        {
+            m_currentGizmoOperation = ImGuizmo::TRANSLATE;
+        }
+        ImGui::SameLine();
+        auto rotateTextureId = (ImTextureID)ImGuiRenderer::guiNameToTextureId["rotate"];
+        if (ImGui::ImageButton("rotate", rotateTextureId, size, uv0, uv1, m_currentGizmoOperation == ImGuizmo::ROTATE ? selectedBackgroundColor : backgroundColor))
+        {
+            m_currentGizmoOperation = ImGuizmo::ROTATE;
+        }
+        ImGui::SameLine();
+        auto scaleTextureId = (ImTextureID)ImGuiRenderer::guiNameToTextureId["scale"];
+        if (ImGui::ImageButton("scale", scaleTextureId, size, uv0, uv1, m_currentGizmoOperation == ImGuizmo::SCALE ? selectedBackgroundColor : backgroundColor))
+        {
+            m_currentGizmoOperation = ImGuizmo::SCALE;
+        }
+        // if (ImGui::RadioButton("Universal", m_currentGizmoOperation == ImGuizmo::UNIVERSAL))
+        //     m_currentGizmoOperation = ImGuizmo::UNIVERSAL;
+        ImGui::SameLine();
+        auto gizmoLocalTextureId = (ImTextureID)ImGuiRenderer::guiNameToTextureId["local"];
+        auto gizmoWorldTextureId = (ImTextureID)ImGuiRenderer::guiNameToTextureId["world"];
+        auto gizmoModeTextureId  = m_currentGizmoMode == ImGuizmo::LOCAL ? gizmoLocalTextureId : gizmoWorldTextureId;
+        if (m_currentGizmoOperation == ImGuizmo::SCALE)
+        {
+            gizmoModeTextureId = gizmoLocalTextureId;
+        }
+        if (ImGui::ImageButton("gizmoMode", gizmoModeTextureId, size, uv0, uv1, backgroundColor))
+        {
+            m_currentGizmoMode = m_currentGizmoMode == ImGuizmo::LOCAL ? ImGuizmo::WORLD : ImGuizmo::LOCAL;
+        }
+        ImGui::SameLine();
+        ImGui::PopStyleVar();
     }
     ImGui::EndChild();
     // 恢复之前的背景颜色

@@ -31,7 +31,7 @@ rfk::Struct const& thisClass = staticGetArchetype();\
 if constexpr (!std::is_same_v<ChildClass, Window>)const_cast<rfk::Struct&>(thisClass).addSubclass(childClass, rfk::internal::CodeGenerationHelpers::computeClassPointerOffset<ChildClass, Window>());\
 else\
 {\
-childClass.setFieldsCapacity(5u + rfk::internal::CodeGenerationHelpers::getReflectedFieldsCount< std::enable_shared_from_this<Window>>()+rfk::internal::CodeGenerationHelpers::getReflectedFieldsCount< ISerializable<Window>>()); childClass.setStaticFieldsCapacity(0u + rfk::internal::CodeGenerationHelpers::getReflectedStaticFieldsCount< std::enable_shared_from_this<Window>>()+rfk::internal::CodeGenerationHelpers::getReflectedStaticFieldsCount< ISerializable<Window>>()); \
+childClass.setFieldsCapacity(5u + rfk::internal::CodeGenerationHelpers::getReflectedFieldsCount< std::enable_shared_from_this<Window>>()+rfk::internal::CodeGenerationHelpers::getReflectedFieldsCount< ISerializable>()); childClass.setStaticFieldsCapacity(0u + rfk::internal::CodeGenerationHelpers::getReflectedStaticFieldsCount< std::enable_shared_from_this<Window>>()+rfk::internal::CodeGenerationHelpers::getReflectedStaticFieldsCount< ISerializable>()); \
 }\
 [[maybe_unused]] rfk::Field* field = nullptr; [[maybe_unused]] rfk::StaticField* staticField = nullptr;\
 )\
@@ -45,10 +45,12 @@ field = childClass.addField("height", std::hash<std::string>()(std::string("c:@N
 )\
 __RFK_DISABLE_WARNING_POP \
 RFK_UNPACK_IF_NOT_PARSING(rfk::internal::CodeGenerationHelpers::registerChildClass<std::enable_shared_from_this<Window>, ChildClass>(childClass);\
-rfk::internal::CodeGenerationHelpers::registerChildClass<ISerializable<Window>, ChildClass>(childClass);\
+rfk::internal::CodeGenerationHelpers::registerChildClass<ISerializable, ChildClass>(childClass);\
 }\
 \
 public:  static rfk::Class const& staticGetArchetype() noexcept;\
+\
+public:  virtual rfk::Class const& getArchetype() const noexcept override;\
 \
 )\
 

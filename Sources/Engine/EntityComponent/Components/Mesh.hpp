@@ -12,7 +12,7 @@ namespace Sandbox NAMESPACE()
     class Device;
     struct Vertex;
 
-    class CLASS() Mesh : public IComponent, public ISerializable<Mesh>
+    class CLASS() Mesh : public IComponent//, public ISerializable//<Mesh>
     {
     public:
         void Cleanup() override;

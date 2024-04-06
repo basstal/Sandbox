@@ -29,9 +29,8 @@ static bool initialized = false;
 static rfk::Class type("Transform", 3612830085661866220u, sizeof(Transform), 1);
 if (!initialized) {
 initialized = true;
-type.setDirectParentsCapacity(2);
+type.setDirectParentsCapacity(1);
 type.addDirectParent(rfk::getArchetype<IComponent>(), static_cast<rfk::EAccessSpecifier>(1));
-type.addDirectParent(rfk::getArchetype<ISerializable<Transform>>(), static_cast<rfk::EAccessSpecifier>(1));
 Transform::_rfk_registerChildClass<Transform>(type);
 static rfk::StaticMethod defaultSharedInstantiator("", 0u, rfk::getType<rfk::SharedPtr<Transform>>(),new rfk::NonMemberFunction<rfk::SharedPtr<Transform>()>(&rfk::internal::CodeGenerationHelpers::defaultSharedInstantiator<Transform>),rfk::EMethodFlags::Default, nullptr);
 type.addSharedInstantiator(defaultSharedInstantiator);
@@ -40,6 +39,8 @@ type.addUniqueInstantiator(defaultUniqueInstantiator);
 type.setMethodsCapacity(0u); type.setStaticMethodsCapacity(0u); 
 }
 return type; }
+
+rfk::Class const& Sandbox::Transform::getArchetype() const noexcept { return Transform::staticGetArchetype(); }
 
 template <> rfk::Archetype const* rfk::getArchetype<Sandbox::Transform>() noexcept { return &Sandbox::Transform::staticGetArchetype(); }
 

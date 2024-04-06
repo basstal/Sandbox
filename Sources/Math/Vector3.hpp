@@ -6,7 +6,7 @@
 
 namespace Sandbox NAMESPACE()
 {
-    class CLASS() Vector3 : public ISerializable<Vector3>
+    class CLASS() Vector3 : public ISerializable  //<Vector3>
     {
     public:
         FIELD()
@@ -25,6 +25,7 @@ namespace Sandbox NAMESPACE()
         // 移动构造函数：从glm::vec3移动（实际上和复制构造一样，因为glm::vec3没有动态资源）
         Vector3(glm::vec3&& inGlmVec3);
 
+        Vector3& operator=(const float other[3]);
 
         Vector3 operator-() const;
 
@@ -39,6 +40,8 @@ namespace Sandbox NAMESPACE()
         glm::vec3 ToGlmVec3();
 
         glm::vec3 vec = glm::vec3(0.0f);
+
+        std::string ToString() const;
 
     private:
         void Sync();

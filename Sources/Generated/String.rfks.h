@@ -30,7 +30,7 @@ static rfk::Class type("String", 4726623101810144873u, sizeof(String), 1);
 if (!initialized) {
 initialized = true;
 type.setDirectParentsCapacity(1);
-type.addDirectParent(rfk::getArchetype<ISerializable<String>>(), static_cast<rfk::EAccessSpecifier>(1));
+type.addDirectParent(rfk::getArchetype<ISerializable>(), static_cast<rfk::EAccessSpecifier>(1));
 String::_rfk_registerChildClass<String>(type);
 static rfk::StaticMethod defaultSharedInstantiator("", 0u, rfk::getType<rfk::SharedPtr<String>>(),new rfk::NonMemberFunction<rfk::SharedPtr<String>()>(&rfk::internal::CodeGenerationHelpers::defaultSharedInstantiator<String>),rfk::EMethodFlags::Default, nullptr);
 type.addSharedInstantiator(defaultSharedInstantiator);
@@ -44,6 +44,8 @@ method->addParameter("inString", 0u, rfk::getType<const std::string &>());
 
 }
 return type; }
+
+rfk::Class const& Sandbox::String::getArchetype() const noexcept { return String::staticGetArchetype(); }
 
 template <> rfk::Archetype const* rfk::getArchetype<Sandbox::String>() noexcept { return &Sandbox::String::staticGetArchetype(); }
 

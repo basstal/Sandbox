@@ -3,6 +3,7 @@
 #include "ImGuiRenderer.hpp"
 
 #include "Editor.hpp"
+#include "Engine/Image.hpp"
 #include "FileSystem/Directory.hpp"
 #include "IImGuiWindow.hpp"
 #include "ImGuiWidgets/MenuBar.hpp"
@@ -23,13 +24,21 @@
 #include "VulkanRHI/Core/DescriptorPool.hpp"
 #include "VulkanRHI/Core/Device.hpp"
 #include "VulkanRHI/Core/Fence.hpp"
+#include "VulkanRHI/Core/Image.hpp"
+#include "VulkanRHI/Core/ImageView.hpp"
 #include "VulkanRHI/Core/Instance.hpp"
 #include "VulkanRHI/Core/RenderPass.hpp"
+#include "VulkanRHI/Core/Sampler.hpp"
 #include "VulkanRHI/Core/Surface.hpp"
 #include "VulkanRHI/Core/Swapchain.hpp"
 #include "VulkanRHI/Renderer.hpp"
 #include "VulkanRHI/Rendering/RenderAttachments.hpp"
 #include "VulkanRHI/Rendering/RenderTarget.hpp"
+
+std::map<std::string, std::shared_ptr<Sandbox::Resource::Image>> Sandbox::ImGuiRenderer::guiNameToResourceImage;
+std::map<std::string, std::shared_ptr<Sandbox::Image>>           Sandbox::ImGuiRenderer::guiNameToImage;
+std::map<std::string, std::shared_ptr<Sandbox::ImageView>>       Sandbox::ImGuiRenderer::guiNameToImageView;
+std::map<std::string, VkDescriptorSet>                           Sandbox::ImGuiRenderer::guiNameToTextureId;
 
 void Sandbox::ImGuiRenderer::Prepare(const std::shared_ptr<Renderer>& renderer, const std::shared_ptr<Editor>& editor)
 {
@@ -68,7 +77,29 @@ void Sandbox::ImGuiRenderer::Prepare(const std::shared_ptr<Renderer>& renderer, 
     renderer->swapchain->onAfterRecreateSwapchain.BindMember<ImGuiRenderer, &ImGuiRenderer::CreateRenderTarget>(this);
     CreateRenderTarget();
     RegisterWindows(renderer);
+
+    LoadImageToGuiTexture("translate", "Textures/Icon/translate.png");
+    LoadImageToGuiTexture("rotate", "Textures/Icon/rotate.png");
+    LoadImageToGuiTexture("scale", "Textures/Icon/scale.png");
+    LoadImageToGuiTexture("local", "Textures/Icon/local.png");
+    LoadImageToGuiTexture("world", "Textures/Icon/world.png");
+
     m_prepared = true;
+}
+
+void Sandbox::ImGuiRenderer::LoadImageToGuiTexture(const std::string& name, const std::string& assetPath)
+{
+    auto assetDirectory          = Directory::GetAssetsDirectory();
+    auto resourceImage           = std::make_shared<Resource::Image>(assetDirectory.GetFile(assetPath));
+    guiNameToResourceImage[name] = resourceImage;
+    auto image = std::make_shared<Image>(m_renderer->device, VkExtent3D{ToUInt32(resourceImage->width), ToUInt32(resourceImage->height), 1}, VK_FORMAT_R8G8B8A8_UNORM,
+                                         VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_HEAP_DEVICE_LOCAL_BIT,
+                                         VK_SAMPLE_COUNT_1_BIT, VK_IMAGE_TILING_OPTIMAL, resourceImage->mipLevels);
+    m_renderer->commandBuffers[0]->CopyDataToImage(resourceImage, image, VK_FORMAT_R8G8B8A8_UNORM);
+    guiNameToImage[name]     = image;
+    auto imageView           = std::make_shared<ImageView>(image, VK_IMAGE_VIEW_TYPE_2D);
+    guiNameToImageView[name] = imageView;
+    guiNameToTextureId[name] = ImGui_ImplVulkan_AddTexture(viewport->presentSampler->vkSampler, imageView->vkImageView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 }
 
 void Sandbox::ImGuiRenderer::RegisterWindows(const std::shared_ptr<Renderer>& renderer)
@@ -167,6 +198,15 @@ void Sandbox::ImGuiRenderer::Cleanup()
         return;
     }
     m_prepared = false;
+    for (auto& [name, textureId] : guiNameToTextureId)
+    {
+        if (textureId != nullptr)
+        {
+            ImGui_ImplVulkan_RemoveTexture(textureId);
+            guiNameToImageView[name]->Cleanup();
+            guiNameToImage[name]->Cleanup();
+        }
+    }
     UnregisterAllWindows();
     for (auto& commandBuffer : commandBuffers)
     {

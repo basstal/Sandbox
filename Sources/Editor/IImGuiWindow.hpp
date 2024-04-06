@@ -7,7 +7,7 @@
 
 namespace Sandbox NAMESPACE()
 {
-    class CLASS() IImGuiWindow : public ISerializable<IImGuiWindow>
+    class CLASS() IImGuiWindow : public ISerializable//<IImGuiWindow>
     {
     public:
         std::string name = "Default";

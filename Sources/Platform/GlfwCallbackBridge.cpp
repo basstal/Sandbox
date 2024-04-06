@@ -80,7 +80,7 @@ static void KeyCallback(GLFWwindow* window, int key, int scancode, int action, i
     if (glfwInputBridge)
     {
         glfwInputBridge->onKey.Trigger(window, key, scancode, action, mods);
-        LOGD_OLD("key {}, scancode {}, action {}, mods {}", std::to_string(key), std::to_string(scancode), std::to_string(action), std::to_string(mods))
+        // LOGD_OLD("key {}, scancode {}, action {}, mods {}", std::to_string(key), std::to_string(scancode), std::to_string(action), std::to_string(mods))
     }
 }
 

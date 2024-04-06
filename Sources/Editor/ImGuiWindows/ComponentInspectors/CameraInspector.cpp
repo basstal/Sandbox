@@ -9,7 +9,7 @@ Sandbox::CameraInspector::CameraInspector() { name = "Camera"; }
 
 void Sandbox::CameraInspector::OnInspectorGui()
 {
-    auto camera = m_target->GetComponent<Camera>();
+    auto camera = target->GetComponent<Camera>();
 
     auto rotationChanged = ImGui::InputFloat("rotationX", &camera->rotationX, 3.f, 18.0f, "%.3f");
     rotationChanged      = ImGui::InputFloat("rotationZ", &camera->rotationZ, 3.f, 18.0f, "%.3f") || rotationChanged;

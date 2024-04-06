@@ -31,7 +31,7 @@ static rfk::Class type("GameObject", 7774748035391891929u, sizeof(GameObject), 1
 if (!initialized) {
 initialized = true;
 type.setDirectParentsCapacity(1);
-type.addDirectParent(rfk::getArchetype<ISerializable<GameObject>>(), static_cast<rfk::EAccessSpecifier>(1));
+type.addDirectParent(rfk::getArchetype<ISerializable>(), static_cast<rfk::EAccessSpecifier>(1));
 GameObject::_rfk_registerChildClass<GameObject>(type);
 static rfk::StaticMethod defaultSharedInstantiator("", 0u, rfk::getType<rfk::SharedPtr<GameObject>>(),new rfk::NonMemberFunction<rfk::SharedPtr<GameObject>()>(&rfk::internal::CodeGenerationHelpers::defaultSharedInstantiator<GameObject>),rfk::EMethodFlags::Default, nullptr);
 type.addSharedInstantiator(defaultSharedInstantiator);
@@ -40,6 +40,8 @@ type.addUniqueInstantiator(defaultUniqueInstantiator);
 type.setMethodsCapacity(0u); type.setStaticMethodsCapacity(0u); 
 }
 return type; }
+
+rfk::Class const& Sandbox::GameObject::getArchetype() const noexcept { return GameObject::staticGetArchetype(); }
 
 template <> rfk::Archetype const* rfk::getArchetype<Sandbox::GameObject>() noexcept { return &Sandbox::GameObject::staticGetArchetype(); }
 

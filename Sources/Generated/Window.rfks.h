@@ -31,7 +31,7 @@ if (!initialized) {
 initialized = true;
 type.setDirectParentsCapacity(2);
 type.addDirectParent(rfk::getArchetype<std::enable_shared_from_this<Window>>(), static_cast<rfk::EAccessSpecifier>(1));
-type.addDirectParent(rfk::getArchetype<ISerializable<Window>>(), static_cast<rfk::EAccessSpecifier>(1));
+type.addDirectParent(rfk::getArchetype<ISerializable>(), static_cast<rfk::EAccessSpecifier>(1));
 Window::_rfk_registerChildClass<Window>(type);
 static rfk::StaticMethod defaultSharedInstantiator("", 0u, rfk::getType<rfk::SharedPtr<Window>>(),new rfk::NonMemberFunction<rfk::SharedPtr<Window>()>(&rfk::internal::CodeGenerationHelpers::defaultSharedInstantiator<Window>),rfk::EMethodFlags::Default, nullptr);
 type.addSharedInstantiator(defaultSharedInstantiator);
@@ -40,6 +40,8 @@ type.addUniqueInstantiator(defaultUniqueInstantiator);
 type.setMethodsCapacity(0u); type.setStaticMethodsCapacity(0u); 
 }
 return type; }
+
+rfk::Class const& Sandbox::Window::getArchetype() const noexcept { return Window::staticGetArchetype(); }
 
 template <> rfk::Archetype const* rfk::getArchetype<Sandbox::Window>() noexcept { return &Sandbox::Window::staticGetArchetype(); }
 

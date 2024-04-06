@@ -17,7 +17,7 @@ namespace Sandbox NAMESPACE()
         METHOD()
         bool DeserializeFromYaml(const YAML::Node& node);
 
-        const rfk::Struct& getArchetype() const noexcept override;
+        // const rfk::Struct& getArchetype() const noexcept override;
 
         Sandbox_List_GENERATED
     };
@@ -42,7 +42,7 @@ namespace Sandbox NAMESPACE()
     bool Sandbox::List<T>::DeserializeFromYaml(const YAML::Node& node)
     {
         const rfk::Class& objectType = T::staticGetArchetype();
-        LOGD_OLD("[List] Descrialize objectType : {} ", objectType.getName())
+        LOGD_OLD("[List] Deserialize objectType : {} ", objectType.getName())
 
         for (auto it = node.begin(); it != node.end(); ++it)
         {
@@ -53,11 +53,11 @@ namespace Sandbox NAMESPACE()
         return true;
     }
 
-    template <typename T>
-    const rfk::Struct& List<T>::getArchetype() const noexcept
-    {
-        return T::staticGetArchetype();
-    }
+    // template <typename T>
+    // const rfk::Struct& List<T>::getArchetype() const noexcept
+    // {
+    //     return T::staticGetArchetype();
+    // }
 }  // namespace Sandbox NAMESPACE()
 
 File_List_GENERATED

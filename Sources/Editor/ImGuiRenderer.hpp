@@ -1,10 +1,14 @@
 ﻿#pragma once
 #include <memory>
 
-#include "ImGuiWidgets/MenuBar.hpp"
 
 namespace Sandbox
 {
+    namespace Resource
+    {
+        class Image;
+    }
+    class MenuBar;
     class Fence;
     class IImGuiWindow;
     class CommandBuffer;
@@ -16,11 +20,14 @@ namespace Sandbox
     class Sampler;
     class Viewport;
     class Hierarchy;
+    class Image;
+    class ImageView;
 
     class ImGuiRenderer
     {
     public:
         void Prepare(const std::shared_ptr<Renderer>& renderer, const std::shared_ptr<Editor>& editor);
+        void LoadImageToGuiTexture(const std::string& name, const std::string& assetPath);
 
         void RegisterWindows(const std::shared_ptr<Renderer>& renderer);
 
@@ -56,6 +63,11 @@ namespace Sandbox
         std::shared_ptr<Viewport>                   viewport;
         std::shared_ptr<Hierarchy>                  hierarchy;
         std::shared_ptr<MenuBar>                    menuBar;
+
+        static std::map<std::string, std::shared_ptr<Resource::Image>> guiNameToResourceImage; // TODO:先存着后面再看如何简化
+        static std::map<std::string, std::shared_ptr<Image>> guiNameToImage; // TODO: 先存着后面再看如何简化
+        static std::map<std::string, std::shared_ptr<ImageView>> guiNameToImageView; // TODO: 先存着后面再看如何简化
+        static std::map<std::string, VkDescriptorSet> guiNameToTextureId; // ImGui_ImplVulkan_AddTexture Register a texture (VkDescriptorSet == ImTextureID)
 
     private:
         std::shared_ptr<Editor>   m_editor;

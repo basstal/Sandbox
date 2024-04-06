@@ -29,9 +29,8 @@ static bool initialized = false;
 static rfk::Class type("Camera", 10866052711324808399u, sizeof(Camera), 1);
 if (!initialized) {
 initialized = true;
-type.setDirectParentsCapacity(2);
+type.setDirectParentsCapacity(1);
 type.addDirectParent(rfk::getArchetype<IComponent>(), static_cast<rfk::EAccessSpecifier>(1));
-type.addDirectParent(rfk::getArchetype<ISerializable<Camera>>(), static_cast<rfk::EAccessSpecifier>(1));
 Camera::_rfk_registerChildClass<Camera>(type);
 static rfk::StaticMethod defaultSharedInstantiator("", 0u, rfk::getType<rfk::SharedPtr<Camera>>(),new rfk::NonMemberFunction<rfk::SharedPtr<Camera>()>(&rfk::internal::CodeGenerationHelpers::defaultSharedInstantiator<Camera>),rfk::EMethodFlags::Default, nullptr);
 type.addSharedInstantiator(defaultSharedInstantiator);
@@ -40,6 +39,8 @@ type.addUniqueInstantiator(defaultUniqueInstantiator);
 type.setMethodsCapacity(0u); type.setStaticMethodsCapacity(0u); 
 }
 return type; }
+
+rfk::Class const& Sandbox::Camera::getArchetype() const noexcept { return Camera::staticGetArchetype(); }
 
 template <> rfk::Archetype const* rfk::getArchetype<Sandbox::Camera>() noexcept { return &Sandbox::Camera::staticGetArchetype(); }
 

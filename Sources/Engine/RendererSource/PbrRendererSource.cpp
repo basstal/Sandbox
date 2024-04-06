@@ -69,6 +69,7 @@ void Sandbox::PbrRendererSource::CreateDescriptorSets(std::shared_ptr<Renderer>&
     uboLights.resize(frameFlightSize);
     textures.resize(frameFlightSize);
 
+    // TODO:简化以下贴图载入
     std::shared_ptr<Sandbox::Resource::Image> albedo    = std::make_shared<Resource::Image>(Directory::GetAssetsDirectory().GetFile("Textures/pbr/rusted_iron/albedo.png"));
     std::shared_ptr<Sandbox::Resource::Image> metallic  = std::make_shared<Resource::Image>(Directory::GetAssetsDirectory().GetFile("Textures/pbr/rusted_iron/metallic.png"));
     std::shared_ptr<Sandbox::Resource::Image> roughness = std::make_shared<Resource::Image>(Directory::GetAssetsDirectory().GetFile("Textures/pbr/rusted_iron/roughness.png"));

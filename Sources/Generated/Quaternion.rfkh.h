@@ -31,7 +31,7 @@ rfk::Struct const& thisClass = staticGetArchetype();\
 if constexpr (!std::is_same_v<ChildClass, Quaternion>)const_cast<rfk::Struct&>(thisClass).addSubclass(childClass, rfk::internal::CodeGenerationHelpers::computeClassPointerOffset<ChildClass, Quaternion>());\
 else\
 {\
-childClass.setFieldsCapacity(4u + rfk::internal::CodeGenerationHelpers::getReflectedFieldsCount< ISerializable<Quaternion>>()); childClass.setStaticFieldsCapacity(0u + rfk::internal::CodeGenerationHelpers::getReflectedStaticFieldsCount< ISerializable<Quaternion>>()); \
+childClass.setFieldsCapacity(4u + rfk::internal::CodeGenerationHelpers::getReflectedFieldsCount< ISerializable>()); childClass.setStaticFieldsCapacity(0u + rfk::internal::CodeGenerationHelpers::getReflectedStaticFieldsCount< ISerializable>()); \
 }\
 [[maybe_unused]] rfk::Field* field = nullptr; [[maybe_unused]] rfk::StaticField* staticField = nullptr;\
 )\
@@ -43,10 +43,12 @@ field = childClass.addField("z", std::hash<std::string>()(std::string("c:@N@Sand
 field = childClass.addField("w", std::hash<std::string>()(std::string("c:@N@Sandbox@S@Quaternion@FI@w") + rfk::internal::getTypename<ChildClass>()), rfk::getType<float>(), static_cast<rfk::EFieldFlags>(1), offsetof(ChildClass, w), &thisClass);\
 )\
 __RFK_DISABLE_WARNING_POP \
-RFK_UNPACK_IF_NOT_PARSING(rfk::internal::CodeGenerationHelpers::registerChildClass<ISerializable<Quaternion>, ChildClass>(childClass);\
+RFK_UNPACK_IF_NOT_PARSING(rfk::internal::CodeGenerationHelpers::registerChildClass<ISerializable, ChildClass>(childClass);\
 }\
 \
 public:  static rfk::Class const& staticGetArchetype() noexcept;\
+\
+public:  virtual rfk::Class const& getArchetype() const noexcept override;\
 \
 )\
 

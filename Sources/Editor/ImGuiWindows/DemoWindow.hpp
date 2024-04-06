@@ -6,7 +6,8 @@ namespace Sandbox
     class DemoWindow : public IImGuiWindow
     {
     public:
-             DemoWindow();
+        DemoWindow();
+
         void OnGuiBegin() override;
 
         void Prepare() override;

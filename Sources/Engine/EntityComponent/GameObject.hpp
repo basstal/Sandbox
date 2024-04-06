@@ -16,7 +16,7 @@ namespace Sandbox NAMESPACE()
     template <typename T>
     concept DerivedFromIComponent = std::is_base_of_v<IComponent, T>;
 
-    class CLASS() GameObject : public ISerializable<GameObject>
+    class CLASS() GameObject : public ISerializable//<GameObject>
     {
     public:
         FIELD()

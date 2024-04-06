@@ -62,6 +62,8 @@ method->addParameter("node", 0u, rfk::getType<const YAML::Node &>());\
 }\
 return type; }\
 \
+virtual rfk::ClassTemplateInstantiation const& getArchetype() const noexcept override { return staticGetArchetype(); }\
+\
 )\
 
 

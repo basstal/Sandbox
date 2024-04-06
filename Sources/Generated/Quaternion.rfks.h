@@ -30,7 +30,7 @@ static rfk::Class type("Quaternion", 3624716398323429864u, sizeof(Quaternion), 1
 if (!initialized) {
 initialized = true;
 type.setDirectParentsCapacity(1);
-type.addDirectParent(rfk::getArchetype<ISerializable<Quaternion>>(), static_cast<rfk::EAccessSpecifier>(1));
+type.addDirectParent(rfk::getArchetype<ISerializable>(), static_cast<rfk::EAccessSpecifier>(1));
 Quaternion::_rfk_registerChildClass<Quaternion>(type);
 static rfk::StaticMethod defaultSharedInstantiator("", 0u, rfk::getType<rfk::SharedPtr<Quaternion>>(),new rfk::NonMemberFunction<rfk::SharedPtr<Quaternion>()>(&rfk::internal::CodeGenerationHelpers::defaultSharedInstantiator<Quaternion>),rfk::EMethodFlags::Default, nullptr);
 type.addSharedInstantiator(defaultSharedInstantiator);
@@ -39,6 +39,8 @@ type.addUniqueInstantiator(defaultUniqueInstantiator);
 type.setMethodsCapacity(0u); type.setStaticMethodsCapacity(0u); 
 }
 return type; }
+
+rfk::Class const& Sandbox::Quaternion::getArchetype() const noexcept { return Quaternion::staticGetArchetype(); }
 
 template <> rfk::Archetype const* rfk::getArchetype<Sandbox::Quaternion>() noexcept { return &Sandbox::Quaternion::staticGetArchetype(); }
 

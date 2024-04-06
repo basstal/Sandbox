@@ -10,7 +10,7 @@
 
 namespace Sandbox NAMESPACE()
 {
-    class CLASS() Transform : public IComponent, public ISerializable<Transform>
+    class CLASS() Transform : public IComponent//, public ISerializable//<Transform>
     {
     public:
         FIELD()

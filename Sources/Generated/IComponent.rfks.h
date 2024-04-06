@@ -29,6 +29,8 @@ static bool initialized = false;
 static rfk::Class type("IComponent", 2358108181402035206u, sizeof(IComponent), 1);
 if (!initialized) {
 initialized = true;
+type.setDirectParentsCapacity(1);
+type.addDirectParent(rfk::getArchetype<ISerializable>(), static_cast<rfk::EAccessSpecifier>(1));
 IComponent::_rfk_registerChildClass<IComponent>(type);
 static rfk::StaticMethod defaultSharedInstantiator("", 0u, rfk::getType<rfk::SharedPtr<IComponent>>(),new rfk::NonMemberFunction<rfk::SharedPtr<IComponent>()>(&rfk::internal::CodeGenerationHelpers::defaultSharedInstantiator<IComponent>),rfk::EMethodFlags::Default, nullptr);
 type.addSharedInstantiator(defaultSharedInstantiator);
@@ -37,6 +39,8 @@ type.addUniqueInstantiator(defaultUniqueInstantiator);
 type.setMethodsCapacity(0u); type.setStaticMethodsCapacity(0u); 
 }
 return type; }
+
+rfk::Class const& Sandbox::IComponent::getArchetype() const noexcept { return IComponent::staticGetArchetype(); }
 
 template <> rfk::Archetype const* rfk::getArchetype<Sandbox::IComponent>() noexcept { return &Sandbox::IComponent::staticGetArchetype(); }
 

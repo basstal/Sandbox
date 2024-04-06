@@ -38,6 +38,8 @@ rfk::internal::CodeGenerationHelpers::registerChildClass<Inspector, ChildClass>(
 \
 public:  static rfk::Class const& staticGetArchetype() noexcept;\
 \
+public:  virtual rfk::Class const& getArchetype() const noexcept override;\
+\
 )\
 
 

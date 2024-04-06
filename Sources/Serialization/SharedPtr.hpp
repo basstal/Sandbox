@@ -37,7 +37,7 @@ namespace Sandbox NAMESPACE()
         METHOD()
         bool DeserializeFromYaml(const YAML::Node& node);
 
-        const rfk::Struct& getArchetype() const noexcept override;
+        // const rfk::Struct& getArchetype() const noexcept override;
 
         Sandbox_SharedPtr_GENERATED
     };
@@ -73,12 +73,12 @@ namespace Sandbox NAMESPACE()
         return true;
     }
 
-    template <typename T>
-    const rfk::Struct& SharedPtr<T>::getArchetype() const noexcept
-    {
-        LOGF("Core", "SharedPtr<T>::getArchetype Not implemented");  // 为了避免头文件中的循环引用，而且暂时不需要根据 shared ptr 获取 T 的 原型信息，所以这里直接抛出异常
-		return T::staticGetArchetype();
-	}
+ //    template <typename T>
+ //    const rfk::Struct& SharedPtr<T>::getArchetype() const noexcept
+ //    {
+ //        LOGF("Core", "SharedPtr<T>::getArchetype Not implemented");  // 为了避免头文件中的循环引用，而且暂时不需要根据 shared ptr 获取 T 的 原型信息，所以这里直接抛出异常
+	// 	return T::staticGetArchetype();
+	// }
 } // namespace Sandbox NAMESPACE()
 
 File_SharedPtr_GENERATED

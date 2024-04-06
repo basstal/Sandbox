@@ -31,13 +31,14 @@ rfk::Struct const& thisClass = staticGetArchetype();\
 if constexpr (!std::is_same_v<ChildClass, Mesh>)const_cast<rfk::Struct&>(thisClass).addSubclass(childClass, rfk::internal::CodeGenerationHelpers::computeClassPointerOffset<ChildClass, Mesh>());\
 else\
 {\
-childClass.setFieldsCapacity(0u + rfk::internal::CodeGenerationHelpers::getReflectedFieldsCount< IComponent>()+rfk::internal::CodeGenerationHelpers::getReflectedFieldsCount< ISerializable<Mesh>>()); childClass.setStaticFieldsCapacity(0u + rfk::internal::CodeGenerationHelpers::getReflectedStaticFieldsCount< IComponent>()+rfk::internal::CodeGenerationHelpers::getReflectedStaticFieldsCount< ISerializable<Mesh>>()); \
+childClass.setFieldsCapacity(0u + rfk::internal::CodeGenerationHelpers::getReflectedFieldsCount< IComponent>()); childClass.setStaticFieldsCapacity(0u + rfk::internal::CodeGenerationHelpers::getReflectedStaticFieldsCount< IComponent>()); \
 }\
 rfk::internal::CodeGenerationHelpers::registerChildClass<IComponent, ChildClass>(childClass);\
-rfk::internal::CodeGenerationHelpers::registerChildClass<ISerializable<Mesh>, ChildClass>(childClass);\
 }\
 \
 public:  static rfk::Class const& staticGetArchetype() noexcept;\
+\
+public:  virtual rfk::Class const& getArchetype() const noexcept override;\
 \
 )\
 

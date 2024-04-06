@@ -10,7 +10,7 @@ namespace Sandbox NAMESPACE()
 {
     // class GameObject;
 
-    class CLASS() Scene : public ISerializable<Scene>
+    class CLASS() Scene : public ISerializable//<Scene>
     {
     public:
         FIELD()

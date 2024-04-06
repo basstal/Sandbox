@@ -30,7 +30,7 @@ static rfk::Class type("Scene", 5035160349312317672u, sizeof(Scene), 1);
 if (!initialized) {
 initialized = true;
 type.setDirectParentsCapacity(1);
-type.addDirectParent(rfk::getArchetype<ISerializable<Scene>>(), static_cast<rfk::EAccessSpecifier>(1));
+type.addDirectParent(rfk::getArchetype<ISerializable>(), static_cast<rfk::EAccessSpecifier>(1));
 Scene::_rfk_registerChildClass<Scene>(type);
 static rfk::StaticMethod defaultSharedInstantiator("", 0u, rfk::getType<rfk::SharedPtr<Scene>>(),new rfk::NonMemberFunction<rfk::SharedPtr<Scene>()>(&rfk::internal::CodeGenerationHelpers::defaultSharedInstantiator<Scene>),rfk::EMethodFlags::Default, nullptr);
 type.addSharedInstantiator(defaultSharedInstantiator);
@@ -39,6 +39,8 @@ type.addUniqueInstantiator(defaultUniqueInstantiator);
 type.setMethodsCapacity(0u); type.setStaticMethodsCapacity(0u); 
 }
 return type; }
+
+rfk::Class const& Sandbox::Scene::getArchetype() const noexcept { return Scene::staticGetArchetype(); }
 
 template <> rfk::Archetype const* rfk::getArchetype<Sandbox::Scene>() noexcept { return &Sandbox::Scene::staticGetArchetype(); }
 

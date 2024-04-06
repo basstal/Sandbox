@@ -29,8 +29,8 @@ namespace Sandbox NAMESPACE()
         template <DerivedFromIComponent T>
         void DrawFieldsReflected(std::shared_ptr<T> instance);
 
+        std::shared_ptr<GameObject> target;
     protected:
-        std::shared_ptr<GameObject> m_target;
 
         Sandbox_Inspector_GENERATED
     };
@@ -96,7 +96,7 @@ namespace Sandbox NAMESPACE()
                         field.set(*instancePtr, value);
                     }
                 }
-                // 此处可以扩展更多类型的支持
+                // TODO:此处可以扩展更多类型的支持
 
                 return true; // 继续遍历
             },instance.get());

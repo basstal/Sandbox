@@ -5,7 +5,7 @@
 #include "FileSystem/Directory.hpp"
 #include "Generated/IImGuiWindow.rfks.h"
 
-void Sandbox::IImGuiWindow::Prepare() { LoadFromFile(GetConfigCachePath()); }
+void Sandbox::IImGuiWindow::Prepare() { this->LoadFromFile(GetConfigCachePath()); }
 
 void Sandbox::IImGuiWindow::OnGuiBegin()
 {

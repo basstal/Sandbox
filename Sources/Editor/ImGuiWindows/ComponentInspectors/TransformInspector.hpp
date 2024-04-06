@@ -15,10 +15,6 @@ namespace Sandbox NAMESPACE()
 
         void OnInspectorGui() override;
 
-        ImGuizmo::OPERATION currentGizmoOperation;
-        ImGuizmo::MODE      currentGizmoMode;
-        bool                useSnap;
-        float               snap[3] = {1.f, 1.f, 1.f};
         Sandbox_TransformInspector_GENERATED
     };
 }  // namespace Sandbox NAMESPACE()
