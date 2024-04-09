@@ -4,6 +4,7 @@
 
 #include "Editor/IImGuiWindow.hpp"
 #include "Editor/ImGuiExamples.hpp"
+#include "Engine/EntityComponent/Scene.hpp"
 #include "Misc/DataBinding.hpp"
 bool Sandbox::MenuBar::Draw(const std::vector<std::shared_ptr<IImGuiWindow>>& windows)
 {
@@ -32,6 +33,11 @@ bool Sandbox::MenuBar::Draw(const std::vector<std::shared_ptr<IImGuiWindow>>& wi
             }
             if (ImGui::MenuItem("Paste", "CTRL+V"))
             {
+            }
+            ImGui::Separator();
+            if (ImGui::MenuItem("New Scene"))
+            {
+                Scene::NewScene();
             }
             ImGui::EndMenu();
         }

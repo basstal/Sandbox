@@ -2,6 +2,7 @@
 
 #include "ContentBrowser.hpp"
 
+#include "Engine/EntityComponent/Scene.hpp"
 #include "FileSystem/Directory.hpp"
 #include "FileSystem/File.hpp"
 
@@ -53,3 +54,26 @@ void Sandbox::ContentBrowser::Tick(float deltaTime) { Sandbox::TreeView::Tick(de
 void Sandbox::ContentBrowser::OnGui() { TreeView::OnGui(); }
 
 void Sandbox::ContentBrowser::Cleanup() { TreeView::Cleanup(); }
+
+
+void Sandbox::ContentBrowser::OnTreeNodeDoubleClickDispatch(TreeNodeClickEvent& treeNodeClickEvent)
+{
+    TreeView::OnTreeNodeDoubleClickDispatch(treeNodeClickEvent);
+    auto item = LeafIdToSharedPtr(treeNodeClickEvent.nodeId);
+    if (item->IsLeaf())
+    {
+        auto file = std::dynamic_pointer_cast<AssetFileTreeViewSource>(item->source)->file;
+        if (file->GetExtension() == ".scene")
+        {
+            auto loadedScene    = Scene::LoadScene(file);
+            Scene::currentScene = loadedScene;
+            Scene::onSceneChange.Trigger(loadedScene);
+        }
+        // LOGF("Double clicked on file: %s", file->GetPath().c_str());
+    }
+    // else
+    // {
+    //     auto directory = std::dynamic_pointer_cast<AssetDirectoryTreeViewSource>(item->source)->directory;
+    //     LOGF("Double clicked on directory: %s", directory->GetPath().c_str());
+    // }
+}

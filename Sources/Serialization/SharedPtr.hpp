@@ -3,6 +3,7 @@
 #include <memory>
 #include <yaml-cpp/yaml.h>
 
+#include "Engine/EntityComponent/IComponent.hpp"
 #include "FileSystem/Logger.hpp"
 #include "Generated/SharedPtr.rfkh.h"
 #include "Refureku/Object.h"
@@ -23,6 +24,8 @@ namespace Sandbox NAMESPACE()
         // 使用using引入std::shared_ptr<T>的构造函数
         using std::shared_ptr<T>::shared_ptr;
 
+        SharedPtr();
+
         // 添加一个接受std::shared_ptr<T>的构造函数
         SharedPtr(const std::shared_ptr<T>& other) : std::shared_ptr<T>(other) {}
 
@@ -41,6 +44,12 @@ namespace Sandbox NAMESPACE()
 
         Sandbox_SharedPtr_GENERATED
     };
+
+    template <typename T>
+    SharedPtr<T>::SharedPtr() : std::shared_ptr<T>(new T())
+    {
+        // 确保现在 this->get() 返回一个有效指针
+    }
 
     template <typename T>
     YAML::Node Sandbox::SharedPtr<T>::SerializeToYaml()
@@ -69,14 +78,16 @@ namespace Sandbox NAMESPACE()
     {
         const rfk::Class& archeType = T::staticGetArchetype();
         LOGD_OLD("[SharedPtr] objectType : {}, fieldsCount : {} ", archeType.getName(), std::to_string(archeType.getFieldsCount()))
-        this->get()->DeserializeFromYaml(node);
+
+        auto instancePtr = this->get();
+        instancePtr->DeserializeFromYaml(node);
         return true;
     }
 
- //    template <typename T>
- //    const rfk::Struct& SharedPtr<T>::getArchetype() const noexcept
- //    {
- //        LOGF("Core", "SharedPtr<T>::getArchetype Not implemented");  // 为了避免头文件中的循环引用，而且暂时不需要根据 shared ptr 获取 T 的 原型信息，所以这里直接抛出异常
+    //    template <typename T>
+    //    const rfk::Struct& SharedPtr<T>::getArchetype() const noexcept
+    //    {
+    //        LOGF("Core", "SharedPtr<T>::getArchetype Not implemented");  // 为了避免头文件中的循环引用，而且暂时不需要根据 shared ptr 获取 T 的 原型信息，所以这里直接抛出异常
 	// 	return T::staticGetArchetype();
 	// }
 } // namespace Sandbox NAMESPACE()

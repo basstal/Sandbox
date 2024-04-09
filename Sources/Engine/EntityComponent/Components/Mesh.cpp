@@ -3,10 +3,10 @@
 #include "Mesh.hpp"
 
 #include "Engine/Model.hpp"
+#include "Generated/Mesh.rfks.h"
 #include "VulkanRHI/Core/Buffer.hpp"
 #include "VulkanRHI/Core/CommandBuffer.hpp"
 #include "VulkanRHI/Core/Device.hpp"
-#include "Generated/Mesh.rfks.h"
 
 void Sandbox::Mesh::Cleanup()
 {
@@ -30,6 +30,7 @@ void Sandbox::Mesh::LoadFromModel(const std::shared_ptr<Device>& device, const s
 
 uint32_t Sandbox::Mesh::Indices() const { return static_cast<uint32_t>(m_indices.size()); }
 
-std::string Sandbox::Mesh::GetDerivedClassName() { return getArchetype().getName();}
+std::string       Sandbox::Mesh::GetDerivedClassName() { return getArchetype().getName(); }
+const rfk::Class* Sandbox::Mesh::GetDerivedClass() { return &getArchetype();}
 
 

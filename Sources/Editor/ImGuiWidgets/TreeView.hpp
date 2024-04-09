@@ -27,6 +27,15 @@ namespace Sandbox
         virtual ~TreeViewItem() = default;
     };
 
+    // 示例事件类型
+    struct TreeNodeClickEvent
+    {
+        std::string nodeName;
+        intptr_t    nodeId;
+
+        TreeNodeClickEvent(const std::string& name, intptr_t id) : nodeName(name), nodeId(id) {}
+    };
+
     class TreeView : public IImGuiWindow
     {
     public:
@@ -40,13 +49,18 @@ namespace Sandbox
 
         void Cleanup() override;
 
-        virtual intptr_t CreateLeafId(const std::shared_ptr<TreeViewItem>& source);
+        virtual intptr_t GetLeafId(const std::shared_ptr<TreeViewItem>& source);
+
+        std::shared_ptr<Sandbox::TreeViewItem> LeafIdToSharedPtr(intptr_t id);
 
         virtual void ConstructImGuiTreeNodes(const std::shared_ptr<Sandbox::TreeViewItem>& target);
 
+        virtual void OnTreeNodeDoubleClickDispatch(TreeNodeClickEvent&);
+
     protected:
-        bool               m_cleaned       = false;
-        intptr_t           m_singleClicked = -1;
-        std::set<intptr_t> m_selections;
+        std::map<intptr_t, std::shared_ptr<TreeViewItem>> m_idToItem;
+        bool                                              m_cleaned       = false;
+        intptr_t                                          m_singleClicked = -1;
+        std::set<intptr_t>                                m_selections;
     };
 }  // namespace Sandbox

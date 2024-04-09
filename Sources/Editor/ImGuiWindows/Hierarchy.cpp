@@ -10,6 +10,7 @@ Sandbox::Hierarchy::Hierarchy(const std::shared_ptr<Inspector>& inspector)
 {
     name        = "Hierarchy";
     m_inspector = inspector;
+    Scene::onSceneChange.BindMember<Hierarchy, &Hierarchy::SetScene>(this);
 }
 std::vector<std::shared_ptr<Sandbox::TreeViewItem>> Sandbox::Hierarchy::CreateTreeViewItems(const std::shared_ptr<Scene>& scene)
 {
@@ -51,7 +52,56 @@ void Sandbox::Hierarchy::Prepare()
     SetScene(Scene::GetCurrentScene());
 }
 
-void Sandbox::Hierarchy::OnGui() { TreeView::OnGui(); }
+// TODO:temp code
+void ShowExampleMenuFile()
+{
+    // 菜单项
+    if (ImGui::MenuItem("New"))
+    {
+        // 当'New'被选中时执行的代码
+    }
+    if (ImGui::MenuItem("Open", "Ctrl+O"))
+    {
+        // 当'Open'被选中时执行的代码
+    }
+    // 更多菜单项...
+    ImGui::Separator();
+    if (ImGui::MenuItem("Quit", "Alt+F4"))
+    {
+        // 当'Quit'被选中时执行的代码
+    }
+}
+
+void Sandbox::Hierarchy::OnGui()
+{
+    TreeView::OnGui();
+    // 假设我们创建一个文本区域，右键点击它会弹出菜单
+    if (ImGui::BeginPopupContextItem("MyPopup"))
+    {
+        if (ImGui::MenuItem("Action 1"))
+        {
+            // 当'Action 1'被选中时执行的代码
+        }
+        if (ImGui::MenuItem("Action 2"))
+        {
+            // 当'Action 2'被选中时执行的代码
+        }
+        // 更多动作...
+        ImGui::EndPopup();
+    }
+
+    // 如果窗口是右键点击，弹出上下文菜单
+    if (ImGui::BeginPopupContextWindow())
+    {
+        if (ImGui::MenuItem("Custom Popup Menu Item"))
+        {
+            // 当自定义菜单项被选中时执行的代码
+        }
+        // 也可以复用其他的菜单
+        ShowExampleMenuFile();
+        ImGui::EndPopup();
+    }
+}
 
 void Sandbox::Hierarchy::Tick(float deltaTime)
 {

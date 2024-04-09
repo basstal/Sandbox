@@ -40,15 +40,19 @@ void Sandbox::TreeView::Cleanup()
     m_cleaned = true;
 }
 
-intptr_t Sandbox::TreeView::CreateLeafId(const std::shared_ptr<TreeViewItem>& item)
+intptr_t Sandbox::TreeView::GetLeafId(const std::shared_ptr<TreeViewItem>& item)
 {
     if (item == nullptr)
     {
         return -1;
     }
-    return reinterpret_cast<intptr_t>(item.get());
+    auto id        = reinterpret_cast<intptr_t>(item.get());
+    m_idToItem[id] = item;
+    return id;
 }
 
+
+std::shared_ptr<Sandbox::TreeViewItem> Sandbox::TreeView::LeafIdToSharedPtr(intptr_t id) { return m_idToItem[id]; }
 
 void Sandbox::TreeView::ConstructImGuiTreeNodes(const std::shared_ptr<Sandbox::TreeViewItem>& target)
 {
@@ -61,7 +65,7 @@ void Sandbox::TreeView::ConstructImGuiTreeNodes(const std::shared_ptr<Sandbox::T
     {
         static ImGuiTreeNodeFlags baseFlags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick | ImGuiTreeNodeFlags_SpanAvailWidth |
             ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen;  // ImGuiTreeNodeFlags_Bullet;
-        auto leafId    = CreateLeafId(treeViewItem);
+        auto leafId    = GetLeafId(treeViewItem);
         auto nodeFlags = m_selections.contains(leafId) ? baseFlags | ImGuiTreeNodeFlags_Selected : baseFlags;
         ImGui::TreeNodeEx(reinterpret_cast<void*>(leafId), nodeFlags,
                           treeViewItem->source->name.c_str());  // NOLINT(clang-diagnostic-format-security, performance-no-int-to-ptr)
@@ -69,6 +73,16 @@ void Sandbox::TreeView::ConstructImGuiTreeNodes(const std::shared_ptr<Sandbox::T
         {
             m_singleClicked = leafId;
         }
+
+        // 检测到双击事件
+        if (ImGui::IsItemClicked(0) && ImGui::IsMouseDoubleClicked(0))
+        {
+            // 构建事件信息
+            TreeNodeClickEvent event(treeViewItem->source->name, leafId);
+            // 派发事件
+            OnTreeNodeDoubleClickDispatch(event);
+        }
+
         if (ImGui::BeginDragDropSource())
         {
             // TODO:待完善
@@ -92,4 +106,8 @@ void Sandbox::TreeView::ConstructImGuiTreeNodes(const std::shared_ptr<Sandbox::T
         }
         ImGui::TreePop();
     }
+}
+
+void Sandbox::TreeView::OnTreeNodeDoubleClickDispatch(TreeNodeClickEvent& clicked)
+{
 }

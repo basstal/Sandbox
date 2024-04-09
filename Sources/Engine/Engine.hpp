@@ -15,10 +15,12 @@ namespace Sandbox
     class Camera;
     class Timer;
     class GameObject;
-
+    class Scene;
     class Engine
     {
     public:
+        // std::shared_ptr<Scene> scene;
+
         std::shared_ptr<Renderer>                   renderer;
         std::shared_ptr<Editor>                     editor;
         std::shared_ptr<Timer>                      rendererTimer;
@@ -36,6 +38,8 @@ namespace Sandbox
          * \brief 初始化引擎
          */
         void Prepare();
+        // void SetScene(const std::shared_ptr<Scene>& inScene);
+        // void NewScene();
         void CreateEditor();
         void CreateRenderer();
 

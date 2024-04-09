@@ -11,9 +11,13 @@ namespace Sandbox NAMESPACE()
     class CLASS() IComponent : public ISerializable
     {
     public:
+        static Event<const std::shared_ptr<IComponent>&> onComponentCreate;
+
         std::weak_ptr<GameObject> gameObject;
 
         virtual std::string GetDerivedClassName();
+
+        virtual const rfk::Class* GetDerivedClass();
 
         virtual void Cleanup();
         Sandbox_IComponent_GENERATED

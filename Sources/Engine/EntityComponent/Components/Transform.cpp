@@ -18,4 +18,6 @@ glm::mat4 Sandbox::Transform::GetModelMatrix()
 
 glm::mat4 Sandbox::Transform::GetModelTranslate() { return glm::translate(glm::mat4(1.0f), position.ToGlmVec3()); }
 
-std::string Sandbox::Transform::GetDerivedClassName() { return getArchetype().getName();}
+std::string       Sandbox::Transform::GetDerivedClassName() { return getArchetype().getName(); }
+const rfk::Class* Sandbox::Transform::GetDerivedClass() { return &getArchetype();
+}

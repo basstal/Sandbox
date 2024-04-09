@@ -31,14 +31,13 @@ rfk::Struct const& thisClass = staticGetArchetype();\
 if constexpr (!std::is_same_v<ChildClass, Camera>)const_cast<rfk::Struct&>(thisClass).addSubclass(childClass, rfk::internal::CodeGenerationHelpers::computeClassPointerOffset<ChildClass, Camera>());\
 else\
 {\
-childClass.setFieldsCapacity(7u + rfk::internal::CodeGenerationHelpers::getReflectedFieldsCount< IComponent>()); childClass.setStaticFieldsCapacity(0u + rfk::internal::CodeGenerationHelpers::getReflectedStaticFieldsCount< IComponent>()); \
+childClass.setFieldsCapacity(6u + rfk::internal::CodeGenerationHelpers::getReflectedFieldsCount< IComponent>()); childClass.setStaticFieldsCapacity(0u + rfk::internal::CodeGenerationHelpers::getReflectedStaticFieldsCount< IComponent>()); \
 }\
 [[maybe_unused]] rfk::Field* field = nullptr; [[maybe_unused]] rfk::StaticField* staticField = nullptr;\
 )\
 __RFK_DISABLE_WARNING_PUSH \
 __RFK_DISABLE_WARNING_OFFSETOF \
-RFK_UNPACK_IF_NOT_PARSING(field = childClass.addField("position", std::hash<std::string>()(std::string("c:@N@Sandbox@S@Camera@FI@position") + rfk::internal::getTypename<ChildClass>()), rfk::getType<Vector3>(), static_cast<rfk::EFieldFlags>(1), offsetof(ChildClass, position), &thisClass);\
-field = childClass.addField("rotationX", std::hash<std::string>()(std::string("c:@N@Sandbox@S@Camera@FI@rotationX") + rfk::internal::getTypename<ChildClass>()), rfk::getType<float>(), static_cast<rfk::EFieldFlags>(1), offsetof(ChildClass, rotationX), &thisClass);\
+RFK_UNPACK_IF_NOT_PARSING(field = childClass.addField("rotationX", std::hash<std::string>()(std::string("c:@N@Sandbox@S@Camera@FI@rotationX") + rfk::internal::getTypename<ChildClass>()), rfk::getType<float>(), static_cast<rfk::EFieldFlags>(1), offsetof(ChildClass, rotationX), &thisClass);\
 field = childClass.addField("rotationZ", std::hash<std::string>()(std::string("c:@N@Sandbox@S@Camera@FI@rotationZ") + rfk::internal::getTypename<ChildClass>()), rfk::getType<float>(), static_cast<rfk::EFieldFlags>(1), offsetof(ChildClass, rotationZ), &thisClass);\
 field = childClass.addField("fieldOfView", std::hash<std::string>()(std::string("c:@N@Sandbox@S@Camera@FI@fieldOfView") + rfk::internal::getTypename<ChildClass>()), rfk::getType<float>(), static_cast<rfk::EFieldFlags>(1), offsetof(ChildClass, fieldOfView), &thisClass);\
 field = childClass.addField("nearPlane", std::hash<std::string>()(std::string("c:@N@Sandbox@S@Camera@FI@nearPlane") + rfk::internal::getTypename<ChildClass>()), rfk::getType<float>(), static_cast<rfk::EFieldFlags>(1), offsetof(ChildClass, nearPlane), &thisClass);\

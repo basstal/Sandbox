@@ -7,6 +7,7 @@
 #include "Generated/GameObject.rfkh.h"
 #include "Misc/String.hpp"
 #include "Serialization/ISerializable.hpp"
+#include "Serialization/List.hpp"
 #include "Serialization/SharedPtr.hpp"
 
 namespace Sandbox NAMESPACE()
@@ -16,10 +17,9 @@ namespace Sandbox NAMESPACE()
     template <typename T>
     concept DerivedFromIComponent = std::is_base_of_v<IComponent, T>;
 
-    class CLASS() GameObject : public ISerializable//<GameObject>
+    class CLASS() GameObject : public ISerializable, public std::enable_shared_from_this<GameObject>
     {
     public:
-        FIELD()
         SharedPtr<Transform> transform;
         FIELD()
         String name = "Default";
@@ -41,12 +41,17 @@ namespace Sandbox NAMESPACE()
         template <DerivedFromIComponent T>
         std::shared_ptr<T> GetComponent();
 
-        std::vector<std::shared_ptr<IComponent>> GetComponents();
+        Sandbox::List<Sandbox::SharedPtr<IComponent>> GetComponents();
+
+        YAML::Node SerializeToYaml() override;
+
+        bool DeserializeFromYaml(const YAML::Node& inNode) override;
 
     private:
         bool m_cleaned = false;
 
-        std::vector<std::shared_ptr<IComponent>> m_components;
+        // FIELD()
+        List<SharedPtr<IComponent>> m_components;
 
         Sandbox_GameObject_GENERATED
     };
@@ -68,7 +73,10 @@ namespace Sandbox NAMESPACE()
     template <DerivedFromIComponent T>
     std::shared_ptr<T> GameObject::AddComponent()
     {
-        m_components.push_back(std::make_shared<T>());
+        auto component = std::make_shared<T>();
+        m_components.push_back(component);
+        component->gameObject = weak_from_this();
+        IComponent::onComponentCreate.Trigger(component);
         return std::static_pointer_cast<T>(m_components.back());
     }
 }  // namespace Sandbox NAMESPACE()

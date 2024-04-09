@@ -37,19 +37,8 @@ void Sandbox::ISerializable::SaveToFile(const File& file)
     fout << node;
 }
 
-struct OutUserData
-{
-    const YAML::Node* node;
-    void*             instancePtr;
-};
 
-struct InUserData
-{
-    YAML::Node node;
-    void*      instancePtr;
-};
-
-inline bool SerializeObjectField(const rfk::Field& field, void* inUserData)
+bool Sandbox::SerializeObjectField(const rfk::Field& field, void* inUserData)
 {
     const rfk::Type& fieldType = field.getType();
     auto             archetype = fieldType.getArchetype();
@@ -60,7 +49,7 @@ inline bool SerializeObjectField(const rfk::Field& field, void* inUserData)
     }
     const rfk::Class* classArcheType = rfk::classCast(archetype);
     LOGD_OLD("field : {} , fieldType : {}, isPointer : {}, isValue : {}", field.getName(), archetype->getName(), fieldType.isPointer(), fieldType.isValue())
-    auto userData = static_cast<InUserData*>(inUserData);
+    auto userData = static_cast<Sandbox::ISerializable::InUserData*>(inUserData);
     // TODO:映射表
     if (fieldType.match(rfk::getType<int>()))
     {
@@ -121,10 +110,10 @@ YAML::Node Sandbox::ISerializable::SerializeToYaml()
     return userData.node;
 }
 
-inline bool DeserializeObjectField(const rfk::Field& field, void* inUserData)
+bool Sandbox::DeserializeObjectField(const rfk::Field& field, void* inUserData)
 {
     const rfk::Type& fieldType      = field.getType();
-    auto             userData       = static_cast<OutUserData*>(inUserData);
+    auto             userData       = static_cast<Sandbox::ISerializable::OutUserData*>(inUserData);
     auto             archetype      = fieldType.getArchetype();
     auto             classArcheType = rfk::classCast(archetype);
     LOGD_OLD("Deserialize field : {} , fieldType : {}, isPointer : {}, isValue : {}", field.getName(), archetype->getName(), fieldType.isPointer(), fieldType.isValue())

@@ -17,7 +17,7 @@ namespace Sandbox
 
         virtual void                            Prepare(std::shared_ptr<Renderer>& renderer);
         std::shared_ptr<Sandbox::MVPUboObjects> PrepareUniformBuffers(std::shared_ptr<Renderer>& renderer);
-        void                                    UpdateModels(std::shared_ptr<Renderer>& renderer, const std::vector<std::shared_ptr<Models>>& inModels);
+        void                                    UpdateModels(const std::shared_ptr<Renderer>& renderer, const std::vector<std::shared_ptr<Models>>& inModels);
         virtual void                            UpdateUniforms(uint32_t frameFlightIndex);
         virtual void                            Cleanup();
         virtual void                            CreatePipeline(std::shared_ptr<Renderer>& renderer)       = 0;

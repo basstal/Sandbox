@@ -19,7 +19,8 @@ namespace Sandbox
     class Hierarchy : public TreeView
     {
     public:
-                                                            Hierarchy(const std::shared_ptr<Inspector>& inspector);
+        Hierarchy(const std::shared_ptr<Inspector>& inspector);
+
         std::vector<std::shared_ptr<Sandbox::TreeViewItem>> CreateTreeViewItems(const std::shared_ptr<Scene>& scene);
 
         std::vector<std::shared_ptr<Sandbox::TreeViewItem>> ChildGameObjects(const std::shared_ptr<GameObject>& gameObject);
@@ -34,6 +35,7 @@ namespace Sandbox
         void SetScene(const std::shared_ptr<Scene>& inScene);
 
         Event<std::shared_ptr<GameObject>> onTargetChanged;
+
 
     private:
         std::shared_ptr<Inspector> m_inspector;

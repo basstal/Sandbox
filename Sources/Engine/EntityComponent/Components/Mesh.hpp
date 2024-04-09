@@ -12,7 +12,7 @@ namespace Sandbox NAMESPACE()
     class Device;
     struct Vertex;
 
-    class CLASS() Mesh : public IComponent//, public ISerializable//<Mesh>
+    class CLASS() Mesh : public IComponent
     {
     public:
         void Cleanup() override;
@@ -27,12 +27,14 @@ namespace Sandbox NAMESPACE()
 
         std::string GetDerivedClassName() override;
 
+        const rfk::Class* GetDerivedClass() override;
+
     private:
         std::vector<Vertex>   m_vertices;
         std::vector<uint32_t> m_indices;
 
         Sandbox_Mesh_GENERATED
     };
-}  // namespace Sandbox
+}  // namespace Sandbox NAMESPACE()
 
 File_Mesh_GENERATED

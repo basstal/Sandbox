@@ -17,6 +17,8 @@ namespace Sandbox
 
         std::string GetNameWithoutExtension() const;
 
+        std::string GetExtension() const;
+
         std::string ReadFile();
 
         Directory Parent() const;

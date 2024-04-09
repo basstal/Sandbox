@@ -30,6 +30,7 @@ namespace Sandbox NAMESPACE()
 
         std::string GetDerivedClassName() override;
 
+        const rfk::Class* GetDerivedClass() override;
         Sandbox_Transform_GENERATED
     };
 }  // namespace Sandbox NAMESPACE()

@@ -14,6 +14,8 @@ std::string Sandbox::File::GetNameWithoutExtension() const
     return resultPath.string();
 }
 
+std::string Sandbox::File::GetExtension() const { return path.filename().extension().string(); }
+
 std::string Sandbox::File::ReadFile()
 {
     std::ifstream file(path);

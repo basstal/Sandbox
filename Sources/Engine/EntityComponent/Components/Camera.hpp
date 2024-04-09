@@ -31,7 +31,7 @@ namespace Sandbox NAMESPACE()
     };
 
 
-    class CLASS() Camera : public IComponent//, public ISerializable//<Camera>
+    class CLASS() Camera : public IComponent
     {
     public:
         // Defines several possible options for camera movement. Used as abstraction to stay away from window-system specific input methods
@@ -79,7 +79,7 @@ namespace Sandbox NAMESPACE()
         /**
          * Processes input received from a mouse input system. Expects the offset value in both the x and y direction.
          */
-        void ProcessMouseMovement(float xOffset, float yOffset, bool constrainPitch = true);
+        void ProcessMouseMovement(float xOffset, float yOffset);
 
         /**
          * \brief 重置相机
@@ -91,11 +91,11 @@ namespace Sandbox NAMESPACE()
          */
         void UpdateCameraVectors();
 
-        /**
-         * \brief 位置
-         */
-        FIELD()
-        Vector3 position;
+        // /**
+        //  * \brief 位置
+        //  */
+        // FIELD()
+        // Vector3 position;
         /**
          * \brief X 轴旋转角度
          */
@@ -137,6 +137,8 @@ namespace Sandbox NAMESPACE()
         Vector3   up1;
 
         std::string GetDerivedClassName() override;
+
+        const rfk::Class* GetDerivedClass() override;
 
         Sandbox_Camera_GENERATED
 	};

@@ -43,7 +43,8 @@ namespace Sandbox NAMESPACE()
 
         // 移动赋值运算符
         Quaternion& operator=(Quaternion&& other) noexcept;
-
+        
+        Quaternion& operator*=(const Quaternion& rhs) noexcept;
         // 四元数乘法
         Quaternion operator*(const Quaternion& rhs) const { return Quaternion(m_quat * rhs.m_quat); }
 

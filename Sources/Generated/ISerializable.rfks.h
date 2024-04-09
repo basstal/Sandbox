@@ -38,10 +38,10 @@ static rfk::StaticMethod defaultUniqueInstantiator("", 0u, rfk::getType<rfk::Uni
 type.addUniqueInstantiator(defaultUniqueInstantiator);
 [[maybe_unused]] rfk::Method* method = nullptr; [[maybe_unused]] rfk::StaticMethod* staticMethod = nullptr;
 type.setMethodsCapacity(2u); type.setStaticMethodsCapacity(0u); 
-method = type.addMethod("SerializeToYaml", 15306307837170004511u, rfk::getType<YAML::Node>(), new rfk::MemberFunction<ISerializable, YAML::Node ()>(static_cast<YAML::Node (ISerializable::*)()>(& ISerializable::SerializeToYaml)), static_cast<rfk::EMethodFlags>(1));
-method = type.addMethod("DeserializeFromYaml", 4385964492517204887u, rfk::getType<bool>(), new rfk::MemberFunction<ISerializable, bool (const YAML::Node &)>(static_cast<bool (ISerializable::*)(const YAML::Node &)>(& ISerializable::DeserializeFromYaml)), static_cast<rfk::EMethodFlags>(1));
+method = type.addMethod("SerializeToYaml", 15306307837170004511u, rfk::getType<YAML::Node>(), new rfk::MemberFunction<ISerializable, YAML::Node ()>(static_cast<YAML::Node (ISerializable::*)()>(& ISerializable::SerializeToYaml)), static_cast<rfk::EMethodFlags>(33));
+method = type.addMethod("DeserializeFromYaml", 4385964492517204887u, rfk::getType<bool>(), new rfk::MemberFunction<ISerializable, bool (const YAML::Node &)>(static_cast<bool (ISerializable::*)(const YAML::Node &)>(& ISerializable::DeserializeFromYaml)), static_cast<rfk::EMethodFlags>(33));
 method->setParametersCapacity(1); 
-method->addParameter("node", 0u, rfk::getType<const YAML::Node &>());
+method->addParameter("inNode", 0u, rfk::getType<const YAML::Node &>());
 
 }
 return type; }

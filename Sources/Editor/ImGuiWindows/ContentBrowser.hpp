@@ -33,7 +33,8 @@ namespace Sandbox
     class ContentBrowser : public TreeView
     {
     public:
-             ContentBrowser();
+        ContentBrowser();
+
         void Prepare() override;
 
         std::vector<std::shared_ptr<Sandbox::TreeViewItem>> ScanAndConstructContentBrowserTreeViewItems(const std::shared_ptr<Directory>& directory);
@@ -43,5 +44,7 @@ namespace Sandbox
         void OnGui() override;
 
         void Cleanup() override;
+
+        void OnTreeNodeDoubleClickDispatch(TreeNodeClickEvent&) override;
     };
 }  // namespace Sandbox

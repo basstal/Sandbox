@@ -85,7 +85,7 @@ void Sandbox::Inspector::DrawComponentInspectors()
         std::string className = component->GetDerivedClassName();
         if (!componentNameToInspector.contains(className))
         {
-            LOGW("Editor", "No inspector found for component with classId: {}", className)
+            LOGW("Editor", "No inspector found for component with class name {}", className)
             continue;
         }
         auto inspector = componentNameToInspector[className];

@@ -44,7 +44,7 @@ namespace Sandbox NAMESPACE()
 
         void Cleanup() override;
 
-        void SetTarget(const std::shared_ptr<GameObject>& target);
+        // void SetTarget(const std::shared_ptr<GameObject>& target);
 
         void DrawGizmo(VkExtent2D extent2D);
         void DrawOverlay();
@@ -62,16 +62,16 @@ namespace Sandbox NAMESPACE()
         ImVec2 CalculateStartPosition(int aspectWidth, int aspectHeight, int resolutionWidth, int resolutionHeight, uint32_t& adjustedWidth, uint32_t& adjustedHeight);
         void   BindCameraPosition(EViewMode inViewMode);
         // std::shared_ptr<GameObject> m_referenceGameObject;
-        ImVec2                      m_startPosition;
-        bool                        m_isMouseHoveringInnerRect;
-        bool                        m_mouseMoved              = true;
-        float                       m_lastX                   = 0.0f;
-        float                       m_lastY                   = 0.0f;
-        bool                        m_isCameraMovementEnabled = false;
-        Sandbox::DelegateHandle     m_cursorBindHandler;
-        GLFWwindow*                 m_glfwWindow;
-        ImGuiWindow*                m_imguiWindow;
-        std::shared_ptr<Renderer>   m_renderer;
+        ImVec2                    m_startPosition;
+        bool                      m_isMouseHoveringInnerRect;
+        bool                      m_mouseMoved              = true;
+        float                     m_lastX                   = 0.0f;
+        float                     m_lastY                   = 0.0f;
+        bool                      m_isCameraMovementEnabled = false;
+        Sandbox::DelegateHandle   m_cursorBindHandler;
+        GLFWwindow*               m_glfwWindow;
+        ImGuiWindow*              m_imguiWindow;
+        std::shared_ptr<Renderer> m_renderer;
         FIELD()
         ImGuizmo::OPERATION m_currentGizmoOperation;
         FIELD()

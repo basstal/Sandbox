@@ -25,21 +25,6 @@
 #include "VulkanRHI/Rendering/PipelineState.hpp"
 #include "VulkanRHI/Rendering/RenderAttachments.hpp"
 
-void Sandbox::Viewport::OnCursorPosition(GLFWwindow* window, double xPos, double yPos)
-{
-    if (m_mouseMoved)
-    {
-        m_lastX      = static_cast<float>(xPos);
-        m_lastY      = static_cast<float>(yPos);
-        m_mouseMoved = false;
-    }
-
-    float offsetX = static_cast<float>(xPos) - m_lastX;
-    float offsetY = m_lastY - static_cast<float>(yPos);
-    m_lastX       = static_cast<float>(xPos);
-    m_lastY       = static_cast<float>(yPos);
-    mainCamera->ProcessMouseMovement(offsetX, offsetY);
-}
 
 Sandbox::Viewport::Viewport(const std::shared_ptr<Renderer>& inRenderer)
 {
@@ -53,6 +38,14 @@ Sandbox::Viewport::Viewport(const std::shared_ptr<Renderer>& inRenderer)
     m_renderer->surface->window->callbackBridge->onMouseButton.BindMember<Viewport, &Viewport::SwitchCursorForCameraMovement>(this);
     BindCameraPosition(inRenderer->viewMode);
     inRenderer->onViewModeChanged.BindMember<Viewport, &Viewport::BindCameraPosition>(this);
+    IComponent::onComponentCreate.Bind(
+        [this](const std::shared_ptr<IComponent>& inComponent)
+        {
+            if (mainCamera == nullptr && inComponent->GetDerivedClass() == &Camera::staticGetArchetype())
+            {
+                mainCamera = std::dynamic_pointer_cast<Camera>(inComponent);
+            }
+        });
 }
 
 void Sandbox::Viewport::Prepare()
@@ -167,6 +160,23 @@ void Sandbox::Viewport::Tick(float deltaTime)
     }
 }
 
+
+void Sandbox::Viewport::OnCursorPosition(GLFWwindow* window, double xPos, double yPos)
+{
+    if (m_mouseMoved)
+    {
+        m_lastX      = static_cast<float>(xPos);
+        m_lastY      = static_cast<float>(yPos);
+        m_mouseMoved = false;
+    }
+
+    float offsetX = static_cast<float>(xPos) - m_lastX;
+    float offsetY = m_lastY - static_cast<float>(yPos);
+    m_lastX       = static_cast<float>(xPos);
+    m_lastY       = static_cast<float>(yPos);
+    mainCamera->ProcessMouseMovement(offsetX, offsetY);
+}
+
 void Sandbox::Viewport::SwitchCursorForCameraMovement(GLFWwindow* inWindow, int button, int action, int mods)
 {
     if (button != GLFW_MOUSE_BUTTON_RIGHT || mainCamera == nullptr)
@@ -217,10 +227,10 @@ void Sandbox::Viewport::Cleanup()
     }
 }
 
-void Sandbox::Viewport::SetTarget(const std::shared_ptr<GameObject>& target)
-{
-    // m_referenceGameObject = target;
-}
+// void Sandbox::Viewport::SetTarget(const std::shared_ptr<GameObject>& target)
+// {
+//     // m_referenceGameObject = target;
+// }
 
 void Sandbox::Viewport::DrawGizmo(VkExtent2D extent2D)
 {
@@ -468,6 +478,14 @@ void Sandbox::Viewport::BindCameraPosition(EViewMode inViewMode)
     if (m_renderer->TryGetRendererSource(inViewMode, rendererSource))
     {
         // TODO:因为这里 position 是 Vector3 派生自 rfk::Object 虚函数表指针要求 8 字节对齐，因此不满足传递给 GPU 对齐要求
-        rendererSource->pipeline->pipelineState->pushConstantsInfo.data = mainCamera == nullptr ? nullptr : &mainCamera->position.vec;
+        if (mainCamera == nullptr)
+        {
+            rendererSource->pipeline->pipelineState->pushConstantsInfo.data = nullptr;
+        }
+        else
+        {
+            auto gameObject = mainCamera->gameObject.lock();
+            rendererSource->pipeline->pipelineState->pushConstantsInfo.data = &gameObject->transform->position.vec;
+        }
     }
 }

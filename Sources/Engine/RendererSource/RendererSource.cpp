@@ -41,7 +41,7 @@ std::shared_ptr<Sandbox::MVPUboObjects> Sandbox::RendererSource::PrepareUniformB
 }
 
 
-void Sandbox::RendererSource::UpdateModels(std::shared_ptr<Renderer>& renderer, const std::vector<std::shared_ptr<Models>>& inModels)
+void Sandbox::RendererSource::UpdateModels(const std::shared_ptr<Renderer>& renderer, const std::vector<std::shared_ptr<Models>>& inModels)
 {
     VkDeviceSize dynamicAlignment = sizeof(glm::mat4);
     renderer->device->GetMinUniformBufferOffsetAlignment(dynamicAlignment);

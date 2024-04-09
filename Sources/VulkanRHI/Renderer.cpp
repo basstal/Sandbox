@@ -173,10 +173,16 @@ void Sandbox::Renderer::RecordCommandBuffer(std::shared_ptr<CommandBuffer>& comm
         while (!queuedMeshes.empty())
         {
             std::shared_ptr<Mesh>& nextMesh = queuedMeshes.front();
-            commandBuffer->BindVertexBuffers(nextMesh->vertexBuffer);
-            commandBuffer->BindIndexBuffer(nextMesh->indexBuffer);
-            commandBuffer->DrawIndexed(nextMesh->Indices());
-            queuedMeshes.pop();
+            if (nextMesh == nullptr)
+            {
+                queuedMeshes.pop();
+            }
+            else
+            {
+                commandBuffer->BindVertexBuffers(nextMesh->vertexBuffer);
+                commandBuffer->BindIndexBuffer(nextMesh->indexBuffer);
+                commandBuffer->DrawIndexed(nextMesh->Indices());
+            }
         }
         onAfterRendererDraw.Trigger(commandBuffer, frameFlightIndex);
 

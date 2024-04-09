@@ -8,9 +8,10 @@
 
 namespace Sandbox NAMESPACE()
 {
-    // class GameObject;
+    struct Models;
+    class Renderer;
 
-    class CLASS() Scene : public ISerializable//<Scene>
+    class CLASS() Scene : public ISerializable  //<Scene>
     {
     public:
         FIELD()
@@ -22,7 +23,16 @@ namespace Sandbox NAMESPACE()
 
         void Cleanup();
 
-        void Tick();
+        void Tick(const std::shared_ptr<Renderer>& renderer);
+
+        static std::shared_ptr<Scene> LoadScene(std::shared_ptr<File> sceneFile);
+        static void                   NewScene();
+
+
+        std::vector<std::shared_ptr<Models>> models;
+
+        static Event<const std::shared_ptr<Scene>&> onSceneChange;
+
     private:
         bool m_cleaned = false;
 

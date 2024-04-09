@@ -18,6 +18,12 @@ Sandbox::Quaternion& Sandbox::Quaternion::operator=(Quaternion&& other) noexcept
     Sync();
     return *this;
 }
+Sandbox::Quaternion& Sandbox::Quaternion::operator*=(const Quaternion& rhs) noexcept
+{
+    m_quat *= rhs.m_quat;
+    Sync();
+    return *this;
+}
 glm::quat Sandbox::Quaternion::ToGlmQuaternion()
 {
     m_quat.x = x;
