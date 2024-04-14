@@ -10,7 +10,6 @@ namespace Sandbox NAMESPACE()
     class CLASS(InspectComponentName("Camera")) CameraInspector : public Inspector
     {
     public:
-        CameraInspector();
 
         void OnInspectorGui() override;
 

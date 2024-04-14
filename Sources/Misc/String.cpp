@@ -34,6 +34,12 @@ Sandbox::String& Sandbox::String::operator=(const char* inString)
     Sync();
     return *this;
 }
+Sandbox::String& Sandbox::String::operator=(const std::string& inString)
+{
+    m_string = inString;
+    Sync();
+    return *this;
+}
 
 void Sandbox::String::Construct(const std::string& inString)
 {
@@ -66,11 +72,12 @@ std::string Sandbox::String::Replace(const std::string& source, const std::strin
     return result;
 }
 
-std::string Sandbox::String::ToStdString() { return m_string; }
+std::string Sandbox::String::ToStdString() const { return m_string; }
 
 void Sandbox::String::Sync()
 {
     auto cStr = m_string.c_str();
-    rawString = new char[m_string.size() + 1];
-    strcpy_s(rawString, m_string.size() + 1, cStr);
+    delete m_rawString;
+    m_rawString = new char[m_string.size() + 1];
+    strcpy_s(m_rawString, m_string.size() + 1, cStr);
 }

@@ -20,6 +20,7 @@ namespace Sandbox NAMESPACE()
     class CLASS() GameObject : public ISerializable, public std::enable_shared_from_this<GameObject>
     {
     public:
+        FIELD()
         SharedPtr<Transform> transform;
         FIELD()
         String name = "Default";
@@ -76,6 +77,7 @@ namespace Sandbox NAMESPACE()
         auto component = std::make_shared<T>();
         m_components.push_back(component);
         component->gameObject = weak_from_this();
+        component->transform  = std::weak_ptr<Transform>(transform.ToStdSharedPtr());
         IComponent::onComponentCreate.Trigger(component);
         return std::static_pointer_cast<T>(m_components.back());
     }

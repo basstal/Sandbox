@@ -1,6 +1,9 @@
 ﻿#include "pch.hpp"
 
 #include "Logs.hpp"
+
+std::shared_ptr<Sandbox::Logs> Sandbox::Logs::Instance = nullptr;
+
 Sandbox::Logs::Logs() : autoScroll(true)
 {
     name = "Logs";
@@ -33,6 +36,9 @@ void Sandbox::Logs::AddLog(const char* fmt, ...)
     va_list args;
     va_start(args, fmt);
     stringBuilder.appendfv(fmt, args);
+    char buffer[1024];
+    (void)vsnprintf(buffer, sizeof(buffer), fmt, args);
+    LOGD("Editor", buffer)
     va_end(args);
     IncreaseLineNum(oldSize);
 }

@@ -35,8 +35,11 @@ namespace Sandbox
 
     struct DepthStencilState
     {
-        VkBool32 depthTestEnable  = VK_TRUE;
-        VkBool32 depthWriteEnable = VK_TRUE;
+        VkBool32         depthTestEnable   = VK_TRUE;
+        VkBool32         depthWriteEnable  = VK_TRUE;
+        VkBool32         stencilTestEnable = VK_FALSE;
+        VkStencilOpState front             = {};
+        VkStencilOpState back              = {};
     };
 
     struct PushConstantsInfo
@@ -53,6 +56,9 @@ namespace Sandbox
                       const std::shared_ptr<PipelineLayout>& pipelineLayout);
 
         ~PipelineState() = default;
+
+        // 复制构造函数
+        PipelineState(const PipelineState& other);
 
         InputAssemblyState inputAssemblyState;
         VertexInputState   vertexInputState;

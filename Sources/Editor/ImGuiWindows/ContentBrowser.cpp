@@ -65,9 +65,7 @@ void Sandbox::ContentBrowser::OnTreeNodeDoubleClickDispatch(TreeNodeClickEvent& 
         auto file = std::dynamic_pointer_cast<AssetFileTreeViewSource>(item->source)->file;
         if (file->GetExtension() == ".scene")
         {
-            auto loadedScene    = Scene::LoadScene(file);
-            Scene::currentScene = loadedScene;
-            Scene::onSceneChange.Trigger(loadedScene);
+            Scene::LoadScene(file);
         }
         // LOGF("Double clicked on file: %s", file->GetPath().c_str());
     }

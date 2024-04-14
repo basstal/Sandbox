@@ -24,8 +24,9 @@ namespace Sandbox NAMESPACE()
             const YAML::Node* node;
             void*             instancePtr;
         };
+        // TODO:改个更像序列化的名字
         void LoadFromFile(const File& file);
-
+        // TODO:改个更像序列化的名字
         void SaveToFile(const File& file);
 
         METHOD()

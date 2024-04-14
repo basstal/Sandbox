@@ -36,6 +36,7 @@ Sandbox::Buffer::Buffer(const std::shared_ptr<Device>& device, VkDeviceSize inSi
     {
         Logger::Fatal("failed to allocate buffer memory!");
     }
+    LOGI_OLD("{}\n{}", PtrToHexString(vkDeviceMemory), GetCallStack())
 
     vkBindBufferMemory(device->vkDevice, vkBuffer, vkDeviceMemory, 0);
 }

@@ -29,6 +29,7 @@ namespace Sandbox NAMESPACE()
         template <DerivedFromIComponent T>
         void DrawFieldsReflected(std::shared_ptr<T> instance);
 
+        // TODO:记在这里太分散了，最好还是使用 hierarchy 一致的 target 记录
         std::shared_ptr<GameObject> target;
     protected:
 

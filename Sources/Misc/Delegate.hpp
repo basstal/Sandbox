@@ -28,7 +28,7 @@ namespace Sandbox
         bool operator<(const DelegateHandle& other) const;
 
     private:
-        static uint64_t currentId;  // 用于生成唯一ID
+        static uint64_t CurrentId;  // 用于生成唯一ID
         uint64_t        id;
     };
 

@@ -20,6 +20,8 @@ namespace Sandbox NAMESPACE()
 
         Vector3(float scalar);
 
+        Vector3(float x, float y, float z);
+
         Vector3(const glm::vec3& inGlmVec3);
 
         // 移动构造函数：从glm::vec3移动（实际上和复制构造一样，因为glm::vec3没有动态资源）
@@ -31,11 +33,13 @@ namespace Sandbox NAMESPACE()
 
         void operator+=(const glm::vec3& inGlmVec3);
 
-        void operator+=(const Vector3& inGlmVec3);
+        void operator+=(const Vector3& inGlmVec3);void operator-=(const Vector3&inGlmVec3);
 
         const Vector3 operator*(const glm::vec3& inGlmVec3) const;
 
         const Vector3 operator*(float velocity) const;
+
+        const Vector3 operator-(const Vector3& inGlmVec3) const;
 
         glm::vec3 ToGlmVec3();
 

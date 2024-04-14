@@ -35,6 +35,8 @@
 #include "VulkanRHI/Rendering/RenderAttachments.hpp"
 #include "VulkanRHI/Rendering/RenderTarget.hpp"
 
+std::shared_ptr<Sandbox::ImGuiRenderer> Sandbox::ImGuiRenderer::Instance = nullptr;
+
 std::map<std::string, std::shared_ptr<Sandbox::Resource::Image>> Sandbox::ImGuiRenderer::guiNameToResourceImage;
 std::map<std::string, std::shared_ptr<Sandbox::Image>>           Sandbox::ImGuiRenderer::guiNameToImage;
 std::map<std::string, std::shared_ptr<Sandbox::ImageView>>       Sandbox::ImGuiRenderer::guiNameToImageView;
@@ -42,6 +44,7 @@ std::map<std::string, VkDescriptorSet>                           Sandbox::ImGuiR
 
 void Sandbox::ImGuiRenderer::Prepare(const std::shared_ptr<Renderer>& renderer, const std::shared_ptr<Editor>& editor)
 {
+    Instance   = shared_from_this();
     m_renderer = renderer;
     // 构建 GUI renderPass
     std::vector<Attachment> attachments = {
@@ -83,7 +86,6 @@ void Sandbox::ImGuiRenderer::Prepare(const std::shared_ptr<Renderer>& renderer, 
     LoadImageToGuiTexture("scale", "Textures/Icon/scale.png");
     LoadImageToGuiTexture("local", "Textures/Icon/local.png");
     LoadImageToGuiTexture("world", "Textures/Icon/world.png");
-
     m_prepared = true;
 }
 
@@ -111,11 +113,14 @@ void Sandbox::ImGuiRenderer::RegisterWindows(const std::shared_ptr<Renderer>& re
     RegisterWindow(std::make_shared<ContentBrowser>());
     auto inspector = std::make_shared<Inspector>();
     hierarchy      = std::make_shared<Hierarchy>(inspector);
-    hierarchy->onTargetChanged.BindMember<Inspector, &Inspector::InspectTarget>(inspector.get());
-    hierarchy->onTargetChanged.BindMember<Viewport, &Viewport::InspectTarget>(viewport.get());
+    onTargetChanged.BindMember<Inspector, &Inspector::InspectTarget>(inspector.get());
+    onTargetChanged.BindMember<Viewport, &Viewport::InspectTarget>(viewport.get());
+
     RegisterWindow(hierarchy);
     RegisterWindow(inspector);
-    RegisterWindow(std::make_shared<Logs>());
+    auto logs      = std::make_shared<Logs>();
+    Logs::Instance = logs;
+    RegisterWindow(logs);
     RegisterWindow(std::make_shared<Stats>());
 }
 

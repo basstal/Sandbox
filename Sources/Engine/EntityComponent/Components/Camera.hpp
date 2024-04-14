@@ -140,6 +140,10 @@ namespace Sandbox NAMESPACE()
 
         const rfk::Class* GetDerivedClass() override;
 
+        Vector3 NDCToWorld(const float& x, const float& y, const float& z);
+
+        Vector3 NDCToWorld(const Vector3& ndcCoordinate);
+
         Sandbox_Camera_GENERATED
 	};
 } // namespace Sandbox NAMESPACE()

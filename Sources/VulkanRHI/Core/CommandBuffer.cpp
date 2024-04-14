@@ -123,8 +123,16 @@ void Sandbox::CommandBuffer::SetScissor(uint32_t firstScissor, const std::vector
     vkCmdSetScissor(vkCommandBuffer, firstScissor, static_cast<uint32_t>(scissors.size()), scissors.data());
 }
 
-void Sandbox::CommandBuffer::BindPipeline(const std::shared_ptr<Pipeline>& pipeline, const std::shared_ptr<DescriptorSet>& descriptorSet,
-                                          const std::vector<uint32_t>& dynamicOffsets)
+
+void Sandbox::CommandBuffer::BindDescriptorSet(const std::shared_ptr<PipelineLayout>& pipelineLayout, const std::shared_ptr<DescriptorSet>& descriptorSet,
+                                               const std::vector<uint32_t>& dynamicOffsets)
+{
+    descriptorSet->Update();
+    vkCmdBindDescriptorSets(vkCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout->vkPipelineLayout, 0, 1, &descriptorSet->vkDescriptorSet,
+                            static_cast<uint32_t>(dynamicOffsets.size()), dynamicOffsets.data());
+}
+
+void Sandbox::CommandBuffer::BindPipeline(const std::shared_ptr<Pipeline>& pipeline)
 {
     auto& pipelineState = pipeline->pipelineState;
     vkCmdBindPipeline(vkCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->vkPipeline);
@@ -135,10 +143,7 @@ void Sandbox::CommandBuffer::BindPipeline(const std::shared_ptr<Pipeline>& pipel
     {
         vkCmdPushConstants(vkCommandBuffer, pipelineLayout->vkPipelineLayout, pushConstantsInfo.stage, 0, pushConstantsInfo.size, pushConstantsInfo.data);
     }
-
-    descriptorSet->Update();
-    vkCmdBindDescriptorSets(vkCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout->vkPipelineLayout, 0, 1, &descriptorSet->vkDescriptorSet,
-                            static_cast<uint32_t>(dynamicOffsets.size()), dynamicOffsets.data());
+    m_boundPipeline = pipeline;
 }
 
 void Sandbox::CommandBuffer::BindVertexBuffers(const std::shared_ptr<Buffer>& buffer)
@@ -502,7 +507,7 @@ void Sandbox::CommandBuffer::BlitImage(const std::shared_ptr<Image>& srcImage, c
 
     // 目标图像的指定
     imageBlit.dstSubresource.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
-	imageBlit.dstSubresource.mipLevel = 0;
+    imageBlit.dstSubresource.mipLevel       = 0;
     imageBlit.dstSubresource.baseArrayLayer = 0;
     imageBlit.dstSubresource.layerCount = 1;
 
@@ -517,4 +522,8 @@ void Sandbox::CommandBuffer::BlitImage(const std::shared_ptr<Image>& srcImage, c
         1, &imageBlit, // Blit操作的数量和具体操作
         VK_FILTER_LINEAR // 使用线性滤波
     );
+}
+
+std::shared_ptr<Sandbox::Pipeline> Sandbox::CommandBuffer::GetBoundPipeline(){
+    return m_boundPipeline;
 }

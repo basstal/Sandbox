@@ -6,7 +6,11 @@
 
 namespace Sandbox
 {
+    std::string ToString(ImVec2 inValue);
+
     std::string ToString(glm::vec3 inValue);
+
+    std::string ToString(glm::vec4 inValue);
 
     std::string ToString(glm::mat4 inValue);
 

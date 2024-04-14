@@ -3,10 +3,10 @@
 #include "Delegate.hpp"
 
 // 初始化静态成员变量
-uint64_t                Sandbox::DelegateHandle::currentId = 0;
+uint64_t                Sandbox::DelegateHandle::CurrentId = 0;
 Sandbox::DelegateHandle Sandbox::DelegateHandle::Null      = DelegateHandle();
 
-Sandbox::DelegateHandle::DelegateHandle() : id(currentId++) {}
+Sandbox::DelegateHandle::DelegateHandle() : id(CurrentId++) {}
 
 Sandbox::DelegateHandle::DelegateHandle(const DelegateHandle& other) { id = other.id; }
 

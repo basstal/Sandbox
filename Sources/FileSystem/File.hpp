@@ -6,12 +6,14 @@
 
 namespace Sandbox
 {
+    class String;
     class Directory;
 
     class File : public FileSystemBase
     {
     public:
         File(const std::string& inPath);
+        File(const String& inPath);
 
         std::string GetName() const;
 

@@ -15,8 +15,7 @@ namespace Sandbox
     {
     public:
         DescriptorSet(const std::shared_ptr<Device>& device, const std::shared_ptr<DescriptorPool>& descriptorPool,
-                      const std::shared_ptr<DescriptorSetLayout>& descriptorSetLayout, const BindingMap<VkDescriptorBufferInfo>& inBufferInfoMapping,
-                      const BindingMap<VkDescriptorImageInfo>& inImageInfoMapping);
+                      const std::shared_ptr<DescriptorSetLayout>& descriptorSetLayout);
 
         ~DescriptorSet();
 
@@ -24,7 +23,8 @@ namespace Sandbox
 
         void Allocate(const std::shared_ptr<DescriptorPool>& descriptorPool, const std::shared_ptr<DescriptorSetLayout>& descriptorSetLayout);
 
-        void Prepare(const std::map<uint32_t, std::vector<VkDescriptorBufferInfo>>& inBufferInfoMapping,
+        void BindBufferInfoMapping(const BindingMap<VkDescriptorBufferInfo>& inBufferInfoMapping, const std::shared_ptr<DescriptorSetLayout>& descriptorSetLayout);
+        void BindInfoMapping(const std::map<uint32_t, std::vector<VkDescriptorBufferInfo>>& inBufferInfoMapping,
                      const std::map<uint32_t, std::vector<VkDescriptorImageInfo>>& inImageInfoMapping, const std::shared_ptr<DescriptorSetLayout>& descriptorSetLayout);
 
         void Update();
@@ -32,6 +32,7 @@ namespace Sandbox
         VkDescriptorSet vkDescriptorSet;
         // The list of write operations for the descriptor set
         std::vector<VkWriteDescriptorSet> writeDescriptorSets;
+        std::vector<VkWriteDescriptorSet> writeDescriptorSetsImage;
 
     private:
         std::map<uint32_t, std::vector<VkDescriptorImageInfo>>  m_imageInfoMapping;

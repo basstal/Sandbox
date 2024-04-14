@@ -5,6 +5,7 @@
 #include "Editor/IImGuiWindow.hpp"
 #include "Editor/ImGuiExamples.hpp"
 #include "Engine/EntityComponent/Scene.hpp"
+#include "FileSystem/Directory.hpp"
 #include "Misc/DataBinding.hpp"
 bool Sandbox::MenuBar::Draw(const std::vector<std::shared_ptr<IImGuiWindow>>& windows)
 {
@@ -35,6 +36,13 @@ bool Sandbox::MenuBar::Draw(const std::vector<std::shared_ptr<IImGuiWindow>>& wi
             {
             }
             ImGui::Separator();
+            if (ImGui::MenuItem("Save Scene"))
+            {
+                // TODO: 测试保存场景
+                auto sceneFile = Directory::GetAssetsDirectory().GetFile("Test.scene");
+                LOGD("Test", "begin serialize scene")
+                Scene::GetCurrentScene()->SaveToFile(sceneFile);
+            }
             if (ImGui::MenuItem("New Scene"))
             {
                 Scene::NewScene();

@@ -3,6 +3,7 @@
 #include "Editor.hpp"
 
 #include "Engine/EntityComponent/Components/Camera.hpp"
+#include "Engine/EntityComponent/Scene.hpp"
 #include "Engine/RendererSource/RendererSource.hpp"
 #include "Engine/Timer.hpp"
 #include "FileSystem/Directory.hpp"
@@ -77,13 +78,15 @@ void Sandbox::Editor::PrepareOnGui()
     ShaderSource fragmentShaderSource(Directory::GetAssetsDirectory().GetFile("Shaders/FillModeNonSolidGrid.frag"));
     shaderModules.push_back(std::make_shared<ShaderModule>(device, fragmentShaderSource, "", VK_SHADER_STAGE_FRAGMENT_BIT));
 
-    pipelineLayout     = std::make_shared<PipelineLayout>(device, shaderModules, std::vector<uint32_t>{1});
-    auto renderPass    = m_renderer->renderPass;
-    pipelineLineList   = std::make_shared<Pipeline>(device, shaderModules, renderPass, pipelineLayout, VK_PRIMITIVE_TOPOLOGY_LINE_LIST, VK_POLYGON_MODE_FILL);
-    auto pipelineState = std::make_shared<PipelineState>(shaderModules, renderPass, pipelineLayout);
-    pipelineState->depthStencilState.depthTestEnable  = VK_FALSE;
-    pipelineState->depthStencilState.depthWriteEnable = VK_TRUE;
-    pipelineGizmo                                     = std::make_shared<Pipeline>(device, pipelineState);
+    pipelineLayout                                     = std::make_shared<PipelineLayout>(device, shaderModules, std::vector<uint32_t>{1});
+    auto renderPass                                    = m_renderer->renderPass;
+    auto pipelineStateLineList                         = std::make_shared<PipelineState>(shaderModules, renderPass, pipelineLayout);
+    pipelineStateLineList->inputAssemblyState.topology = VK_PRIMITIVE_TOPOLOGY_LINE_LIST;
+    pipelineLineList                                   = std::make_shared<Pipeline>(device, pipelineStateLineList);
+    auto pipelineState                                 = std::make_shared<PipelineState>(shaderModules, renderPass, pipelineLayout);
+    pipelineState->depthStencilState.depthTestEnable   = VK_FALSE;
+    pipelineState->depthStencilState.depthWriteEnable  = VK_TRUE;
+    pipelineGizmo                                      = std::make_shared<Pipeline>(device, pipelineState);
     // auto pipelineState1 = std::make_shared<PipelineState>(shaderModules, renderPass, pipelineLayout);
     // pipelineState1->inputAssemblyState.topology = VK_PRIMITIVE_TOPOLOGY_LINE_LIST;
     // pipelineState1->depthStencilState.depthTestEnable = VK_TRUE;
@@ -92,7 +95,9 @@ void Sandbox::Editor::PrepareOnGui()
 
     UpdateDescriptorSets(m_renderer->viewMode);
     m_renderer->onViewModeChanged.BindMember<Editor, &Editor::UpdateDescriptorSets>(this);
+    Scene::onReconstructMeshes.Bind([this] { UpdateDescriptorSets(m_renderer->viewMode); });
 }
+
 
 void Sandbox::Editor::UpdateDescriptorSets(EViewMode inViewMode)
 {
@@ -115,8 +120,9 @@ void Sandbox::Editor::UpdateDescriptorSets(EViewMode inViewMode)
             {1, {uniformMvpObjects[i]->modelsUbo->GetDescriptorBufferInfo(dynamicAlignment)}},
         };
         BindingMap<VkDescriptorImageInfo> imageInfoMapping;
-        auto                              descriptorSet =
-            std::make_shared<DescriptorSet>(m_renderer->device, m_renderer->descriptorPool, pipelineLayout->descriptorSetLayout, bufferInfoMapping, imageInfoMapping);
+
+        auto descriptorSet = std::make_shared<DescriptorSet>(m_renderer->device, m_renderer->descriptorPool, pipelineLayout->descriptorSetLayout);
+        descriptorSet->BindInfoMapping(bufferInfoMapping, imageInfoMapping, pipelineLayout->descriptorSetLayout);
         descriptorSets.push_back(descriptorSet);
     }
 }

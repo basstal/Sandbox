@@ -127,11 +127,10 @@ std::vector<VkAttachmentDescription> Sandbox::RenderPass::GetAttachmentDescripti
         attachmentDescription.finalLayout   = IsDepthFormat(attachmentDescription.format) ? VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL : attachment.finalLayout;
         if (i < inLoadStoreInfos.size())
         {
-            attachmentDescription.loadOp  = inLoadStoreInfos[i].loadOp;
-            attachmentDescription.storeOp = inLoadStoreInfos[i].storeOp;
-            // TODO: enable stencil load store
-            attachmentDescription.stencilLoadOp  = VK_ATTACHMENT_LOAD_OP_DONT_CARE;  // inLoadStoreInfos[i].loadOp;
-            attachmentDescription.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;  // inLoadStoreInfos[i].storeOp;
+            attachmentDescription.loadOp         = inLoadStoreInfos[i].loadOp;
+            attachmentDescription.storeOp        = inLoadStoreInfos[i].storeOp;
+            attachmentDescription.stencilLoadOp  = inLoadStoreInfos[i].loadOp;
+            attachmentDescription.stencilStoreOp = inLoadStoreInfos[i].storeOp;
         }
 
         result.push_back(attachmentDescription);

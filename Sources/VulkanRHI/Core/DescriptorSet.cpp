@@ -11,13 +11,12 @@
 
 
 Sandbox::DescriptorSet::DescriptorSet(const std::shared_ptr<Device>& device, const std::shared_ptr<DescriptorPool>& descriptorPool,
-                                      const std::shared_ptr<DescriptorSetLayout>& descriptorSetLayout, const BindingMap<VkDescriptorBufferInfo>& inBufferInfoMapping,
-                                      const BindingMap<VkDescriptorImageInfo>& inImageInfoMapping)
+                                      const std::shared_ptr<DescriptorSetLayout>& descriptorSetLayout)
 {
     m_device         = device;
     m_descriptorPool = descriptorPool;
     Allocate(descriptorPool, descriptorSetLayout);
-    Prepare(inBufferInfoMapping, inImageInfoMapping, descriptorSetLayout);
+    // Prepare(inBufferInfoMapping, inImageInfoMapping, descriptorSetLayout);
 }
 
 Sandbox::DescriptorSet::~DescriptorSet() { Cleanup(); }
@@ -45,18 +44,11 @@ void Sandbox::DescriptorSet::Allocate(const std::shared_ptr<DescriptorPool>& des
     }
     // LOGI("{}\n{}", PtrToHexString(vkDescriptorSet), GetCallStack())
 }
-
-void Sandbox::DescriptorSet::Prepare(const std::map<uint32_t, std::vector<VkDescriptorBufferInfo>>& inBufferInfoMapping,
-                                     const std::map<uint32_t, std::vector<VkDescriptorImageInfo>>&  inImageInfoMapping,
-                                     const std::shared_ptr<DescriptorSetLayout>&                    descriptorSetLayout)
+void Sandbox::DescriptorSet::BindBufferInfoMapping(const BindingMap<VkDescriptorBufferInfo>&   inBufferInfoMapping,
+                                                   const std::shared_ptr<DescriptorSetLayout>& descriptorSetLayout)
 {
-    if (!writeDescriptorSets.empty())
-    {
-        LOGW_OLD("DescriptorSet::Prepare() called more than once")
-        return;
-    }
-    m_imageInfoMapping                            = inImageInfoMapping;
-    m_bufferInfoMapping                           = inBufferInfoMapping;
+    m_bufferInfoMapping = inBufferInfoMapping;
+    writeDescriptorSets.clear();
     auto                         maxUniformBuffer = m_device->GetMaxUniformBuffer();
     auto                         maxStorageBuffer = m_device->GetMaxStorageBuffer();
     VkDescriptorSetLayoutBinding out;
@@ -87,7 +79,23 @@ void Sandbox::DescriptorSet::Prepare(const std::map<uint32_t, std::vector<VkDesc
             writeDescriptorSets.push_back(writeDescriptorSet);
         }
     }
+}
 
+void Sandbox::DescriptorSet::BindInfoMapping(const std::map<uint32_t, std::vector<VkDescriptorBufferInfo>>& inBufferInfoMapping,
+                                             const std::map<uint32_t, std::vector<VkDescriptorImageInfo>>&  inImageInfoMapping,
+                                             const std::shared_ptr<DescriptorSetLayout>&                    descriptorSetLayout)
+{
+    // if (!writeDescriptorSets.empty() || !writeDescriptorSetsImage.empty())
+    // {
+    //     LOGW_OLD("DescriptorSet::Prepare() called more than once")
+    //     return;
+    // }
+
+    VkDescriptorSetLayoutBinding out;
+    BindBufferInfoMapping(inBufferInfoMapping, descriptorSetLayout);
+
+    m_imageInfoMapping = inImageInfoMapping;
+    writeDescriptorSetsImage.clear();
     for (auto& [bindingIndex, imageInfos] : m_imageInfoMapping)
     {
         if (descriptorSetLayout->TryGetLayoutBinding(bindingIndex, out))
@@ -101,7 +109,7 @@ void Sandbox::DescriptorSet::Prepare(const std::map<uint32_t, std::vector<VkDesc
             writeDescriptorSet.dstSet          = vkDescriptorSet;
             writeDescriptorSet.dstArrayElement = 0;
             writeDescriptorSet.descriptorCount = out.descriptorCount;
-            writeDescriptorSets.push_back(writeDescriptorSet);
+            writeDescriptorSetsImage.push_back(writeDescriptorSet);
         }
     }
 }
@@ -110,9 +118,10 @@ void Sandbox::DescriptorSet::Update()
 {
     std::vector<VkWriteDescriptorSet> writeOperations;
     std::vector<uint64_t>             writeOperationsHash;
-    for (size_t i = 0; i < writeDescriptorSets.size(); i++)
+    auto                              totalWriteCount = writeDescriptorSets.size() + writeDescriptorSetsImage.size();
+    for (size_t i = 0; i < totalWriteCount; i++)
     {
-        const VkWriteDescriptorSet& writeOperation     = writeDescriptorSets[i];
+        const VkWriteDescriptorSet& writeOperation     = i < writeDescriptorSets.size() ? writeDescriptorSets[i] : writeDescriptorSetsImage[i - writeDescriptorSets.size()];
         size_t                      writeOperationHash = 0;
         HashParam(writeOperationHash, writeOperation);
         auto it = m_updatedBindings.find(writeOperation.dstBinding);

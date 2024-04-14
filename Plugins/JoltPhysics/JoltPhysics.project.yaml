@@ -1,0 +1,6 @@
+type: Cpp
+sub_type: Library
+additional_include_paths:
+  - JoltPhysics
+lib_paths:
+  - JoltPhysics/Build/VS2022_CL/Debug/Jolt.lib

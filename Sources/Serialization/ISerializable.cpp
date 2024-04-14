@@ -70,7 +70,11 @@ bool Sandbox::SerializeObjectField(const rfk::Field& field, void* inUserData)
     }
     else if (fieldType.match(rfk::getType<char*>()))
     {
-        userData->node[field.getName()] = field.getUnsafe<char*>(userData->instancePtr);
+        auto charPtr = field.getUnsafe<char*>(userData->instancePtr);
+        if (charPtr != nullptr)
+        {
+            userData->node[field.getName()] = charPtr;
+        }
     }
     else if (classArcheType != nullptr)
     {

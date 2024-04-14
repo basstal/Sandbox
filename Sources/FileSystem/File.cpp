@@ -3,8 +3,14 @@
 #include "File.hpp"
 
 #include "Directory.hpp"
+#include "Misc/String.hpp"
 
 Sandbox::File::File(const std::string& inPath) { path = std::filesystem::path(inPath); }
+Sandbox::File::File(const String& inPath)
+{
+    std::string pathString = inPath.ToStdString();
+    path                   = std::filesystem::path(pathString);
+}
 
 std::string Sandbox::File::GetName() const { return path.filename().string(); }
 

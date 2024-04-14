@@ -12,6 +12,12 @@ Sandbox::Vector3::Vector3(float scalar)
     Sync();
 }
 
+Sandbox::Vector3::Vector3(float x, float y, float z)
+{
+    vec = glm::vec3(x, y, z);
+    Sync();
+}
+
 Sandbox::Vector3::Vector3(const glm::vec3& inGlmVec3)
 {
     vec = inGlmVec3;
@@ -44,9 +50,18 @@ void Sandbox::Vector3::operator+=(const Vector3& inGlmVec3)
     Sync();
 }
 
+
+void Sandbox::Vector3::operator-=(const Vector3& inGlmVec3)
+{
+    vec -= inGlmVec3.vec;
+    Sync();
+}
+
 const Sandbox::Vector3 Sandbox::Vector3::operator*(const glm::vec3& inGlmVec3) const { return Vector3(vec * inGlmVec3); }
 
 const Sandbox::Vector3 Sandbox::Vector3::operator*(float velocity) const { return Vector3(vec * velocity); }
+
+const Sandbox::Vector3 Sandbox::Vector3::operator-(const Vector3& inGlmVec3) const { return Vector3(vec - inGlmVec3.vec); }
 
 std::string Sandbox::Vector3::ToString() const { return std::format("({0}, {1}, {2})", x, y, z); }
 

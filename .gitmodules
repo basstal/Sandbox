@@ -23,3 +23,6 @@
 [submodule "Plugins/refureku/Refureku"]
 	path = Plugins/refureku/Refureku
 	url = https://github.com/jsoysouvanh/Refureku
+[submodule "Plugins/JoltPhysics/JoltPhysics"]
+	path = Plugins/JoltPhysics/JoltPhysics
+	url = https://github.com/jrouwe/JoltPhysics

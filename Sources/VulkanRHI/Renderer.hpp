@@ -33,6 +33,7 @@ namespace Sandbox
     class Pipeline;
     class DescriptorSet;
     class RendererSource;
+    class Material;
 
     struct WindowSerializedProperties;
 
@@ -89,18 +90,17 @@ namespace Sandbox
         std::vector<std::shared_ptr<Fence>>     fences;
 
         // 按绘制定制大小
-        std::queue<std::shared_ptr<Mesh>> queuedMeshes;
-        // std::vector<std::shared_ptr<Buffer>> vertexBuffers;
-        // std::vector<std::shared_ptr<Buffer>> indexBuffers;
-        // std::vector<uint32_t> indexCounts;
+        std::vector<std::shared_ptr<Material>> queuedMaterials;
         /**
          * \brief 当前绘制帧序号
          */
         uint32_t frameFlightIndex = 0;
 
-        Event<const std::shared_ptr<CommandBuffer>&, uint32_t> onBeforeRendererDraw;
-        Event<const std::shared_ptr<CommandBuffer>&, uint32_t> onAfterRendererDraw;
-        Event<const std::shared_ptr<CommandBuffer>&, uint32_t> onOtherDrawCommands;
+        Event<const std::shared_ptr<CommandBuffer>&, uint32_t>                         onBeforeRendererDraw;
+        Event<const std::shared_ptr<CommandBuffer>&, uint32_t>                         onAfterRendererDraw;
+        Event<const std::shared_ptr<CommandBuffer>&, uint32_t>                         onOtherDrawCommands;
+        Event<const std::shared_ptr<CommandBuffer>&, uint32_t, std::shared_ptr<Mesh>&> onBeforeDrawMesh;
+        Event<const std::shared_ptr<CommandBuffer>&, uint32_t, std::shared_ptr<Mesh>&> onAfterDrawMesh;
 
         Event<uint32_t> onOtherCommandBuffer;
 

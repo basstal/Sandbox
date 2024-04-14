@@ -11,7 +11,7 @@ std::string Sandbox::IComponent::GetDerivedClassName() { return this->getArchety
 
 const rfk::Class* Sandbox::IComponent::GetDerivedClass()
 {
-    LOGW("Engine", "GetDerivedClass not implemented! Serialization this component will fail!")
+    LOGW("Engine", "GetDerivedClass not implemented! Serialization component {} will fail!", GetDerivedClassName())
     return nullptr;
 }
 void Sandbox::IComponent::Cleanup() {}

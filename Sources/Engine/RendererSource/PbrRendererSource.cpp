@@ -17,10 +17,10 @@
 #include "VulkanRHI/Core/PipelineLayout.hpp"
 #include "VulkanRHI/Core/ShaderModule.hpp"
 #include "VulkanRHI/Renderer.hpp"
+#include "VulkanRHI/Rendering/PipelineState.hpp"
 #include "VulkanRHI/Rendering/Texture.hpp"
 #include "VulkanRHI/Rendering/UniformBuffer.hpp"
 
-void Sandbox::PbrRendererSource::Prepare(std::shared_ptr<Sandbox::Renderer>& renderer) { RendererSource::Prepare(renderer); }
 
 void Sandbox::PbrRendererSource::UpdateUniforms(uint32_t frameFlightIndex)
 {
@@ -57,8 +57,9 @@ void Sandbox::PbrRendererSource::CreatePipelineWithPreamble(std::shared_ptr<Rend
     shaderModules.push_back(vertexShader);
     auto fragmentShader = std::make_shared<ShaderModule>(device, fragmentSource, preamble, VK_SHADER_STAGE_FRAGMENT_BIT);
     shaderModules.push_back(fragmentShader);
-    pipelineLayout = std::make_shared<PipelineLayout>(device, shaderModules, std::vector<uint32_t>{1});
-    pipeline       = std::make_shared<Pipeline>(device, shaderModules, renderer->renderPass, pipelineLayout, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, VK_POLYGON_MODE_FILL);
+    pipelineLayout                             = std::make_shared<PipelineLayout>(device, shaderModules, std::vector<uint32_t>{1});
+    auto pipelineState                         = std::make_shared<PipelineState>(shaderModules, renderer->renderPass, pipelineLayout);
+    pipeline                                   = std::make_shared<Pipeline>(device, pipelineState);
 }
 void Sandbox::PbrRendererSource::CreateDescriptorSets(std::shared_ptr<Renderer>& renderer)
 {
@@ -108,11 +109,21 @@ void Sandbox::PbrRendererSource::CreateDescriptorSets(std::shared_ptr<Renderer>&
         textures[i][3]->image     = aoImage;
         textures[i][3]->imageView = std::make_shared<ImageView>(aoImage, VK_IMAGE_VIEW_TYPE_2D);
     }
-    uint32_t dynamicAlignment = renderer->GetUniformDynamicAlignment(sizeof(glm::mat4));
     for (size_t i = 0; i < frameFlightSize; ++i)
     {
-        uboLights[i] = std::make_shared<UniformBuffer>(device, sizeof(Light));
+        uboLights[i]      = std::make_shared<UniformBuffer>(device, sizeof(Light));
+        descriptorSets[i] = std::make_shared<DescriptorSet>(device, renderer->descriptorPool, pipelineLayout->descriptorSetLayout);
+    }
+    UpdateDescriptorSets(renderer);
+}
 
+void Sandbox::PbrRendererSource::UpdateDescriptorSets(const std::shared_ptr<Renderer>& renderer)
+{
+    uint32_t frameFlightSize  = renderer->maxFramesFlight;
+    uint32_t dynamicAlignment = renderer->GetUniformDynamicAlignment(sizeof(glm::mat4));
+
+    for (size_t i = 0; i < frameFlightSize; ++i)
+    {
         BindingMap<VkDescriptorBufferInfo> bufferInfoMapping = {
             {0, {uboMvp[i]->vpUbo->GetDescriptorBufferInfo()}},
             {1, {uboMvp[i]->modelsUbo->GetDescriptorBufferInfo(dynamicAlignment)}},
@@ -124,6 +135,6 @@ void Sandbox::PbrRendererSource::CreateDescriptorSets(std::shared_ptr<Renderer>&
              {textures[i][0]->GetDescriptorImageInfo(), textures[i][1]->GetDescriptorImageInfo(), textures[i][2]->GetDescriptorImageInfo(),
               textures[i][3]->GetDescriptorImageInfo()}},
         };
-        descriptorSets[i] = std::make_shared<DescriptorSet>(device, renderer->descriptorPool, pipelineLayout->descriptorSetLayout, bufferInfoMapping, imageInfoMapping);
-    }
+        descriptorSets[i]->BindInfoMapping(bufferInfoMapping, imageInfoMapping, pipelineLayout->descriptorSetLayout);
+    }    
 }

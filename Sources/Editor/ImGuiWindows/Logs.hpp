@@ -8,6 +8,7 @@ namespace Sandbox
     {
     public:
         Logs();
+
         void AddLogMessage(const Sandbox::Logger::LogMessage& message);
         void AddLog(const std::string& message);
 
@@ -19,6 +20,8 @@ namespace Sandbox
         ImGuiTextBuffer stringBuilder;
         bool            autoScroll;
         ImVector<int>   lineOffsets;  // Index to lines offset. We maintain this with AddLog() calls.
+
+        static std::shared_ptr<Logs> Instance;
 
     protected:
         void IncreaseLineNum(int oldSize);

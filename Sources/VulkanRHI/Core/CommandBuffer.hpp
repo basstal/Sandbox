@@ -21,6 +21,7 @@ namespace Sandbox
     class Buffer;
     class Fence;
     class Semaphore;
+    class PipelineLayout;
 
     class CommandBuffer
     {
@@ -47,8 +48,10 @@ namespace Sandbox
         void SetViewport(uint32_t firstViewport, const std::vector<VkViewport>& viewports);
 
         void SetScissor(uint32_t firstScissor, const std::vector<VkRect2D>& scissors);
+        void BindDescriptorSet(const std::shared_ptr<PipelineLayout>& pipelineLayout, const std::shared_ptr<DescriptorSet>& descriptorSet,
+                               const std::vector<uint32_t>& dynamicOffsets);
 
-        void BindPipeline(const std::shared_ptr<Pipeline>& pipeline, const std::shared_ptr<DescriptorSet>& descriptorSet, const std::vector<uint32_t>& dynamicOffsets);
+        void BindPipeline(const std::shared_ptr<Pipeline>& pipeline);
 
         void BindVertexBuffers(const std::shared_ptr<Buffer>& buffer);
 
@@ -77,9 +80,12 @@ namespace Sandbox
 
         void BlitImage(const std::shared_ptr<Image>& srcImage, const std::shared_ptr<Image>& dstImage, VkExtent2D size);
 
+        std::shared_ptr<Pipeline> GetBoundPipeline();
+
         VkCommandBuffer vkCommandBuffer;
 
     private:
+        std::shared_ptr<Pipeline>    m_boundPipeline;
         std::shared_ptr<CommandPool> m_commandPool;
         std::shared_ptr<Device>      m_device;
         bool                         m_cleaned = false;

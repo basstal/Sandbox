@@ -4,9 +4,12 @@
 
 #include "Editor/Grid.hpp"
 #include "GlmExtensions.hpp"
+#include "Math/Vector3.hpp"
 #include "VulkanRHI/Core/Buffer.hpp"
 
 Sandbox::Ray::Ray(const glm::vec3& origin, const glm::vec3& direction) : origin(origin), direction(direction) {}
+
+Sandbox::Ray::Ray(const Vector3& origin, const Vector3& direction) : Ray(origin.vec, direction.vec) {}
 
 Sandbox::Ray::Ray() : origin(0.0f), direction(1.0f, 0.0f, 0.0f) {}
 

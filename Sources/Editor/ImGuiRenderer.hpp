@@ -25,8 +25,9 @@ namespace Sandbox
     class Image;
     class ImageView;
     class Scene;
+    class GameObject;
 
-    class ImGuiRenderer
+    class ImGuiRenderer : public std::enable_shared_from_this<ImGuiRenderer>
     {
     public:
         void Prepare(const std::shared_ptr<Renderer>& renderer, const std::shared_ptr<Editor>& editor);
@@ -66,6 +67,8 @@ namespace Sandbox
         std::shared_ptr<Viewport>                   viewport;
         std::shared_ptr<Hierarchy>                  hierarchy;
         std::shared_ptr<MenuBar>                    menuBar;
+        
+        static std::shared_ptr<ImGuiRenderer> Instance;
 
         static std::map<std::string, std::shared_ptr<Resource::Image>> guiNameToResourceImage;  // TODO:先存着后面再看如何简化
         static std::map<std::string, std::shared_ptr<Image>>           guiNameToImage;  // TODO: 先存着后面再看如何简化
@@ -73,6 +76,7 @@ namespace Sandbox
         static std::map<std::string, VkDescriptorSet>                  guiNameToTextureId;  // ImGui_ImplVulkan_AddTexture Register a texture (VkDescriptorSet == ImTextureID)
 
         Event<const std::shared_ptr<Scene>&> onSceneChange;
+        Event<std::shared_ptr<GameObject>>   onTargetChanged;
 
     private:
         std::shared_ptr<Editor>   m_editor;

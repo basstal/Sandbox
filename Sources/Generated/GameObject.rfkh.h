@@ -31,13 +31,14 @@ rfk::Struct const& thisClass = staticGetArchetype();\
 if constexpr (!std::is_same_v<ChildClass, GameObject>)const_cast<rfk::Struct&>(thisClass).addSubclass(childClass, rfk::internal::CodeGenerationHelpers::computeClassPointerOffset<ChildClass, GameObject>());\
 else\
 {\
-childClass.setFieldsCapacity(1u + rfk::internal::CodeGenerationHelpers::getReflectedFieldsCount< ISerializable>()+rfk::internal::CodeGenerationHelpers::getReflectedFieldsCount< std::enable_shared_from_this<GameObject>>()); childClass.setStaticFieldsCapacity(0u + rfk::internal::CodeGenerationHelpers::getReflectedStaticFieldsCount< ISerializable>()+rfk::internal::CodeGenerationHelpers::getReflectedStaticFieldsCount< std::enable_shared_from_this<GameObject>>()); \
+childClass.setFieldsCapacity(2u + rfk::internal::CodeGenerationHelpers::getReflectedFieldsCount< ISerializable>()+rfk::internal::CodeGenerationHelpers::getReflectedFieldsCount< std::enable_shared_from_this<GameObject>>()); childClass.setStaticFieldsCapacity(0u + rfk::internal::CodeGenerationHelpers::getReflectedStaticFieldsCount< ISerializable>()+rfk::internal::CodeGenerationHelpers::getReflectedStaticFieldsCount< std::enable_shared_from_this<GameObject>>()); \
 }\
 [[maybe_unused]] rfk::Field* field = nullptr; [[maybe_unused]] rfk::StaticField* staticField = nullptr;\
 )\
 __RFK_DISABLE_WARNING_PUSH \
 __RFK_DISABLE_WARNING_OFFSETOF \
-RFK_UNPACK_IF_NOT_PARSING(field = childClass.addField("name", std::hash<std::string>()(std::string("c:@N@Sandbox@S@GameObject@FI@name") + rfk::internal::getTypename<ChildClass>()), rfk::getType<String>(), static_cast<rfk::EFieldFlags>(1), offsetof(ChildClass, name), &thisClass);\
+RFK_UNPACK_IF_NOT_PARSING(field = childClass.addField("transform", std::hash<std::string>()(std::string("c:@N@Sandbox@S@GameObject@FI@transform") + rfk::internal::getTypename<ChildClass>()), rfk::getType<SharedPtr<Transform>>(), static_cast<rfk::EFieldFlags>(1), offsetof(ChildClass, transform), &thisClass);\
+field = childClass.addField("name", std::hash<std::string>()(std::string("c:@N@Sandbox@S@GameObject@FI@name") + rfk::internal::getTypename<ChildClass>()), rfk::getType<String>(), static_cast<rfk::EFieldFlags>(1), offsetof(ChildClass, name), &thisClass);\
 )\
 __RFK_DISABLE_WARNING_POP \
 RFK_UNPACK_IF_NOT_PARSING(rfk::internal::CodeGenerationHelpers::registerChildClass<ISerializable, ChildClass>(childClass);\

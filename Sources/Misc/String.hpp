@@ -7,12 +7,9 @@
 
 namespace Sandbox NAMESPACE()
 {
-    class CLASS() String : public ISerializable//<String>
+    class CLASS() String : public ISerializable  //<String>
     {
     public:
-        FIELD()
-        char* rawString = nullptr;
-
         String() = default;
 
         String(const std::string& string);
@@ -24,17 +21,21 @@ namespace Sandbox NAMESPACE()
         String(String&& other) noexcept;
 
         String& operator=(const char* inString);
+        String& operator=(const std::string& inString);
 
         static std::vector<std::string> Split(const std::string& source, const char& seperator);
 
         static std::string Replace(const std::string& source, const std::string& from, const std::string& to);
 
-        std::string ToStdString();
+        std::string ToStdString() const;
 
         METHOD()
         void Construct(const std::string& inString);
 
     private:
+        FIELD()
+        char* m_rawString = nullptr;
+
         std::string m_string;
         void        Sync();
         Sandbox_String_GENERATED

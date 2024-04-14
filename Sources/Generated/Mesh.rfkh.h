@@ -31,9 +31,16 @@ rfk::Struct const& thisClass = staticGetArchetype();\
 if constexpr (!std::is_same_v<ChildClass, Mesh>)const_cast<rfk::Struct&>(thisClass).addSubclass(childClass, rfk::internal::CodeGenerationHelpers::computeClassPointerOffset<ChildClass, Mesh>());\
 else\
 {\
-childClass.setFieldsCapacity(0u + rfk::internal::CodeGenerationHelpers::getReflectedFieldsCount< IComponent>()); childClass.setStaticFieldsCapacity(0u + rfk::internal::CodeGenerationHelpers::getReflectedStaticFieldsCount< IComponent>()); \
+childClass.setFieldsCapacity(1u + rfk::internal::CodeGenerationHelpers::getReflectedFieldsCount< IComponent>()); childClass.setStaticFieldsCapacity(0u + rfk::internal::CodeGenerationHelpers::getReflectedStaticFieldsCount< IComponent>()); \
 }\
-rfk::internal::CodeGenerationHelpers::registerChildClass<IComponent, ChildClass>(childClass);\
+[[maybe_unused]] rfk::Field* field = nullptr; [[maybe_unused]] rfk::StaticField* staticField = nullptr;\
+)\
+__RFK_DISABLE_WARNING_PUSH \
+__RFK_DISABLE_WARNING_OFFSETOF \
+RFK_UNPACK_IF_NOT_PARSING(field = childClass.addField("m_modelPath", std::hash<std::string>()(std::string("c:@N@Sandbox@S@Mesh@FI@m_modelPath") + rfk::internal::getTypename<ChildClass>()), rfk::getType<String>(), static_cast<rfk::EFieldFlags>(4), offsetof(ChildClass, m_modelPath), &thisClass);\
+)\
+__RFK_DISABLE_WARNING_POP \
+RFK_UNPACK_IF_NOT_PARSING(rfk::internal::CodeGenerationHelpers::registerChildClass<IComponent, ChildClass>(childClass);\
 }\
 \
 public:  static rfk::Class const& staticGetArchetype() noexcept;\

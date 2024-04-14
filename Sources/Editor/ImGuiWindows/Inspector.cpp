@@ -3,6 +3,7 @@
 #include "Inspector.hpp"
 
 #include "Editor/IImGuiWindow.hpp"
+#include "Engine/EntityComponent/Components/Mesh.hpp"
 #include "Generated/Inspector.rfks.h"
 #include "Serialization/Property/InspectComponentName.hpp"
 
@@ -12,6 +13,14 @@ Sandbox::Inspector::Inspector() { name = "Inspector"; }
 
 void Sandbox::Inspector::Prepare()
 {
+    auto& archetype = getArchetype();
+    if (archetype.isSubclassOf(Inspector::staticGetArchetype()))
+    {
+        auto inspectComponentNameProperty = getArchetype().getProperty<InspectComponentName>();
+        name                              = inspectComponentNameProperty != nullptr ? inspectComponentNameProperty->name : "TODO";
+        // Inspector 的子类不需要下面的逻辑
+        return;
+    }
     // IImGuiWindow::Prepare();
     LoadFromFile(GetConfigCachePath());
     std::map<std::string, const rfk::Class*> componentNameToInspectorClass;
@@ -24,6 +33,7 @@ void Sandbox::Inspector::Prepare()
         componentNameToInspectorClass[inspectComponentName->name] = derivedClass;
     }
 
+    // 将所有 IComponent 的派生类按名字注册到 componentNameToInspector
     auto derivedClasses = IComponent::staticGetArchetype().getDirectSubclasses();
     // LOGD("Test", "derivedClasses count {}", derivedClasses.size())
     for (auto derivedClass : derivedClasses)
@@ -41,7 +51,8 @@ void Sandbox::Inspector::Prepare()
             continue;
         }
         LOGD("Editor", "Register inspector for class {}", componentName)
-        auto sharedInspectorInstance            = componentNameToInspectorClass[componentName]->makeSharedInstance<Inspector>();
+        auto sharedInspectorInstance = componentNameToInspectorClass[componentName]->makeSharedInstance<Inspector>();
+        sharedInspectorInstance->Prepare();
         componentNameToInspector[componentName] = sharedInspectorInstance;
         // LOGD("Test", "Inspector: {}", derivedClass->getName())
     }
@@ -54,6 +65,19 @@ void Sandbox::Inspector::OnGui()
     if (name == "Inspector")
     {
         DrawComponentInspectors();
+        if (target != nullptr)
+        {
+            // 如果窗口是右键点击，弹出上下文菜单
+            if (ImGui::BeginPopupContextWindow())
+            {
+                // 菜单项
+                if (ImGui::MenuItem("Create/Mesh"))
+                {
+                    target->AddComponent<Mesh>();
+                }
+                ImGui::EndPopup();
+            }
+        }
     }
     else
     {
@@ -96,7 +120,7 @@ void Sandbox::Inspector::DrawComponentInspectors()
 void Sandbox::Inspector::InspectTarget(std::shared_ptr<GameObject> inTarget)
 {
     target = inTarget;
-    if (name == "Inspector")  // If the inspector is the main inspector
+    if (name == "Inspector" && target != nullptr)  // If the inspector is the main inspector
     {
         for (auto& pair : componentNameToInspector)
         {

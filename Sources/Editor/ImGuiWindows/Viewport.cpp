@@ -4,14 +4,19 @@
 
 #include "Editor/ImGuiRenderer.hpp"
 #include "Engine/EntityComponent/Components/Camera.hpp"
+#include "Engine/EntityComponent/Components/Material.hpp"
 #include "Engine/EntityComponent/Components/Transform.hpp"
 #include "Engine/EntityComponent/GameObject.hpp"
+#include "Engine/EntityComponent/Scene.hpp"
+#include "Engine/PhysicsSystem.hpp"
 #include "Engine/RendererSource/RendererSource.hpp"
+#include "Engine/RendererSource/StencilRendererSource.hpp"
 #include "FileSystem/Directory.hpp"
 #include "Generated/Viewport.rfks.h"
 #include "Inspector.hpp"
 #include "Misc/Debug.hpp"
 #include "Misc/GlmExtensions.hpp"
+#include "Misc/Ray.hpp"
 #include "Misc/TypeCasting.hpp"
 #include "Platform/GlfwCallbackBridge.hpp"
 #include "Platform/Window.hpp"
@@ -44,14 +49,22 @@ Sandbox::Viewport::Viewport(const std::shared_ptr<Renderer>& inRenderer)
             if (mainCamera == nullptr && inComponent->GetDerivedClass() == &Camera::staticGetArchetype())
             {
                 mainCamera = std::dynamic_pointer_cast<Camera>(inComponent);
+                m_stencilRendererSource->SetCamera(mainCamera);
             }
         });
+    // inRenderer->onAfterDrawMesh.BindMember<Viewport, &Viewport::OnAfterDrawMesh>(this);
 }
 
 void Sandbox::Viewport::Prepare()
 {
     IImGuiWindow::Prepare();
     OnRecreateFramebuffer();
+    // 绘制 viewport 选中框的 rendererSource
+    m_stencilRendererSource = std::make_shared<StencilRendererSource>();
+    m_stencilRendererSource->Prepare(m_renderer);
+    Scene::onSceneChange.Bind([this](const std::shared_ptr<Scene>& inScene)
+                              { inScene->onRendererSourceTick.Bind([this](const std::shared_ptr<Renderer>& renderer) { m_stencilRendererSource->Tick(renderer); }); });
+    Scene::onReconstructMeshes.Bind([this] { m_stencilRendererSource->RecreateUniformModels(m_renderer); });
 }
 
 void Sandbox::Viewport::OnGui()
@@ -67,6 +80,7 @@ void Sandbox::Viewport::OnGui()
     m_startPosition     = CalculateStartPosition(16, 9, ToInt32(viewportWidth), ToInt32(viewportHeight), resolution.width, resolution.height);
     ImGui::SetCursorPos(m_startPosition);
     ImGui::Image((ImTextureID)presentDescriptorSets[imageIndex], ImVec2(ToFloat(resolution.width), ToFloat(resolution.height)));
+    resolvedResolution         = resolution;
     m_glfwWindow               = reinterpret_cast<GLFWwindow*>(m_imguiWindow->Viewport->PlatformHandle);
     m_isMouseHoveringInnerRect = ImGui::IsMouseHoveringRect(m_imguiWindow->InnerRect.Min, m_imguiWindow->InnerRect.Max);
     flags                      = ImGui::IsWindowHovered() && m_isMouseHoveringInnerRect ? flags | ImGuiWindowFlags_NoMove : flags ^ ImGuiWindowFlags_NoMove;
@@ -89,6 +103,11 @@ void Sandbox::Viewport::OnGui()
     // }
     // m_editor->transformGizmo->cameraRay->PrepareDebugDrawData(m_renderer->device);
     DrawGizmo(resolution);
+    // 如果监听到鼠标左键点击 m_imguiWindow 区域
+    if (ImGui::IsMouseClicked(0) && m_isMouseHoveringInnerRect && mainCamera != nullptr)
+    {
+        SelectObject();
+    }
 }
 
 void Sandbox::Viewport::Tick(float deltaTime)
@@ -124,10 +143,7 @@ void Sandbox::Viewport::Tick(float deltaTime)
         {
             LOGF("Editor", "Renderer source for view mode '{}' not found", VIEW_MODE_NAMES[static_cast<uint32_t>(m_renderer->viewMode)])
         }
-        rendererSource->viewAndProjection->view = mainCamera->GetViewMatrix();
-        auto projection                         = mainCamera->GetProjectionMatrix();
-        projection[1][1] *= -1;
-        rendererSource->viewAndProjection->projection = projection;
+        rendererSource->SetCamera(mainCamera);
 
         if (ImGui::IsKeyPressed(ImGuiKey_G))
             m_currentGizmoOperation = ImGuizmo::TRANSLATE;
@@ -218,9 +234,9 @@ void Sandbox::Viewport::DisableCameraMovement()
 
 void Sandbox::Viewport::Cleanup()
 {
+    m_stencilRendererSource->Cleanup();
     IImGuiWindow::Cleanup();
     presentSampler->Cleanup();
-
     for (auto& presentDescriptorSet : presentDescriptorSets)
     {
         ImGui_ImplVulkan_RemoveTexture(presentDescriptorSet);
@@ -239,12 +255,12 @@ void Sandbox::Viewport::DrawGizmo(VkExtent2D extent2D)
         return;
     }
 
-    auto inspector = Inspector::GetInspector<Transform>();
-    if (inspector != nullptr && inspector->target != nullptr)
+    // auto inspector = Inspector::GetInspector<Transform>();
+    if (m_selectedGameObject != nullptr)
     {
-        auto lastPosition = inspector->target->transform->position;
-        auto lastRotation = inspector->target->transform->rotation.GetEulerDegrees();
-        auto lastScale    = inspector->target->transform->scale;
+        auto lastPosition = m_selectedGameObject->transform->position;
+        auto lastRotation = m_selectedGameObject->transform->rotation.GetEulerDegrees();
+        auto lastScale    = m_selectedGameObject->transform->scale;
 
         float translation[3] = {lastPosition.x, lastPosition.y, lastPosition.z};
         float rotation[3]    = {lastRotation.x, lastRotation.y, lastRotation.z};
@@ -283,9 +299,9 @@ void Sandbox::Viewport::DrawGizmo(VkExtent2D extent2D)
                              boundSizing ? bounds : nullptr, boundSizingSnap ? boundsSnap : nullptr);
 
         ImGuizmo::DecomposeMatrixToComponents(matrix, translation, rotation, scale);
-        inspector->target->transform->position = translation;
-        inspector->target->transform->rotation = glm::quat(glm::radians(glm::vec3(rotation[0], rotation[1], rotation[2])));
-        inspector->target->transform->scale    = scale;
+        m_selectedGameObject->transform->position = translation;
+        m_selectedGameObject->transform->rotation = glm::quat(glm::radians(glm::vec3(rotation[0], rotation[1], rotation[2])));
+        m_selectedGameObject->transform->scale    = scale;
 
         // auto applyMatrix = [inspector](const float innerMatrix[16])
         // {
@@ -421,7 +437,82 @@ void Sandbox::Viewport::OnRecreateFramebuffer()
         presentDescriptorSets[i]     = ImGui_ImplVulkan_AddTexture(presentSampler->vkSampler, offlineImageView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
     }
 }
-void Sandbox::Viewport::InspectTarget(std::shared_ptr<GameObject> inTarget) {}
+
+void Sandbox::Viewport::SelectObject()
+{
+    // 获得 imgui io
+    ImGuiIO& io = ImGui::GetIO();
+    // 获取当前鼠标相对 viewport 窗口得位置
+    ImVec2 mousePos     = io.MousePos;
+    ImVec2 topLeft      = m_imguiWindow->InnerRect.GetTL();
+    auto   imageTopLeft = ImVec2(topLeft.x + m_startPosition.x, topLeft.y + m_startPosition.y);
+    LOGD("Editor", "imageTopLeft : {}, topLeft : {}", ToString(imageTopLeft), ToString(topLeft))
+    // 计算鼠标相对 viewport 窗口得位置
+    float screenX = mousePos.x - imageTopLeft.x;
+    float screenY = mousePos.y - imageTopLeft.y;
+    LOGD("Editor", "screenX {}, screenY {}", screenX, screenY)
+    // 将鼠标所在 NDC 位置转为近平面上对应点的世界坐标
+    float xNDC = (2.0f * screenX / ToFloat(resolvedResolution.width)) - 1.0f;
+    float yNDC = 1.0f - (2.0f * screenY / ToFloat(resolvedResolution.height));  // Y轴翻转
+    float zNDC = 0.01f;  // vulkan 将 Z 设为 1.0f 以表示远平面， 0. 0表示近平面
+    LOGD("Editor", "xNDC {}, yNDC {}, zNDC {}", xNDC, yNDC, zNDC)
+    auto worldPosition   = mainCamera->NDCToWorld(xNDC, yNDC, zNDC);
+    auto cameraTransform = mainCamera->transform.lock();
+    auto ray             = Ray(cameraTransform->position, worldPosition - cameraTransform->position);
+    if (m_selectionCollector == nullptr)
+    {
+        m_selectionCollector = std::make_shared<JPH::AllHitCollisionCollector<JPH::CastRayCollector>>();
+    }
+    if (!PhysicsSystem::Instance->PerformRayCast(ray, *m_selectionCollector))
+    {
+        ImGuiRenderer::Instance->onTargetChanged.Trigger(nullptr);
+        m_selectedBodyId = nullptr;
+        return;
+    }
+    size_t index = 0;
+    for (auto& hit : m_selectionCollector->mHits)
+    {
+        if (m_selectedBodyId == nullptr)
+        {
+            break;
+        }
+        ++index;
+        if (*m_selectedBodyId == hit.mBodyID)
+        {
+            break;
+        }
+    }
+    index %= m_selectionCollector->mHits.size();
+    m_selectedBodyId = std::make_shared<JPH::BodyID>(m_selectionCollector->mHits[index].mBodyID);
+    auto gameObject  = PhysicsSystem::Instance->physicsBodyIdToGameObject.at(*m_selectedBodyId);
+    ImGuiRenderer::Instance->onTargetChanged.Trigger(gameObject);
+}
+
+void Sandbox::Viewport::InspectTarget(std::shared_ptr<GameObject> inTarget)
+{
+    std::shared_ptr<Mesh> mesh;
+    if (m_selectedGameObject != nullptr)
+    {
+        // 将之前的选中对象的绘制设置为默认
+        mesh = m_selectedGameObject->GetComponent<Mesh>();
+        if (mesh != nullptr)
+        {
+            mesh->material->customRendererSource = nullptr;
+        }
+    }
+    m_selectedGameObject = inTarget;
+    if (inTarget == nullptr)
+    {
+        return;
+    }
+    mesh = inTarget->GetComponent<Mesh>();
+    if (mesh == nullptr)
+    {
+        return;
+    }
+
+    mesh->material->customRendererSource = m_stencilRendererSource;
+}
 
 /**
  * @brief 计算符合宽高比的起始位置
@@ -488,4 +579,16 @@ void Sandbox::Viewport::BindCameraPosition(EViewMode inViewMode)
             rendererSource->pipeline->pipelineState->pushConstantsInfo.data = &gameObject->transform->position.vec;
         }
     }
+}
+
+void Sandbox::Viewport::OnAfterDrawMesh(const std::shared_ptr<CommandBuffer>& commandBuffer, uint32_t frameFlightIndex, std::shared_ptr<Mesh>& drewMesh)
+{
+    // if (m_selectedGameObject== nullptr)
+    // {
+    //     return;
+    // }
+    // if (m_selectedGameObject->GetComponent<Mesh>() == drewMesh)
+    // {
+    //     // 切换 stencil 绘制管线
+    // }
 }

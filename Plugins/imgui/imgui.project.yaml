@@ -12,6 +12,7 @@ compile_environment:
     - imgui/imstb_truetype.h
     - imgui/backends/imgui_impl_vulkan.h
     - imgui/backends/imgui_impl_glfw.h
+    - imgui/misc/cpp/imgui_stdlib.h
   additional_include_paths:
     - imgui
   cpp_version: Default
@@ -26,3 +27,4 @@ compile_environment:
     - imgui/imgui.cpp
     - imgui/backends/imgui_impl_vulkan.cpp
     - imgui/backends/imgui_impl_glfw.cpp
+    - imgui/misc/cpp/imgui_stdlib.cpp

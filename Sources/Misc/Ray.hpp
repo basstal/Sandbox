@@ -10,6 +10,7 @@ namespace Sandbox
     class Device;
     struct SimpleVertex;
     class Buffer;
+    class Vector3;
 
     class Ray
     {
@@ -29,6 +30,9 @@ namespace Sandbox
          * \param  direction 方向
          */
         Ray(const glm::vec3& origin, const glm::vec3& direction);
+
+        Ray(const Vector3& origin, const Vector3& direction);
+
 
         Ray();
 

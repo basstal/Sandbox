@@ -29,12 +29,12 @@ namespace Sandbox
 
         void OnGui() override;
 
-        void                        Tick(float deltaTime) override;
+        void Tick(float deltaTime) override;
+
         std::shared_ptr<GameObject> LeafIdToGameObject(intptr_t inPtr);
 
         void SetScene(const std::shared_ptr<Scene>& inScene);
-
-        Event<std::shared_ptr<GameObject>> onTargetChanged;
+        void GameObjectToSelection(std::shared_ptr<GameObject> inTarget);
 
 
     private:

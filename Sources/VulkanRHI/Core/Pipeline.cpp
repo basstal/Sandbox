@@ -9,6 +9,7 @@
 #include "ShaderModule.hpp"
 #include "VulkanRHI/Rendering/PipelineState.hpp"
 
+// TODO: remove this method
 Sandbox::Pipeline::Pipeline(const std::shared_ptr<Device>& device, const std::vector<std::shared_ptr<ShaderModule>>& shaderModules,
                             const std::shared_ptr<RenderPass>& renderPass, const std::shared_ptr<PipelineLayout>& pipelineLayout, VkPrimitiveTopology primitiveTopology,
                             VkPolygonMode polygonMode) :
@@ -21,7 +22,7 @@ Sandbox::Pipeline::Pipeline(const std::shared_ptr<Device>& device, const std::sh
     CreatePipeline(pipelineState);
 }
 
-
+// TODO: remove this method
 std::shared_ptr<Sandbox::PipelineState> Sandbox::Pipeline::CreatePipelineState(const std::vector<std::shared_ptr<ShaderModule>>& shaderModules,
                                                                                const std::shared_ptr<RenderPass>&                renderPass,
                                                                                const std::shared_ptr<PipelineLayout>& pipelineLayout, VkPrimitiveTopology primitiveTopology,
@@ -122,11 +123,11 @@ void Sandbox::Pipeline::CreatePipeline(const std::shared_ptr<PipelineState>& inP
     depthStencil.depthWriteEnable      = inPipelineState->depthStencilState.depthWriteEnable;
     depthStencil.depthCompareOp        = VK_COMPARE_OP_LESS;
     depthStencil.depthBoundsTestEnable = VK_FALSE;
+    depthStencil.stencilTestEnable     = inPipelineState->depthStencilState.stencilTestEnable;
     depthStencil.minDepthBounds        = 0.0f;  // Optional
     depthStencil.maxDepthBounds        = 1.0f;  // Optional
-    depthStencil.stencilTestEnable     = VK_FALSE;
-    depthStencil.front                 = {};  // Optional
-    depthStencil.back                  = {};  // Optional
+    depthStencil.front                 = inPipelineState->depthStencilState.front;
+    depthStencil.back                  = inPipelineState->depthStencilState.back;
 
     VkGraphicsPipelineCreateInfo pipelineInfo{};
     pipelineInfo.sType               = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;

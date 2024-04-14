@@ -22,7 +22,14 @@ Sandbox::Camera::Camera()
 {
     worldUp  = DEFAULT_WORLD_UP;
     worldUp1 = DEFAULT_WORLD_UP;
-    UpdateCameraVectors();
+    onComponentCreate.Bind(
+        [this](const std::shared_ptr<IComponent>& inComponent)
+        {
+            if (inComponent.get() == this)
+            {
+                UpdateCameraVectors();
+            }
+        });
 }
 
 Sandbox::Camera::Camera(float inAspectRatio)
@@ -139,4 +146,25 @@ void Sandbox::Camera::UpdateCameraVectors()
 
 std::string Sandbox::Camera::GetDerivedClassName() { return getArchetype().getName(); }
 
-const rfk::Class* Sandbox::Camera::GetDerivedClass() { return rfk::classCast(rfk::getArchetype<Camera>());}
+const rfk::Class* Sandbox::Camera::GetDerivedClass() { return rfk::classCast(rfk::getArchetype<Camera>()); }
+
+
+Sandbox::Vector3 Sandbox::Camera::NDCToWorld(const float& x, const float& y, const float& z)
+{
+    glm::mat4 projectionMatrix        = GetProjectionMatrix();
+    glm::vec4 clipPosition            = glm::vec4(x, y, z, 1.0);
+    glm::mat4 inverseProjectionMatrix = glm::inverse(projectionMatrix);  // 假设projMatrix是当前摄像机的投影矩阵
+    glm::vec4 viewPosition            = inverseProjectionMatrix * clipPosition;
+    viewPosition /= viewPosition.w;
+    LOGD("Engine", "viewPos {}", ToString(viewPosition))
+    glm::mat4 viewMatrix        = GetViewMatrix();
+    glm::mat4 inverseViewMatrix = glm::inverse(viewMatrix);  // 假设viewMatrix是当前摄像机的视图矩阵
+    glm::vec4 worldPosition     = inverseViewMatrix * viewPosition;
+    LOGD("Engine", "worldPos {}", ToString(worldPosition))
+    return Vector3(worldPosition);
+}
+
+Sandbox::Vector3 Sandbox::Camera::NDCToWorld(const Vector3& ndcCoordinate)
+{
+    return NDCToWorld(ndcCoordinate.x, ndcCoordinate.y, ndcCoordinate.z);
+}

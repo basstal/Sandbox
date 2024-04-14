@@ -37,7 +37,7 @@ childClass.setFieldsCapacity(1u + rfk::internal::CodeGenerationHelpers::getRefle
 )\
 __RFK_DISABLE_WARNING_PUSH \
 __RFK_DISABLE_WARNING_OFFSETOF \
-RFK_UNPACK_IF_NOT_PARSING(field = childClass.addField("rawString", std::hash<std::string>()(std::string("c:@N@Sandbox@S@String@FI@rawString") + rfk::internal::getTypename<ChildClass>()), rfk::getType<char *>(), static_cast<rfk::EFieldFlags>(1), offsetof(ChildClass, rawString), &thisClass);\
+RFK_UNPACK_IF_NOT_PARSING(field = childClass.addField("m_rawString", std::hash<std::string>()(std::string("c:@N@Sandbox@S@String@FI@m_rawString") + rfk::internal::getTypename<ChildClass>()), rfk::getType<char *>(), static_cast<rfk::EFieldFlags>(4), offsetof(ChildClass, m_rawString), &thisClass);\
 )\
 __RFK_DISABLE_WARNING_POP \
 RFK_UNPACK_IF_NOT_PARSING(rfk::internal::CodeGenerationHelpers::registerChildClass<ISerializable, ChildClass>(childClass);\

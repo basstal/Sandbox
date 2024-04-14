@@ -4,10 +4,25 @@
 
 #include <sstream>
 
+
+std::string Sandbox::ToString(ImVec2 inValue)
+{
+    std::stringstream ss;
+    ss << "ImVec2(" << inValue.x << ", " << inValue.y << ")";
+    return ss.str();
+}
+
 std::string Sandbox::ToString(glm::vec3 inValue)
 {
     std::stringstream ss;
     ss << "vec3(" << inValue.x << ", " << inValue.y << ", " << inValue.z << ")";
+    return ss.str();
+}
+
+std::string Sandbox::ToString(glm::vec4 inValue)
+{
+    std::stringstream ss;
+    ss << "vec4(" << inValue.x << ", " << inValue.y << ", " << inValue.z << ", " << inValue.w << ")";
     return ss.str();
 }
 

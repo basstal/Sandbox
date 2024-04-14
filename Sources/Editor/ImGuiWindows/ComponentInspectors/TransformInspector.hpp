@@ -11,7 +11,6 @@ namespace Sandbox NAMESPACE()
     class CLASS(InspectComponentName("Transform")) TransformInspector : public Inspector
     {
     public:
-        TransformInspector();
 
         void OnInspectorGui() override;
 

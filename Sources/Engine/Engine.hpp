@@ -16,6 +16,9 @@ namespace Sandbox
     class Timer;
     class GameObject;
     class Scene;
+    class PhysicsSystem;
+
+
     class Engine
     {
     public:
@@ -31,9 +34,10 @@ namespace Sandbox
 
         std::vector<std::shared_ptr<Models>> models;
         std::shared_ptr<Window>              window;
+        std::shared_ptr<PhysicsSystem>       physicsSystem;
 
-        bool pause = false;
-        bool shouldRecreateRenderer;
+            bool pause = false;
+        bool     shouldRecreateRenderer;
         /**
          * \brief 初始化引擎
          */

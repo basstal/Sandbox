@@ -4,7 +4,6 @@
 
 #include "Generated/TransformInspector.rfks.h"
 
-Sandbox::TransformInspector::TransformInspector() { name = "Transform"; }
 
 void Sandbox::TransformInspector::OnInspectorGui()
 {

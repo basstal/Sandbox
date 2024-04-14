@@ -95,6 +95,21 @@ namespace Sandbox
             return delegate.GetHandle();
         }
 
+        DelegateHandle Bind(void (*Func)())
+        {
+            Delegate<void> delegate(Func);
+            registeredDelegates.insert(std::make_pair(delegate.GetHandle(), delegate));
+            return delegate.GetHandle();
+        }
+
+        // 使用std::function绑定
+        DelegateHandle Bind(const std::function<void()>& func)
+        {
+            Delegate<void> delegate(func);
+            registeredDelegates.insert(std::make_pair(delegate.GetHandle(), delegate));
+            return delegate.GetHandle();
+        }
+
         template <typename Instance, void (Instance::*Func)()>
         DelegateHandle BindMember(Instance* obj)
         {

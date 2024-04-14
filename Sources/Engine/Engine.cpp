@@ -7,13 +7,12 @@
 #include "Editor/ImGuiWindows/Hierarchy.hpp"
 #include "Editor/ImGuiWindows/Viewport.hpp"
 #include "Editor/TransformGizmo.hpp"
-#include "Engine/EntityComponent/Components/Mesh.hpp"
 #include "Engine/EntityComponent/Scene.hpp"
 #include "EntityComponent/Components/Camera.hpp"
 #include "FileSystem/Directory.hpp"
 #include "Misc/DataBinding.hpp"
 #include "Misc/TypeCasting.hpp"
-#include "Model.hpp"
+#include "PhysicsSystem.hpp"
 #include "Platform/GlfwCallbackBridge.hpp"
 #include "Platform/Window.hpp"
 #include "RendererSource/PbrRendererSource.hpp"
@@ -23,7 +22,6 @@
 #include "VulkanRHI/Common/Debug.hpp"
 #include "VulkanRHI/Core/Device.hpp"
 #include "VulkanRHI/Renderer.hpp"
-#include "VulkanRHI/Rendering/UniformBuffer.hpp"
 
 int main()
 {
@@ -57,6 +55,9 @@ void Sandbox::Engine::Prepare()
     CreateRenderer();
     CreateEditor();
     DataBinding::Create("Engine/Reload")->Bind([this] { shouldRecreateRenderer = true; });
+    physicsSystem = std::make_shared<PhysicsSystem>();
+    physicsSystem->Prepare();
+
     // DataBinding::Create("Engine/NewScene")->Bind([this] { this->NewScene(); });
 }
 
@@ -86,17 +87,17 @@ void Sandbox::Engine::CreateRenderer()
 
     auto pbrRendererSource = std::make_shared<PbrRendererSource>();
     pbrRendererSource->Prepare(renderer);
-    pbrRendererSource->UpdateModels(renderer, models);
+    // pbrRendererSource->UpdateModels(renderer, models,TODO);
     renderer->rendererSourceMapping[EViewMode::Lit] = pbrRendererSource;
 
     auto unlitRendererSource = std::make_shared<UnlitRendererSource>();
     unlitRendererSource->Prepare(renderer);
-    unlitRendererSource->UpdateModels(renderer, models);
+    // unlitRendererSource->UpdateModels(renderer, models,TODO);
     renderer->rendererSourceMapping[EViewMode::Unlit] = unlitRendererSource;
 
     auto wireframeRendererSource = std::make_shared<WireframeRendererSource>();
     wireframeRendererSource->Prepare(renderer);
-    wireframeRendererSource->UpdateModels(renderer, models);
+    // wireframeRendererSource->UpdateModels(renderer, models,TODO);
     renderer->rendererSourceMapping[EViewMode::Wireframe] = wireframeRendererSource;
 
     renderer->onViewModeChanged.Trigger(Lit);
@@ -104,37 +105,6 @@ void Sandbox::Engine::CreateRenderer()
 
 void Sandbox::Engine::MainLoop()
 {
-    // auto scene = std::make_shared<Scene>();
-    // // TODO:临时游戏对象
-    // std::shared_ptr<GameObject> gameObject = std::make_shared<GameObject>();
-    // gameObject->name                       = "Test";
-    // Scene::currentScene                    = scene;
-    // scene->rootGameObjects.push_back(gameObject);
-    //
-    // std::shared_ptr<GameObject> cameraGameObject = std::make_shared<GameObject>();
-    // cameraGameObject->name                       = "Camera";
-    // auto  camera                                 = cameraGameObject->AddComponent<Camera>();
-    // auto& resolution                             = renderer->resolution;
-    // auto  aspectRatio                            = static_cast<float>(resolution.width) / static_cast<float>(resolution.height);
-    // camera->aspectRatio                          = aspectRatio;
-    // static Sandbox::File editorCameraConfigCache = Sandbox::Directory::GetLibraryDirectory().GetFile("EditorCamera.yaml");
-    // camera->LoadFromFile(editorCameraConfigCache);
-    // camera->UpdateCameraVectors();
-    // editor->imGuiRenderer->viewport->mainCamera = camera;
-    // scene->rootGameObjects.push_back(cameraGameObject);
-    //
-    // // TODO: 测试保存场景
-    // auto sceneFile = Directory::GetAssetsDirectory().GetFile("Test.scene");
-    // LOGD("Test", "begin serialize scene")
-    // scene->SaveToFile(sceneFile);
-    // // LOGD("end serialize scene")
-    // // scene->LoadFromFile(sceneFile);
-    // editor->imGuiRenderer->hierarchy->SetScene(scene);
-    // auto mesh = gameObject->AddComponent<Mesh>();
-    // // gameObjects.push_back(gameObject);
-    // // TODO:临时加载模型
-    // Model model(Directory::GetAssetsDirectory().GetFile("Models/viking_room.obj").path.string());
-    // mesh->LoadFromModel(renderer->device, renderer->commandBuffers[0], model);
     window->callbackBridge->onKey.BindMember<Engine, &Engine::Pause>(this);
     auto                      fpsLimit = 60;
     std::chrono::microseconds logicUpdateDeltaTime(ToUInt32(std::floor(1000000 / fpsLimit)));
@@ -163,6 +133,10 @@ void Sandbox::Engine::MainLoop()
         // 渲染以固定帧率更新
         if (rendererTimer->UpdateInInterval(rendererUpdateInterval))
         {
+            if (Scene::currentScene != nullptr)
+            {
+                Scene::currentScene->TranslateRenderData(renderer);
+            }
             editor->Draw();
         }
         rendererTimer->EndFrame();
@@ -200,6 +174,7 @@ void Sandbox::Engine::Pause(GLFWwindow* inWindow, int key, int scancode, int act
 
 void Sandbox::Engine::Cleanup()
 {
+    physicsSystem->Cleanup();
     window->Cleanup();
     editor->Cleanup();
     renderer->Cleanup();

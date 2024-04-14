@@ -5,9 +5,12 @@
 #include <vulkan/vulkan.hpp>
 
 #include "Editor/IImGuiWindow.hpp"
+#include "Engine/EntityComponent/Components/Mesh.hpp"
+#include "Engine/RendererSource/StencilRendererSource.hpp"
 #include "Generated/Viewport.rfkh.h"
 #include "Misc/Delegate.hpp"
 #include "VulkanRHI/Common/ViewMode.hpp"
+#include "VulkanRHI/Core/CommandBuffer.hpp"
 
 struct ImGuiWindow;
 
@@ -51,6 +54,8 @@ namespace Sandbox NAMESPACE()
 
         void OnRecreateFramebuffer();
 
+        void SelectObject();
+
         void InspectTarget(std::shared_ptr<GameObject> inTarget);
 
         std::vector<VkDescriptorSet> presentDescriptorSets;
@@ -58,9 +63,13 @@ namespace Sandbox NAMESPACE()
 
         std::shared_ptr<Camera> mainCamera;
 
+        VkExtent2D resolvedResolution;
+
+
     private:
         ImVec2 CalculateStartPosition(int aspectWidth, int aspectHeight, int resolutionWidth, int resolutionHeight, uint32_t& adjustedWidth, uint32_t& adjustedHeight);
         void   BindCameraPosition(EViewMode inViewMode);
+        void   OnAfterDrawMesh(const std::shared_ptr<CommandBuffer>&, uint32_t, std::shared_ptr<Mesh>&);
         // std::shared_ptr<GameObject> m_referenceGameObject;
         ImVec2                    m_startPosition;
         bool                      m_isMouseHoveringInnerRect;
@@ -79,6 +88,11 @@ namespace Sandbox NAMESPACE()
         bool           m_useSnap = false;
         float          m_snap[3] = {1.f, 1.f, 1.f};
 
+        std::shared_ptr<StencilRendererSource> m_stencilRendererSource;
+
+        std::shared_ptr<JPH::AllHitCollisionCollector<JPH::CastRayCollector>> m_selectionCollector;
+        std::shared_ptr<JPH::BodyID>                                          m_selectedBodyId;
+        std::shared_ptr<GameObject>                                           m_selectedGameObject;
         Sandbox_Viewport_GENERATED
     };
 }  // namespace Sandbox NAMESPACE()

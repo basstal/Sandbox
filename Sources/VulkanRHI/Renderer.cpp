@@ -9,16 +9,19 @@
 #include "Core/Device.hpp"
 #include "Core/Fence.hpp"
 #include "Core/Instance.hpp"
+#include "Core/Pipeline.hpp"
 #include "Core/RenderPass.hpp"
 #include "Core/Semaphore.hpp"
 #include "Core/ShaderModule.hpp"
 #include "Core/Surface.hpp"
 #include "Core/Swapchain.hpp"
+#include "Engine/EntityComponent/Components/Material.hpp"
 #include "Engine/EntityComponent/Components/Mesh.hpp"
 #include "Engine/RendererSource/RendererSource.hpp"
 #include "FileSystem/Directory.hpp"
 #include "FileSystem/Logger.hpp"
 #include "Platform/Window.hpp"
+#include "Rendering/PipelineState.hpp"
 #include "Rendering/RenderAttachments.hpp"
 #include "Rendering/RenderTarget.hpp"
 
@@ -37,7 +40,7 @@ void Sandbox::Renderer::Prepare(const std::shared_ptr<Window>& window)
     std::vector<Attachment> attachments = {
         Attachment{VK_FORMAT_R8G8B8A8_UNORM, device->GetMaxUsableSampleCount(), VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, VK_IMAGE_LAYOUT_UNDEFINED,
                    VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL},
-        Attachment{VK_FORMAT_D32_SFLOAT, device->GetMaxUsableSampleCount(), VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_IMAGE_LAYOUT_UNDEFINED,
+        Attachment{VK_FORMAT_D32_SFLOAT_S8_UINT, device->GetMaxUsableSampleCount(), VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_IMAGE_LAYOUT_UNDEFINED,
                    VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL},
         Attachment{VK_FORMAT_R8G8B8A8_UNORM, VK_SAMPLE_COUNT_1_BIT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL},
     };
@@ -167,23 +170,29 @@ void Sandbox::Renderer::RecordCommandBuffer(std::shared_ptr<CommandBuffer>& comm
 
         onBeforeRendererDraw.Trigger(commandBuffer, frameFlightIndex);
 
-        commandBuffer->BindPipeline(pipeline, rendererSource->descriptorSets[frameFlightIndex], {0});
-        UpdateUniforms(commandBuffer, rendererSource);
-
-        while (!queuedMeshes.empty())
+        commandBuffer->BindPipeline(pipeline);
+        uint32_t dynamicAlignment = GetUniformDynamicAlignment(sizeof(glm::mat4));
+        uint32_t offset           = 0;
+        for (auto& material : queuedMaterials)
         {
-            std::shared_ptr<Mesh>& nextMesh = queuedMeshes.front();
-            if (nextMesh == nullptr)
+            if (material != nullptr)
             {
-                queuedMeshes.pop();
-            }
-            else
-            {
-                commandBuffer->BindVertexBuffers(nextMesh->vertexBuffer);
-                commandBuffer->BindIndexBuffer(nextMesh->indexBuffer);
-                commandBuffer->DrawIndexed(nextMesh->Indices());
+                // onBeforeDrawMesh.Trigger(commandBuffer, frameFlightIndex, nextMesh);
+                material->DrawMesh(pipeline->pipelineState->pipelineLayout, rendererSource, frameFlightIndex, commandBuffer, offset++ * dynamicAlignment);
+                // onAfterDrawMesh.Trigger(commandBuffer, frameFlightIndex, nextMesh);
             }
         }
+        offset = 0;
+        for (auto& material : queuedMaterials)
+        {
+            if (material != nullptr)
+            {
+                // onBeforeDrawMesh.Trigger(commandBuffer, frameFlightIndex, nextMesh);
+                material->DrawOverlay(pipeline->pipelineState->pipelineLayout, rendererSource, frameFlightIndex, commandBuffer, offset++ * dynamicAlignment);
+                // onAfterDrawMesh.Trigger(commandBuffer, frameFlightIndex, nextMesh);
+            }
+        }
+        queuedMaterials.clear();
         onAfterRendererDraw.Trigger(commandBuffer, frameFlightIndex);
 
         commandBuffer->EndRenderPass();
@@ -195,10 +204,7 @@ void Sandbox::Renderer::RecordCommandBuffer(std::shared_ptr<CommandBuffer>& comm
     commandBuffer->End();
 }
 
-void Sandbox::Renderer::UpdateUniforms(std::shared_ptr<CommandBuffer>& commandBuffer, std::shared_ptr<RendererSource>& rendererSource)
-{
-    rendererSource->UpdateUniforms(frameFlightIndex);
-}
+void Sandbox::Renderer::UpdateUniforms(std::shared_ptr<CommandBuffer>& commandBuffer, std::shared_ptr<RendererSource>& rendererSource) {}
 
 void Sandbox::Renderer::OnAfterRecreateSwapchain()
 {

@@ -5,7 +5,6 @@
 #include "Engine/EntityComponent/Components/Camera.hpp"
 #include "Generated/CameraInspector.rfks.h"
 
-Sandbox::CameraInspector::CameraInspector() { name = "Camera"; }
 
 void Sandbox::CameraInspector::OnInspectorGui()
 {

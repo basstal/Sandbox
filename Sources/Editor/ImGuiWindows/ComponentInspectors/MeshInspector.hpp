@@ -9,7 +9,6 @@ namespace Sandbox NAMESPACE()
     class CLASS(InspectComponentName("Mesh")) MeshInspector : public Inspector
     {
     public:
-        MeshInspector();
 
         void OnInspectorGui() override;
 
