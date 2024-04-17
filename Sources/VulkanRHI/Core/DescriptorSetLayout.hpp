@@ -13,9 +13,8 @@ namespace Sandbox
     class DescriptorSetLayout
     {
     public:
-        DescriptorSetLayout(const std::shared_ptr<Device>& device, const std::vector<std::shared_ptr<ShaderModule>>& shaderModules,
-                            const std::vector<uint32_t>& dynamicBindings);
-
+        DescriptorSetLayout(const std::shared_ptr<Device>& device, const std::vector<std::shared_ptr<ShaderModule>>& shaderModules);
+        
         ~DescriptorSetLayout();
 
         void Cleanup();

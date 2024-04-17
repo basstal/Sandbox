@@ -5,7 +5,7 @@
 
 #include "Components/Transform.hpp"
 #include "Generated/GameObject.rfkh.h"
-#include "Misc/String.hpp"
+#include "Standard/String.hpp"
 #include "Serialization/ISerializable.hpp"
 #include "Serialization/List.hpp"
 #include "Serialization/SharedPtr.hpp"

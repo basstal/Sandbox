@@ -63,7 +63,7 @@ Sandbox::Image::Image(const std::shared_ptr<Device>& device, const VkExtent3D& e
     {
         LOGF_OLD("failed to create image!")
     }
-    // LOGI("{}\n{}", PtrToHexString(vkImage), GetCallStack())
+    LOGI("VulkanRHI", "{}\n{}", PtrToHexString(vkImage), GetCallStack())
 
     VkMemoryRequirements memRequirements;
     vkGetImageMemoryRequirements(vkDevice, vkImage, &memRequirements);

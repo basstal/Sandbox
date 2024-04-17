@@ -18,7 +18,10 @@ namespace Sandbox
 
         void UpdateDescriptorSets(const std::shared_ptr<Renderer>& renderer) override;
 
+        void PushConstants(const std::shared_ptr<CommandBuffer>& inCommandBuffer) override;
+
         std::vector<std::array<std::shared_ptr<Texture>, 4>> textures;
         std::vector<std::shared_ptr<UniformBuffer>>          uboLights;
+        PushConstantsInfo pushConstantsInfo;
     };
 }  // namespace Sandbox

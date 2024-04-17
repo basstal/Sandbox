@@ -4,7 +4,7 @@
 #include "Engine/EntityComponent/IComponent.hpp"
 #include "Engine/Model.hpp"
 #include "Generated/Mesh.rfkh.h"
-#include "Misc/String.hpp"
+#include "Standard/String.hpp"
 
 namespace Sandbox NAMESPACE()
 {
@@ -26,6 +26,8 @@ namespace Sandbox NAMESPACE()
 
         bool SubmitModelToDevice(const std::shared_ptr<Device>& device, const std::shared_ptr<CommandBuffer>& commandBuffer);
         void RegisterModelToPhysicsWorld();
+        bool IsValid();
+
 
         std::shared_ptr<Model> loadedModel;
 

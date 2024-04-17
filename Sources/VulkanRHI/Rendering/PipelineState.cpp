@@ -5,8 +5,7 @@
 #include "VulkanRHI/Core/PipelineLayout.hpp"
 #include "VulkanRHI/Core/ShaderModule.hpp"
 
-Sandbox::PipelineState::PipelineState(const std::vector<std::shared_ptr<ShaderModule>>& inShaderModules, const std::shared_ptr<RenderPass>& inRenderPass,
-                                      const std::shared_ptr<PipelineLayout>& inPipelineLayout)
+Sandbox::PipelineState::PipelineState(const std::vector<std::shared_ptr<ShaderModule>>& inShaderModules, const std::shared_ptr<RenderPass>& inRenderPass)
 {
     renderPass    = inRenderPass;
     shaderModules = inShaderModules;
@@ -17,21 +16,21 @@ Sandbox::PipelineState::PipelineState(const std::vector<std::shared_ptr<ShaderMo
             shaderModule->ReflectVertexInputState(vertexInputState);
         }
     }
-    pipelineLayout = inPipelineLayout;
-    if (!pipelineLayout->pushConstantRanges.empty())
-    {
-        pushConstantsInfo = {pipelineLayout->pushConstantRanges[0].size, nullptr, VK_SHADER_STAGE_FRAGMENT_BIT};
-    }
+    // pipelineLayout = inPipelineLayout;
+    // if (!pipelineLayout->pushConstantRanges.empty())
+    // {
+    //     pushConstantsInfo = {pipelineLayout->pushConstantRanges[0].size, nullptr, VK_SHADER_STAGE_FRAGMENT_BIT};
+    // }
 }
+
 Sandbox::PipelineState::PipelineState(const PipelineState& other)
 {
-    renderPass        = other.renderPass;
-    shaderModules     = other.shaderModules;
-    vertexInputState  = other.vertexInputState;
-    pipelineLayout    = other.pipelineLayout;
-    pushConstantsInfo = other.pushConstantsInfo;
+    renderPass       = other.renderPass;
+    shaderModules    = other.shaderModules;
+    vertexInputState = other.vertexInputState;
+    // pipelineLayout   = other.pipelineLayout;
+    // pushConstantsInfo  = other.pushConstantsInfo;
     inputAssemblyState = other.inputAssemblyState;
     rasterizationState = other.rasterizationState;
     depthStencilState  = other.depthStencilState;
-    
 }

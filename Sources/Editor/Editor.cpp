@@ -14,6 +14,8 @@
 #include "Platform/GlfwCallbackBridge.hpp"
 #include "Platform/Window.hpp"
 #include "TransformGizmo.hpp"
+#include "VulkanRHI/Common/PipelineCaching.hpp"
+#include "VulkanRHI/Common/ShaderModuleCaching.hpp"
 #include "VulkanRHI/Common/ShaderSource.hpp"
 #include "VulkanRHI/Core/DescriptorSet.hpp"
 #include "VulkanRHI/Core/Device.hpp"
@@ -61,7 +63,7 @@ void Sandbox::Editor::CleanupOnGui()
     {
         descriptorSet->Cleanup();
     }
-    pipelineLayout->Cleanup();
+    // pipelineLayout->Cleanup();
     pipelineGizmo->Cleanup();
     pipelineLineList->Cleanup();
     for (auto& shaderModule : shaderModules)
@@ -72,21 +74,26 @@ void Sandbox::Editor::CleanupOnGui()
 
 void Sandbox::Editor::PrepareOnGui()
 {
-    auto         device = m_renderer->device;
-    ShaderSource vertexShaderSource(Directory::GetAssetsDirectory().GetFile("Shaders/FillModeNonSolidGrid.vert"));
-    shaderModules.push_back(std::make_shared<ShaderModule>(device, vertexShaderSource, "", VK_SHADER_STAGE_VERTEX_BIT));
-    ShaderSource fragmentShaderSource(Directory::GetAssetsDirectory().GetFile("Shaders/FillModeNonSolidGrid.frag"));
-    shaderModules.push_back(std::make_shared<ShaderModule>(device, fragmentShaderSource, "", VK_SHADER_STAGE_FRAGMENT_BIT));
+    auto device = m_renderer->device;
 
-    pipelineLayout                                     = std::make_shared<PipelineLayout>(device, shaderModules, std::vector<uint32_t>{1});
+    ShaderSource vertexShaderSource(Directory::GetAssetsDirectory().GetFile("Shaders/FillModeNonSolidGrid.vert"), "", VK_SHADER_STAGE_VERTEX_BIT);
+
+    auto vertexShaderModule = m_renderer->shaderModuleCaching->GetOrCreateShaderModule(vertexShaderSource);
+    vertexShaderModule->SetUniformDescriptorMode("Model", Dynamic);
+    shaderModules.push_back(vertexShaderModule);
+    ShaderSource fragmentShaderSource(Directory::GetAssetsDirectory().GetFile("Shaders/FillModeNonSolidGrid.frag"), "", VK_SHADER_STAGE_FRAGMENT_BIT);
+    shaderModules.push_back(m_renderer->shaderModuleCaching->GetOrCreateShaderModule(fragmentShaderSource));
+
+    // pipelineLayout                                     = std::make_shared<PipelineLayout>(device, shaderModules);
     auto renderPass                                    = m_renderer->renderPass;
-    auto pipelineStateLineList                         = std::make_shared<PipelineState>(shaderModules, renderPass, pipelineLayout);
+    auto pipelineStateLineList                         = std::make_shared<PipelineState>(shaderModules, renderPass);
     pipelineStateLineList->inputAssemblyState.topology = VK_PRIMITIVE_TOPOLOGY_LINE_LIST;
-    pipelineLineList                                   = std::make_shared<Pipeline>(device, pipelineStateLineList);
-    auto pipelineState                                 = std::make_shared<PipelineState>(shaderModules, renderPass, pipelineLayout);
+    pipelineLineList                                   = m_renderer->pipelineCaching->GetOrCreatePipeline(pipelineStateLineList);
+    
+    auto pipelineState                                 = std::make_shared<PipelineState>(shaderModules, renderPass);
     pipelineState->depthStencilState.depthTestEnable   = VK_FALSE;
     pipelineState->depthStencilState.depthWriteEnable  = VK_TRUE;
-    pipelineGizmo                                      = std::make_shared<Pipeline>(device, pipelineState);
+    pipelineGizmo                                      = m_renderer->pipelineCaching->GetOrCreatePipeline(pipelineState);
     // auto pipelineState1 = std::make_shared<PipelineState>(shaderModules, renderPass, pipelineLayout);
     // pipelineState1->inputAssemblyState.topology = VK_PRIMITIVE_TOPOLOGY_LINE_LIST;
     // pipelineState1->depthStencilState.depthTestEnable = VK_TRUE;
@@ -121,8 +128,8 @@ void Sandbox::Editor::UpdateDescriptorSets(EViewMode inViewMode)
         };
         BindingMap<VkDescriptorImageInfo> imageInfoMapping;
 
-        auto descriptorSet = std::make_shared<DescriptorSet>(m_renderer->device, m_renderer->descriptorPool, pipelineLayout->descriptorSetLayout);
-        descriptorSet->BindInfoMapping(bufferInfoMapping, imageInfoMapping, pipelineLayout->descriptorSetLayout);
+        auto descriptorSet = std::make_shared<DescriptorSet>(m_renderer->device, m_renderer->descriptorPool, pipelineLineList->pipelineLayout->descriptorSetLayout);
+        descriptorSet->BindInfoMapping(bufferInfoMapping, imageInfoMapping, pipelineLineList->pipelineLayout->descriptorSetLayout);
         descriptorSets.push_back(descriptorSet);
     }
 }
@@ -135,12 +142,7 @@ uint32_t Sandbox::Editor::GetUniformDynamicAlignment(VkDeviceSize dynamicAlignme
 
 void Sandbox::Editor::Draw()
 {
-    if (m_renderer->AcquireNextImage() != Continue)
-    {
-        return;
-    }
     imGuiRenderer->Draw();
-    m_renderer->Preset();
 }
 
 void Sandbox::Editor::Update()

@@ -7,12 +7,11 @@
 #include "FileSystem/Logger.hpp"
 #include "ShaderModule.hpp"
 
-Sandbox::PipelineLayout::PipelineLayout(const std::shared_ptr<Device>& device, const std::vector<std::shared_ptr<ShaderModule>>& shaderModules,
-                                        const std::vector<uint32_t>& dynamicBindings)
+Sandbox::PipelineLayout::PipelineLayout(const std::shared_ptr<Device>& device, const std::vector<std::shared_ptr<ShaderModule>>& shaderModules)
 {
     m_device = device;
 
-    descriptorSetLayout = std::make_shared<DescriptorSetLayout>(device, shaderModules, dynamicBindings);
+    descriptorSetLayout = std::make_shared<DescriptorSetLayout>(device, shaderModules);
 
     for (const std::shared_ptr<ShaderModule>& shaderModule : shaderModules)
     {

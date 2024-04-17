@@ -93,7 +93,7 @@ void Sandbox::Grid::DrawGrid(const std::shared_ptr<CommandBuffer>& commandBuffer
     uint32_t dynamicAlignment = m_editor->GetUniformDynamicAlignment(sizeof(glm::mat4));
     commandBuffer->BindPipeline(m_editor->pipelineLineList);
     auto offset = Scene::currentScene != nullptr ? Scene::currentScene->renderMeshes.size() : 0;
-    commandBuffer->BindDescriptorSet(m_editor->pipelineLineList->pipelineState->pipelineLayout, m_editor->descriptorSets[frameFlightIndex],
+    commandBuffer->BindDescriptorSet(m_editor->pipelineLineList->pipelineLayout, m_editor->descriptorSets[frameFlightIndex],
                                      {static_cast<uint32_t>(offset * dynamicAlignment)});
     commandBuffer->BindVertexBuffers(lineListBuffer);
     commandBuffer->Draw(static_cast<uint32_t>(lineListProperties.size()));

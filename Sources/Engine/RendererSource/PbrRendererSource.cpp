@@ -6,8 +6,11 @@
 #include "Engine/Image.hpp"
 #include "Engine/Light.hpp"
 #include "FileSystem/Directory.hpp"
+#include "Misc/Debug.hpp"
 #include "Misc/TypeCasting.hpp"
 #include "VulkanRHI/Common/Macros.hpp"
+#include "VulkanRHI/Common/PipelineCaching.hpp"
+#include "VulkanRHI/Common/ShaderModuleCaching.hpp"
 #include "VulkanRHI/Common/ShaderSource.hpp"
 #include "VulkanRHI/Core/CommandBuffer.hpp"
 #include "VulkanRHI/Core/DescriptorSet.hpp"
@@ -51,15 +54,25 @@ void Sandbox::PbrRendererSource::CreatePipelineWithPreamble(std::shared_ptr<Rend
     auto device = renderer->device;
 
     Directory assetsDirectory = Directory::GetAssetsDirectory();
-    auto      vertexSource    = ShaderSource(assetsDirectory.GetFile("Shaders/PBR.vert").path.string());
-    auto      fragmentSource  = ShaderSource(assetsDirectory.GetFile("Shaders/PBR.frag").path.string());
-    auto      vertexShader    = std::make_shared<ShaderModule>(device, vertexSource, preamble, VK_SHADER_STAGE_VERTEX_BIT);
+    auto      vertexSource    = ShaderSource(assetsDirectory.GetFile("Shaders/PBR.vert").path.string(), preamble, VK_SHADER_STAGE_VERTEX_BIT);
+    auto      vertexShader    = renderer->shaderModuleCaching->GetOrCreateShaderModule(vertexSource);
+    vertexShader->SetUniformDescriptorMode("Model", Dynamic);
     shaderModules.push_back(vertexShader);
-    auto fragmentShader = std::make_shared<ShaderModule>(device, fragmentSource, preamble, VK_SHADER_STAGE_FRAGMENT_BIT);
+
+    auto fragmentSource = ShaderSource(assetsDirectory.GetFile("Shaders/PBR.frag").path.string(), preamble, VK_SHADER_STAGE_FRAGMENT_BIT);
+    auto fragmentShader = renderer->shaderModuleCaching->GetOrCreateShaderModule(fragmentSource);
     shaderModules.push_back(fragmentShader);
-    pipelineLayout                             = std::make_shared<PipelineLayout>(device, shaderModules, std::vector<uint32_t>{1});
-    auto pipelineState                         = std::make_shared<PipelineState>(shaderModules, renderer->renderPass, pipelineLayout);
-    pipeline                                   = std::make_shared<Pipeline>(device, pipelineState);
+
+    // pipelineLayout = std::make_shared<PipelineLayout>(device, shaderModules);
+    
+    pipelineState           = std::make_shared<PipelineState>(shaderModules, renderer->renderPass);
+    pipeline                = renderer->pipelineCaching->GetOrCreatePipeline(pipelineState);
+    auto pipelineLayout = pipeline->pipelineLayout;
+    // TODO:这里只处理了 pushConstants 唯一的情况
+    pushConstantsInfo.size  = pipelineLayout->pushConstantRanges[0].size;
+    pushConstantsInfo.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
+    // auto anotherPipeline = renderer->pipelineCaching->GetOrCreatePipeline(pipelineState);
+    // LOGD("Debug", "{}, {}", PtrToHexString(pipeline.get()), PtrToHexString(anotherPipeline.get()))
 }
 void Sandbox::PbrRendererSource::CreateDescriptorSets(std::shared_ptr<Renderer>& renderer)
 {
@@ -112,7 +125,7 @@ void Sandbox::PbrRendererSource::CreateDescriptorSets(std::shared_ptr<Renderer>&
     for (size_t i = 0; i < frameFlightSize; ++i)
     {
         uboLights[i]      = std::make_shared<UniformBuffer>(device, sizeof(Light));
-        descriptorSets[i] = std::make_shared<DescriptorSet>(device, renderer->descriptorPool, pipelineLayout->descriptorSetLayout);
+        descriptorSets[i] = std::make_shared<DescriptorSet>(device, renderer->descriptorPool, pipeline->pipelineLayout->descriptorSetLayout);
     }
     UpdateDescriptorSets(renderer);
 }
@@ -135,6 +148,11 @@ void Sandbox::PbrRendererSource::UpdateDescriptorSets(const std::shared_ptr<Rend
              {textures[i][0]->GetDescriptorImageInfo(), textures[i][1]->GetDescriptorImageInfo(), textures[i][2]->GetDescriptorImageInfo(),
               textures[i][3]->GetDescriptorImageInfo()}},
         };
-        descriptorSets[i]->BindInfoMapping(bufferInfoMapping, imageInfoMapping, pipelineLayout->descriptorSetLayout);
-    }    
+        descriptorSets[i]->BindInfoMapping(bufferInfoMapping, imageInfoMapping, pipeline->pipelineLayout->descriptorSetLayout);
+    }
+}
+void Sandbox::PbrRendererSource::PushConstants(const std::shared_ptr<CommandBuffer>& inCommandBuffer)
+{
+    RendererSource::PushConstants(inCommandBuffer);
+    inCommandBuffer->PushConstants(pushConstantsInfo);
 }

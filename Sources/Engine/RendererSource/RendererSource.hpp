@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include "Engine/EntityComponent/Components/Camera.hpp"
 #include "Engine/EntityComponent/Components/Mesh.hpp"
+#include "VulkanRHI/Rendering/PipelineState.hpp"
 
 namespace Sandbox
 {
@@ -11,6 +12,8 @@ namespace Sandbox
     class DescriptorSet;
     class Renderer;
     class ShaderSource;
+    class PipelineState;
+
     class RendererSource
     {
     public:
@@ -26,6 +29,7 @@ namespace Sandbox
         virtual void CreatePipeline(std::shared_ptr<Renderer>& renderer)             = 0;
         virtual void CreateDescriptorSets(std::shared_ptr<Renderer>& renderer)       = 0;
         virtual void UpdateDescriptorSets(const std::shared_ptr<Renderer>& renderer) = 0;
+        virtual void         PushConstants(const std::shared_ptr<CommandBuffer>& inCommandBuffer);
         virtual void CustomDrawMesh(const std::shared_ptr<Mesh>& mesh, const std::shared_ptr<CommandBuffer>& commandBuffer, const std::shared_ptr<DescriptorSet>& descriptorSet,
                                     uint32_t frameFlightIndex, uint32_t dynamicOffsets);
         virtual void CustomDrawOverlay(const std::shared_ptr<Sandbox::Mesh>& mesh, const std::shared_ptr<Sandbox::CommandBuffer>& shared,
@@ -37,8 +41,11 @@ namespace Sandbox
         std::vector<std::shared_ptr<ShaderModule>>  shaderModules;
         std::vector<std::shared_ptr<MVPUboObjects>> uboMvp;
         std::shared_ptr<ViewAndProjection>          viewAndProjection;
-        std::shared_ptr<PipelineLayout>             pipelineLayout;
+        // std::shared_ptr<PipelineLayout>             pipelineLayout;
         std::shared_ptr<Pipeline>                   pipeline;
+        std::shared_ptr<PipelineState>              pipelineState;
         std::shared_ptr<Camera>                     camera;
+
+        // PushConstantsInfo pushConstantsInfo;
     };
 }  // namespace Sandbox

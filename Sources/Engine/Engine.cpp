@@ -135,11 +135,20 @@ void Sandbox::Engine::MainLoop()
         {
             if (Scene::currentScene != nullptr)
             {
+                // 准备场景渲染数据
                 Scene::currentScene->TranslateRenderData(renderer);
             }
-            editor->Draw();
+            // 获得下一个可渲染的图像
+            if (renderer->AcquireNextImage() == Continue)
+            {
+                // 绘制场景
+                renderer->Draw();
+                editor->Draw();
+                renderer->Preset();
+            }
         }
         rendererTimer->EndFrame();
+
         // TODO:重构这个功能
         if (shouldRecreateRenderer)
         {

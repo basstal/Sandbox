@@ -149,3 +149,8 @@ void Sandbox::RenderPass::Cleanup()
     vkDestroyRenderPass(m_device->vkDevice, vkRenderPass, nullptr);
     m_cleaned = true;
 }
+
+std::shared_ptr<Sandbox::Device> Sandbox::RenderPass::GetDevice() const
+{
+    return m_device;
+}

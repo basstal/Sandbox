@@ -94,6 +94,10 @@ void Sandbox::Scene::TranslateRenderData(const std::shared_ptr<Renderer>& render
     // TODO:临时将 mesh 添加到队列中支持当帧绘制
     for (auto& mesh : renderMeshes)
     {
+        if (!mesh->IsValid())
+        {
+            LOGF("Engine", "Mesh {} is not valid!!", mesh->gameObject.lock()->name.ToStdString())
+        }
         renderer->queuedMaterials.push_back(mesh->material);
     }
 }

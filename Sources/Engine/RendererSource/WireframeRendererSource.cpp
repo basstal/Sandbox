@@ -4,6 +4,8 @@
 
 #include "FileSystem/Directory.hpp"
 #include "VulkanRHI/Common/Macros.hpp"
+#include "VulkanRHI/Common/PipelineCaching.hpp"
+#include "VulkanRHI/Common/ShaderModuleCaching.hpp"
 #include "VulkanRHI/Common/ShaderSource.hpp"
 #include "VulkanRHI/Core/DescriptorSet.hpp"
 #include "VulkanRHI/Core/Pipeline.hpp"
@@ -17,16 +19,19 @@ void Sandbox::WireframeRendererSource::CreatePipeline(std::shared_ptr<Renderer>&
     auto device = renderer->device;
 
     Directory assetsDirectory = Directory::GetAssetsDirectory();
-    auto      vertexSource    = ShaderSource(assetsDirectory.GetFile("Shaders/FillModeNonSolid.vert").path.string());
-    auto      fragmentSource  = ShaderSource(assetsDirectory.GetFile("Shaders/FillModeNonSolid.frag").path.string());
-    auto      vertexShader    = std::make_shared<ShaderModule>(device, vertexSource, "", VK_SHADER_STAGE_VERTEX_BIT);
+    auto      vertexSource    = ShaderSource(assetsDirectory.GetFile("Shaders/FillModeNonSolid.vert").path.string(), "", VK_SHADER_STAGE_VERTEX_BIT);
+    auto      vertexShader    = renderer->shaderModuleCaching->GetOrCreateShaderModule(vertexSource);
+    vertexShader->SetUniformDescriptorMode("Model", Dynamic);
     shaderModules.push_back(vertexShader);
-    auto fragmentShader = std::make_shared<ShaderModule>(device, fragmentSource, "", VK_SHADER_STAGE_FRAGMENT_BIT);
+
+    auto fragmentSource = ShaderSource(assetsDirectory.GetFile("Shaders/FillModeNonSolid.frag").path.string(), "", VK_SHADER_STAGE_FRAGMENT_BIT);
+    auto fragmentShader = renderer->shaderModuleCaching->GetOrCreateShaderModule(fragmentSource);
     shaderModules.push_back(fragmentShader);
-    pipelineLayout                                = std::make_shared<PipelineLayout>(device, shaderModules, std::vector<uint32_t>{1});
-    auto pipelineState                            = std::make_shared<PipelineState>(shaderModules, renderer->renderPass, pipelineLayout);
+    // pipelineLayout                                = std::make_shared<PipelineLayout>(device, shaderModules);
+    pipelineState                                 = std::make_shared<PipelineState>(shaderModules, renderer->renderPass);
     pipelineState->rasterizationState.polygonMode = VK_POLYGON_MODE_LINE;
-    pipeline                                      = std::make_shared<Pipeline>(device, pipelineState);
+    pipeline                                      = renderer->pipelineCaching->GetOrCreatePipeline(pipelineState);
+    
     colorUniformBuffer                            = std::make_shared<UniformBuffer>(device, sizeof(glm::vec3));
     auto white                                    = glm::vec3(1.0f);
     colorUniformBuffer->Update(&white);
@@ -38,7 +43,7 @@ void Sandbox::WireframeRendererSource::CreateDescriptorSets(std::shared_ptr<Rend
     descriptorSets.resize(frameFlightSize);
     for (size_t i = 0; i < frameFlightSize; ++i)
     {
-        descriptorSets[i] = std::make_shared<DescriptorSet>(device, renderer->descriptorPool, pipelineLayout->descriptorSetLayout);
+        descriptorSets[i] = std::make_shared<DescriptorSet>(device, renderer->descriptorPool, pipeline->pipelineLayout->descriptorSetLayout);
     }
     UpdateDescriptorSets(renderer);
 }
@@ -56,7 +61,7 @@ void Sandbox::WireframeRendererSource::UpdateDescriptorSets(const std::shared_pt
             {2, {colorUniformBuffer->GetDescriptorBufferInfo()}},
         };
         BindingMap<VkDescriptorImageInfo> imageInfoMapping;
-        descriptorSets[i]->BindInfoMapping(bufferInfoMapping, imageInfoMapping, pipelineLayout->descriptorSetLayout);
+        descriptorSets[i]->BindInfoMapping(bufferInfoMapping, imageInfoMapping, pipeline->pipelineLayout->descriptorSetLayout);
     }
 }
 void Sandbox::WireframeRendererSource::Cleanup()

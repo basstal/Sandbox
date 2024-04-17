@@ -42,7 +42,7 @@ void Sandbox::DescriptorSet::Allocate(const std::shared_ptr<DescriptorPool>& des
     {
         Logger::Fatal("failed to allocate descriptor sets!");
     }
-    // LOGI("{}\n{}", PtrToHexString(vkDescriptorSet), GetCallStack())
+    LOGI("VulkanRHI", "{}\n{}", PtrToHexString(vkDescriptorSet), GetCallStack())
 }
 void Sandbox::DescriptorSet::BindBufferInfoMapping(const BindingMap<VkDescriptorBufferInfo>&   inBufferInfoMapping,
                                                    const std::shared_ptr<DescriptorSetLayout>& descriptorSetLayout)

@@ -4,7 +4,7 @@
 
 #include "Device.hpp"
 #include "FileSystem/Logger.hpp"
-#include "Misc/String.hpp"
+#include "Standard/String.hpp"
 #include "VulkanRHI/Common/ShaderIncluder.hpp"
 #include "VulkanRHI/Common/ShaderSource.hpp"
 #include "VulkanRHI/Rendering/PipelineState.hpp"
@@ -56,10 +56,10 @@ const std::map<int32_t, VkFormat> GL_DEFINE_TYPE_TO_FORMAT = {
     {GL_FLOAT_MAT2x4, VK_FORMAT_R32G32_SFLOAT},  // GL_FLOAT_MAT2x4
 };
 
-Sandbox::ShaderModule::ShaderModule(const std::shared_ptr<Device>& device, const ShaderSource& glslSource, const std::string& preamble, VkShaderStageFlagBits stage)
+Sandbox::ShaderModule::ShaderModule(const std::shared_ptr<Device>& device, const ShaderSource& glslSource)
 {
     m_device = device;
-    Compile(glslSource, preamble, stage);
+    Compile(glslSource.filePath, glslSource.source, glslSource.preamble, glslSource.stage);
 }
 
 Sandbox::ShaderModule::~ShaderModule() { Cleanup(); }
@@ -74,7 +74,7 @@ void Sandbox::ShaderModule::Cleanup()
     m_cleaned = true;
 }
 
-void Sandbox::ShaderModule::Compile(const ShaderSource& glslSource, const std::string& preamble, VkShaderStageFlagBits stage)
+void Sandbox::ShaderModule::Compile(const std::string& shaderName, const std::string& shaderSource, const std::string& preamble, VkShaderStageFlagBits stage)
 {
     if (!STAGE_TO_LANGUAGE.contains(stage))
     {
@@ -84,8 +84,8 @@ void Sandbox::ShaderModule::Compile(const ShaderSource& glslSource, const std::s
     glslang::TShader        shader(STAGE_TO_LANGUAGE.at(stage));
     const TBuiltInResource* resource = GetDefaultResources();
 
-    std::string shaderName       = glslSource.filePath;
-    std::string shaderSource     = glslSource.source;
+    // std::string shaderName       = glslSource.filePath;
+    // std::string shaderSource     = glslSource.source;
     const char* shaderNameCStr   = shaderName.c_str();
     const char* shaderSourceCStr = shaderSource.c_str();
     auto        vulkanVersion    = glslang::EShTargetVulkan_1_3;
@@ -163,6 +163,36 @@ void Sandbox::ShaderModule::Compile(const ShaderSource& glslSource, const std::s
     }
     vkShaderStage = stage;
 }
+
+void Sandbox::ShaderModule::SetUniformDescriptorMode(const std::string& uniformName, DescriptorMode inMode)
+{
+    // TODO: 这里改变了需不需要重载所有引用这个 shaderModule 的 pipeline？
+    if (m_uniforms.contains(uniformName))
+    {
+        auto& uniform = m_uniforms.at(uniformName);
+        if (uniform.descriptorType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER || uniform.descriptorType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC)
+        {
+            uniform.descriptorType = inMode == Dynamic ? VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC : VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+        }
+        if (uniform.descriptorType == VK_DESCRIPTOR_TYPE_STORAGE_BUFFER || uniform.descriptorType == VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC)
+        {
+            uniform.descriptorType = inMode == Dynamic ? VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC : VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+        }
+    }
+    if (m_uniformBlocks.contains(uniformName))
+    {
+        auto& uniformBlocks = m_uniformBlocks.at(uniformName);
+        if (uniformBlocks.descriptorType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER || uniformBlocks.descriptorType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC)
+        {
+            uniformBlocks.descriptorType = inMode == Dynamic ? VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC : VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+        }
+        if (uniformBlocks.descriptorType == VK_DESCRIPTOR_TYPE_STORAGE_BUFFER || uniformBlocks.descriptorType == VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC)
+        {
+            uniformBlocks.descriptorType = inMode == Dynamic ? VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC : VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+        }
+    }
+}
+
 void Sandbox::ShaderModule::ReflectDescriptorSetLayoutBindings(std::vector<VkDescriptorSetLayoutBinding>&        vkDescriptorSetLayoutBindings,
                                                                std::map<std::string, uint32_t>&                  nameToBinding,
                                                                std::map<uint32_t, VkDescriptorSetLayoutBinding>& bindingToLayoutBinding) const
@@ -234,7 +264,7 @@ void Sandbox::ShaderModule::ReflectVertexInputState(VertexInputState& vertexInpu
         vertexInputState.attributes.emplace_back(vertexInputAttributeDescription);
     }
 
-    assert(vertexInputState.bindings.empty());  // 仅支持单个 binding（即 binding 为 0 的情况）
+    assert(vertexInputState.bindings.empty());  // TODO:目前仅支持单个 binding（即 binding 为 0 的情况）
     vertexInputState.bindings.emplace_back();
     vertexInputState.bindings[0].binding   = 0;
     vertexInputState.bindings[0].stride    = offset;

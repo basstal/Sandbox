@@ -108,7 +108,6 @@ void Sandbox::ImGuiRenderer::RegisterWindows(const std::shared_ptr<Renderer>& re
 {
     RegisterWindow(std::make_shared<DemoWindow>());  // TODO: for debug, remove in future
     viewport = std::make_shared<Viewport>(renderer);
-    viewport->Prepare();
     RegisterWindow(viewport);
     RegisterWindow(std::make_shared<ContentBrowser>());
     auto inspector = std::make_shared<Inspector>();

@@ -33,6 +33,8 @@ namespace Sandbox
         std::vector<LoadStoreInfo> loadStoreInfo;
         std::vector<SubpassInfo>   subpasses;
 
+        std::shared_ptr<Device> GetDevice() const;
+
     private:
         std::shared_ptr<Device> m_device;
         bool                    m_cleaned = false;

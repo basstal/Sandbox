@@ -9,6 +9,7 @@
 #include "Engine/EntityComponent/GameObject.hpp"
 #include "Engine/EntityComponent/Scene.hpp"
 #include "Engine/PhysicsSystem.hpp"
+#include "Engine/RendererSource/PbrRendererSource.hpp"
 #include "Engine/RendererSource/RendererSource.hpp"
 #include "Engine/RendererSource/StencilRendererSource.hpp"
 #include "FileSystem/Directory.hpp"
@@ -62,14 +63,21 @@ void Sandbox::Viewport::Prepare()
     // 绘制 viewport 选中框的 rendererSource
     m_stencilRendererSource = std::make_shared<StencilRendererSource>();
     m_stencilRendererSource->Prepare(m_renderer);
-    Scene::onSceneChange.Bind([this](const std::shared_ptr<Scene>& inScene)
-                              { inScene->onRendererSourceTick.Bind([this](const std::shared_ptr<Renderer>& renderer) { m_stencilRendererSource->Tick(renderer); }); });
+    Scene::onSceneChange.Bind(
+        [this](const std::shared_ptr<Scene>& inScene)
+        {
+            BindCameraPosition(m_renderer->viewMode);
+            inScene->onRendererSourceTick.Bind([this](const std::shared_ptr<Renderer>& renderer) { m_stencilRendererSource->Tick(renderer); });
+        });
     Scene::onReconstructMeshes.Bind([this] { m_stencilRendererSource->RecreateUniformModels(m_renderer); });
 }
 
 void Sandbox::Viewport::OnGui()
 {
-    m_renderer->Draw();
+    if (Scene::currentScene == nullptr)
+    {
+        return;
+    }
     // ImVec2 windowPos = ImGui::GetWindowPos();
     // ImVec2 windowSize = ImGui::GetWindowSize();
     auto imageIndex     = m_renderer->swapchain->acquiredNextImageIndex;
@@ -79,6 +87,7 @@ void Sandbox::Viewport::OnGui()
     auto resolution     = m_renderer->resolution;
     m_startPosition     = CalculateStartPosition(16, 9, ToInt32(viewportWidth), ToInt32(viewportHeight), resolution.width, resolution.height);
     ImGui::SetCursorPos(m_startPosition);
+    // TODO: 这里获取 renderer 绘制好的 RenderTarget
     ImGui::Image((ImTextureID)presentDescriptorSets[imageIndex], ImVec2(ToFloat(resolution.width), ToFloat(resolution.height)));
     resolvedResolution         = resolution;
     m_glfwWindow               = reinterpret_cast<GLFWwindow*>(m_imguiWindow->Viewport->PlatformHandle);
@@ -568,16 +577,21 @@ void Sandbox::Viewport::BindCameraPosition(EViewMode inViewMode)
     std::shared_ptr<RendererSource> rendererSource;
     if (m_renderer->TryGetRendererSource(inViewMode, rendererSource))
     {
-        // TODO:因为这里 position 是 Vector3 派生自 rfk::Object 虚函数表指针要求 8 字节对齐，因此不满足传递给 GPU 对齐要求
-        if (mainCamera == nullptr)
+        std::shared_ptr<PbrRendererSource> pbrRendererSource = std::dynamic_pointer_cast<PbrRendererSource>(rendererSource);
+        if (pbrRendererSource != nullptr)
         {
-            rendererSource->pipeline->pipelineState->pushConstantsInfo.data = nullptr;
+            pbrRendererSource->pushConstantsInfo.data = mainCamera == nullptr ? nullptr : &mainCamera->gameObject.lock()->transform->position.vec;
         }
-        else
-        {
-            auto gameObject = mainCamera->gameObject.lock();
-            rendererSource->pipeline->pipelineState->pushConstantsInfo.data = &gameObject->transform->position.vec;
-        }
+        // if (mainCamera == nullptr)
+        // {
+        //     rendererSource->pipeline->pipelineState->pushConstantsInfo.data = nullptr;
+        // }
+        // else
+        // {
+        //     auto gameObject = mainCamera->gameObject.lock();
+        // // TODO:因为这里 position 是 Vector3 派生自 rfk::Object 虚函数表指针要求 8 字节对齐，因此不满足传递给 GPU 对齐要求
+        //     rendererSource->pipeline->pipelineState->pushConstantsInfo.data = &gameObject->transform->position.vec;
+        // }
     }
 }
 

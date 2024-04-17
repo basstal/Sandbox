@@ -52,8 +52,7 @@ namespace Sandbox
     class PipelineState
     {
     public:
-        PipelineState(const std::vector<std::shared_ptr<ShaderModule>>& shaderModules, const std::shared_ptr<RenderPass>& renderPass,
-                      const std::shared_ptr<PipelineLayout>& pipelineLayout);
+        PipelineState(const std::vector<std::shared_ptr<ShaderModule>>& shaderModules, const std::shared_ptr<RenderPass>& renderPass);
 
         ~PipelineState() = default;
 
@@ -65,10 +64,11 @@ namespace Sandbox
         RasterizationState rasterizationState;
         DepthStencilState  depthStencilState;
 
-        PushConstantsInfo pushConstantsInfo;
+        // PushConstantsInfo pushConstantsInfo;
 
         std::vector<std::shared_ptr<ShaderModule>> shaderModules;
-        std::shared_ptr<PipelineLayout>            pipelineLayout;
+        // TODO: remove this
+        // std::shared_ptr<PipelineLayout> pipelineLayout;
         std::shared_ptr<RenderPass> renderPass;
     };
 }

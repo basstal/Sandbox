@@ -3,6 +3,8 @@
 #include <vector>
 #include <vulkan/vulkan.hpp>
 
+#include "VulkanRHI/Rendering/PipelineState.hpp"
+
 
 namespace Sandbox
 {
@@ -52,6 +54,7 @@ namespace Sandbox
                                const std::vector<uint32_t>& dynamicOffsets);
 
         void BindPipeline(const std::shared_ptr<Pipeline>& pipeline);
+        void PushConstants(const PushConstantsInfo& pushConstantsInfo);
 
         void BindVertexBuffers(const std::shared_ptr<Buffer>& buffer);
 

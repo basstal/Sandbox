@@ -95,6 +95,8 @@ void Sandbox::Mesh::RegisterModelToPhysicsWorld()
     PhysicsSystem::Instance->physicsBodyIdToGameObject[m_physicsBodyId] = gameObject.lock();
 }
 
+bool Sandbox::Mesh::IsValid() { return isLoaded; }
+
 uint32_t Sandbox::Mesh::Indices() const { return static_cast<uint32_t>(m_indices.size()); }
 
 std::string Sandbox::Mesh::GetDerivedClassName() { return getArchetype().getName(); }

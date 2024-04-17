@@ -49,6 +49,7 @@ void Sandbox::Buffer::Cleanup()
     {
         return;
     }
+    LOGI("VulkanRHI", "Cleanup Buffer {}\n{}", PtrToHexString(vkBuffer), GetCallStack())
     if (m_mappedData)
     {
         vkUnmapMemory(m_device->vkDevice, vkDeviceMemory);  // 不是必须的？

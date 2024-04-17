@@ -25,6 +25,8 @@ void Sandbox::Material::DrawMesh(const std::shared_ptr<PipelineLayout>& pipeline
     // TODO:临时写的，这里应该还需要再设计一下
     if (customRendererSource == nullptr)
     {
+        rendererSource->PushConstants(commandBuffer);
+        // commandBuffer->PushConstants(pushConstantsInfo);
         commandBuffer->BindDescriptorSet(pipelineLayout, rendererSource->descriptorSets[frameFlightIndex], {dynamicOffsets});
         commandBuffer->BindVertexBuffers(m_mesh->vertexBuffer);
         commandBuffer->BindIndexBuffer(m_mesh->indexBuffer);

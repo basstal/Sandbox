@@ -4,6 +4,7 @@
 #include <memory>
 #include <string>
 
+#include "Standard/Dictionary.hpp"
 #include "vulkan/vulkan_core.h"
 
 namespace Sandbox
@@ -28,13 +29,13 @@ namespace Sandbox
      */
     struct ShaderUniformBlockReflection
     {
-        int32_t                                        binding;
-        uint32_t                                       bytes;
-        VkShaderStageFlags                             stageFlags;
-        uint32_t                                       descriptorCount;
-        VkDescriptorType                               descriptorType;
-        bool                                           isLayoutPushConstant;
-        std::map<std::string, ShaderUniformReflection> uniforms;
+        int32_t                                          binding;
+        uint32_t                                         bytes;
+        VkShaderStageFlags                               stageFlags;
+        uint32_t                                         descriptorCount;
+        VkDescriptorType                                 descriptorType;
+        bool                                             isLayoutPushConstant;
+        Dictionary<std::string, ShaderUniformReflection> uniforms;
     };
 
     /**
@@ -48,18 +49,26 @@ namespace Sandbox
         int32_t  glDefineType;
     };
 
+    enum DescriptorMode
+    {
+        Static,
+        Dynamic
+    };
     class Device;
     class ShaderSource;
 
     class ShaderModule
     {
     public:
-        ShaderModule(const std::shared_ptr<Device>& device, const ShaderSource& glslSource, const std::string& preamble, VkShaderStageFlagBits stage);
+        ShaderModule(const std::shared_ptr<Device>& device, const ShaderSource& glslSource);
 
         ~ShaderModule();
 
         void Cleanup();
-        void Compile(const ShaderSource& glslSource, const std::string&preamble, VkShaderStageFlagBits stage);
+
+        void Compile(const std::string& shaderName, const std::string& shaderSource, const std::string&preamble,VkShaderStageFlagBits stage);
+
+        void SetUniformDescriptorMode(const std::string& uniformName, DescriptorMode inMode);
 
         void ReflectDescriptorSetLayoutBindings(std::vector<VkDescriptorSetLayoutBinding>& vkDescriptorSetLayoutBindings, std::map<std::string, uint32_t>& nameToBinding,
                                                 std::map<uint32_t, VkDescriptorSetLayoutBinding>& bindingToLayoutBinding) const;
@@ -106,14 +115,14 @@ namespace Sandbox
         /**
          * \brief 保存统一缓冲区名称反射
          */
-        std::map<std::string, ShaderUniformReflection> m_uniforms;
+        Dictionary<std::string, ShaderUniformReflection> m_uniforms;
         /**
          * \brief 保存统一缓冲块名称反射
          */
-        std::map<std::string, ShaderUniformBlockReflection> m_uniformBlocks;
+        Dictionary<std::string, ShaderUniformBlockReflection> m_uniformBlocks;
         /**
          * \brief 保存属性名称反射
          */
-        std::map<std::string, ShaderAttributeReflection> m_attributes;
+        Dictionary<std::string, ShaderAttributeReflection> m_attributes;
     };
 }

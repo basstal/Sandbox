@@ -2,6 +2,8 @@
 
 #include "Renderer.hpp"
 
+#include "Common/PipelineCaching.hpp"
+#include "Common/ShaderModuleCaching.hpp"
 #include "Common/SubpassComponents.hpp"
 #include "Core/CommandBuffer.hpp"
 #include "Core/CommandPool.hpp"
@@ -27,7 +29,7 @@
 
 void Sandbox::Renderer::Prepare(const std::shared_ptr<Window>& window)
 {
-    LOGD("Test", "测试一下中文字体")
+    // LOGD("Test", "测试一下中文字体")
     resolution                                = VkExtent2D{1920, 1080};
     instance                                  = std::make_shared<Instance>(VK_API_VERSION_1_0, "Sandbox");
     surface                                   = std::make_shared<Surface>(instance, window);
@@ -73,6 +75,8 @@ void Sandbox::Renderer::Prepare(const std::shared_ptr<Window>& window)
 
     swapchain->onAfterRecreateSwapchain.BindMember<Sandbox::Renderer, &Renderer::OnAfterRecreateSwapchain>(this);
     onViewModeChanged.BindMember<Renderer, &Renderer::OnViewModeChanged>(this);
+    pipelineCaching     = std::make_shared<PipelineCaching>();
+    shaderModuleCaching = std::make_shared<ShaderModuleCaching>(device);
 }
 
 void Sandbox::Renderer::Cleanup()
@@ -81,6 +85,8 @@ void Sandbox::Renderer::Cleanup()
     {
         return;
     }
+    shaderModuleCaching->Cleanup();
+    pipelineCaching->Cleanup();
 
     for (size_t i = 0; i < maxFramesFlight; ++i)
     {
@@ -132,11 +138,13 @@ void Sandbox::Renderer::Draw()
 
 void Sandbox::Renderer::Preset()
 {
-    onOtherCommandBuffer.Trigger(frameFlightIndex);
+    // onOtherCommandBuffer.Trigger(frameFlightIndex);
 
     swapchain->Preset({renderFinishedSemaphores[frameFlightIndex]});
-    frameFlightIndex = (frameFlightIndex + 1) % maxFramesFlight;
+    FrameFlightIndexIncrease();
 }
+
+void Sandbox::Renderer::FrameFlightIndexIncrease() { frameFlightIndex = (frameFlightIndex + 1) % maxFramesFlight; }
 
 void Sandbox::Renderer::RecordCommandBuffer(std::shared_ptr<CommandBuffer>& commandBuffer)
 {
@@ -171,6 +179,7 @@ void Sandbox::Renderer::RecordCommandBuffer(std::shared_ptr<CommandBuffer>& comm
         onBeforeRendererDraw.Trigger(commandBuffer, frameFlightIndex);
 
         commandBuffer->BindPipeline(pipeline);
+
         uint32_t dynamicAlignment = GetUniformDynamicAlignment(sizeof(glm::mat4));
         uint32_t offset           = 0;
         for (auto& material : queuedMaterials)
@@ -178,7 +187,7 @@ void Sandbox::Renderer::RecordCommandBuffer(std::shared_ptr<CommandBuffer>& comm
             if (material != nullptr)
             {
                 // onBeforeDrawMesh.Trigger(commandBuffer, frameFlightIndex, nextMesh);
-                material->DrawMesh(pipeline->pipelineState->pipelineLayout, rendererSource, frameFlightIndex, commandBuffer, offset++ * dynamicAlignment);
+                material->DrawMesh(pipeline->pipelineLayout, rendererSource, frameFlightIndex, commandBuffer, offset++ * dynamicAlignment);
                 // onAfterDrawMesh.Trigger(commandBuffer, frameFlightIndex, nextMesh);
             }
         }
@@ -188,7 +197,7 @@ void Sandbox::Renderer::RecordCommandBuffer(std::shared_ptr<CommandBuffer>& comm
             if (material != nullptr)
             {
                 // onBeforeDrawMesh.Trigger(commandBuffer, frameFlightIndex, nextMesh);
-                material->DrawOverlay(pipeline->pipelineState->pipelineLayout, rendererSource, frameFlightIndex, commandBuffer, offset++ * dynamicAlignment);
+                material->DrawOverlay(pipeline->pipelineLayout, rendererSource, frameFlightIndex, commandBuffer, offset++ * dynamicAlignment);
                 // onAfterDrawMesh.Trigger(commandBuffer, frameFlightIndex, nextMesh);
             }
         }

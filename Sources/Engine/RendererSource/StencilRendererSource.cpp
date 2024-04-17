@@ -4,6 +4,7 @@
 
 #include "Engine/EntityComponent/Scene.hpp"
 #include "FileSystem/Directory.hpp"
+#include "VulkanRHI/Common/PipelineCaching.hpp"
 #include "VulkanRHI/Core/CommandBuffer.hpp"
 #include "VulkanRHI/Core/DescriptorSet.hpp"
 #include "VulkanRHI/Core/Pipeline.hpp"
@@ -48,15 +49,17 @@ void Sandbox::StencilRendererSource::CreatePipeline(std::shared_ptr<Renderer>& r
         {
             continue;
         }
-        auto pipelineState                                 = std::make_shared<PipelineState>(*rendererSource->pipeline->pipelineState);
+        // TODO:不需要这样复制构造
+        auto pipelineState                                 = std::make_shared<PipelineState>(*rendererSource->pipelineState);
+        pipelineState->rasterizationState.polygonMode      = VK_POLYGON_MODE_FILL;
         pipelineState->depthStencilState.stencilTestEnable = VK_TRUE;
 
         pipelineState->depthStencilState.front = vkStencilOpState;
         pipelineState->depthStencilState.back  = backOpState;
-        stencilInputLitPipeline                = std::make_shared<Pipeline>(renderer->device, pipelineState);
+        stencilInputLitPipeline                = renderer->pipelineCaching->GetOrCreatePipeline(pipelineState);
     }
     auto edgeColor                                            = glm::vec3(243.0f / 255, 151.0f / 255, 44.0f / 255);
-    auto pipelineStateOutline                                 = std::make_shared<PipelineState>(shaderModules, renderer->renderPass, pipelineLayout);
+    auto pipelineStateOutline                                 = std::make_shared<PipelineState>(shaderModules, renderer->renderPass);
     pipelineStateOutline->depthStencilState.stencilTestEnable = VK_TRUE;
     pipelineStateOutline->depthStencilState.depthTestEnable   = VK_FALSE;
 
@@ -69,7 +72,7 @@ void Sandbox::StencilRendererSource::CreatePipeline(std::shared_ptr<Renderer>& r
     pipelineStateOutline->depthStencilState.front = vkStencilOpState;
     pipelineStateOutline->depthStencilState.back  = backOpState;
 
-    stencilOutlinePipeline = std::make_shared<Pipeline>(renderer->device, pipelineStateOutline);
+    stencilOutlinePipeline = renderer->pipelineCaching->GetOrCreatePipeline(pipelineStateOutline);
     colorUniformBuffer->Update(&edgeColor);
 }
 
@@ -83,7 +86,7 @@ void Sandbox::StencilRendererSource::CustomDrawOverlay(const std::shared_ptr<Mes
     transform->scale += 0.05f;
     Tick(m_renderer);
     commandBuffer->BindPipeline(stencilOutlinePipeline);
-    commandBuffer->BindDescriptorSet(stencilOutlinePipeline->pipelineState->pipelineLayout, descriptorSets[frameFlightIndex], {dynamicOffsets});
+    commandBuffer->BindDescriptorSet(stencilOutlinePipeline->pipelineLayout, descriptorSets[frameFlightIndex], {dynamicOffsets});
     commandBuffer->BindVertexBuffers(mesh->vertexBuffer);
     commandBuffer->BindIndexBuffer(mesh->indexBuffer);
     commandBuffer->DrawIndexed(mesh->Indices());
@@ -96,7 +99,7 @@ void Sandbox::StencilRendererSource::CustomDrawMesh(const std::shared_ptr<Mesh>&
     WireframeRendererSource::CustomDrawMesh(mesh, commandBuffer, descriptorSet, frameFlightIndex, dynamicOffsets);
     auto boundPipeline = commandBuffer->GetBoundPipeline();
     commandBuffer->BindPipeline(stencilInputLitPipeline);
-    commandBuffer->BindDescriptorSet(stencilInputLitPipeline->pipelineState->pipelineLayout, descriptorSet, {dynamicOffsets});
+    commandBuffer->BindDescriptorSet(stencilInputLitPipeline->pipelineLayout, descriptorSet, {dynamicOffsets});
     commandBuffer->BindVertexBuffers(mesh->vertexBuffer);
     commandBuffer->BindIndexBuffer(mesh->indexBuffer);
     commandBuffer->DrawIndexed(mesh->Indices());

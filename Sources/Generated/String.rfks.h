@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../Misc/String.hpp"
+#include "../Standard/String.hpp"
 
 #include <type_traits>
 #include <Refureku/TypeInfo/Entity/DefaultEntityRegisterer.h>
@@ -13,7 +13,7 @@
 #include <Refureku/TypeInfo/Archetypes/Template/TemplateTemplateParameter.h>
 
 namespace rfk::generated { 
- static rfk::NamespaceFragment const& getNamespaceFragment_7028080843842788705u_18329063851905182782() noexcept {
+ static rfk::NamespaceFragment const& getNamespaceFragment_7028080843842788705u_2251591766358014641() noexcept {
 static rfk::NamespaceFragment fragment("Sandbox", 7028080843842788705u);
 static bool initialized = false;
 if (!initialized) {
@@ -22,7 +22,7 @@ fragment.setNestedEntitiesCapacity(1u);
 fragment.addNestedEntity(*rfk::getArchetype<Sandbox::String>());
 }
 return fragment; }
-static rfk::NamespaceFragmentRegisterer const namespaceFragmentRegisterer_7028080843842788705u_18329063851905182782(rfk::generated::getNamespaceFragment_7028080843842788705u_18329063851905182782());
+static rfk::NamespaceFragmentRegisterer const namespaceFragmentRegisterer_7028080843842788705u_2251591766358014641(rfk::generated::getNamespaceFragment_7028080843842788705u_2251591766358014641());
  }
 rfk::Class const& Sandbox::String::staticGetArchetype() noexcept {
 static bool initialized = false;

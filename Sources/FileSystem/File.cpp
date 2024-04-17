@@ -3,7 +3,7 @@
 #include "File.hpp"
 
 #include "Directory.hpp"
-#include "Misc/String.hpp"
+#include "Standard/String.hpp"
 
 Sandbox::File::File(const std::string& inPath) { path = std::filesystem::path(inPath); }
 Sandbox::File::File(const String& inPath)

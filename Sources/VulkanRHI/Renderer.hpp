@@ -34,6 +34,8 @@ namespace Sandbox
     class DescriptorSet;
     class RendererSource;
     class Material;
+    class PipelineCaching;
+    class ShaderModuleCaching;
 
     struct WindowSerializedProperties;
 
@@ -51,6 +53,7 @@ namespace Sandbox
          * \brief 提交到交换链
          */
         void Preset();
+        void FrameFlightIndexIncrease();
 
         void RecordCommandBuffer(std::shared_ptr<CommandBuffer>& commandBuffer);
 
@@ -76,7 +79,9 @@ namespace Sandbox
         std::vector<std::shared_ptr<RenderTarget>>      renderTargets;
         std::vector<std::shared_ptr<RenderAttachments>> renderAttachments;
 
-        std::shared_ptr<Pipeline> pipeline;
+        std::shared_ptr<PipelineCaching>     pipelineCaching;
+        std::shared_ptr<ShaderModuleCaching> shaderModuleCaching;
+        std::shared_ptr<Pipeline>            pipeline;
 
         uint32_t maxFramesFlight = 2;
         // 根据最大飞行帧数定制大小

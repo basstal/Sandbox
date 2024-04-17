@@ -93,7 +93,7 @@ void Sandbox::RendererSource::UpdateUniforms(uint32_t frameFlightIndex)
 void Sandbox::RendererSource::Cleanup()
 {
     pipeline->Cleanup();
-    pipelineLayout->Cleanup();
+    // pipelineLayout->Cleanup();
     for (auto& shaderModule : shaderModules)
     {
         shaderModule->Cleanup();
@@ -105,6 +105,8 @@ void Sandbox::RendererSource::Cleanup()
         uboMvp[i]->vpUbo->Cleanup();
     }
 }
+
+void Sandbox::RendererSource::PushConstants(const std::shared_ptr<CommandBuffer>& inCommandBuffer) {}
 
 void Sandbox::RendererSource::CustomDrawMesh(const std::shared_ptr<Sandbox::Mesh>& mesh, const std::shared_ptr<Sandbox::CommandBuffer>& shared,
                                              const std::shared_ptr<Sandbox::DescriptorSet>& descriptorSet, uint32_t frameFlightIndex, uint32_t dynamicOffsets)

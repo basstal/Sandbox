@@ -9,30 +9,32 @@
 #include "ShaderModule.hpp"
 #include "VulkanRHI/Rendering/PipelineState.hpp"
 
-// TODO: remove this method
-Sandbox::Pipeline::Pipeline(const std::shared_ptr<Device>& device, const std::vector<std::shared_ptr<ShaderModule>>& shaderModules,
-                            const std::shared_ptr<RenderPass>& renderPass, const std::shared_ptr<PipelineLayout>& pipelineLayout, VkPrimitiveTopology primitiveTopology,
-                            VkPolygonMode polygonMode) :
-    Pipeline(device, CreatePipelineState(shaderModules, renderPass, pipelineLayout, primitiveTopology, polygonMode))
-{
-}
+// // TODO: remove this method
+// Sandbox::Pipeline::Pipeline(const std::shared_ptr<Device>& device, const std::vector<std::shared_ptr<ShaderModule>>& shaderModules,
+//                             const std::shared_ptr<RenderPass>& renderPass, const std::shared_ptr<PipelineLayout>& pipelineLayout, VkPrimitiveTopology primitiveTopology,
+//                             VkPolygonMode polygonMode) :
+//     Pipeline(device, CreatePipelineState(shaderModules, renderPass, pipelineLayout, primitiveTopology, polygonMode))
+// {
+// }
 
-Sandbox::Pipeline::Pipeline(const std::shared_ptr<Device>& device, const std::shared_ptr<PipelineState>& pipelineState) : pipelineState(pipelineState), m_device(device)
+Sandbox::Pipeline::Pipeline(const std::shared_ptr<Device>& device, const std::shared_ptr<PipelineState>& pipelineState) :
+    shaderModules(pipelineState->shaderModules), m_device(device)  // pipelineLayout(pipelineState->pipelineLayout), m_device(device)
 {
+    pipelineLayout = std::make_shared<PipelineLayout>(device, pipelineState->shaderModules);
     CreatePipeline(pipelineState);
 }
 
-// TODO: remove this method
-std::shared_ptr<Sandbox::PipelineState> Sandbox::Pipeline::CreatePipelineState(const std::vector<std::shared_ptr<ShaderModule>>& shaderModules,
-                                                                               const std::shared_ptr<RenderPass>&                renderPass,
-                                                                               const std::shared_ptr<PipelineLayout>& pipelineLayout, VkPrimitiveTopology primitiveTopology,
-                                                                               VkPolygonMode polygonMode)
-{
-    auto createdPipelineState                            = std::make_shared<PipelineState>(shaderModules, renderPass, pipelineLayout);
-    createdPipelineState->inputAssemblyState.topology    = primitiveTopology;
-    createdPipelineState->rasterizationState.polygonMode = polygonMode;
-    return createdPipelineState;
-}
+// // TODO: remove this method
+// std::shared_ptr<Sandbox::PipelineState> Sandbox::Pipeline::CreatePipelineState(const std::vector<std::shared_ptr<ShaderModule>>& shaderModules,
+//                                                                                const std::shared_ptr<RenderPass>&                renderPass,
+//                                                                                const std::shared_ptr<PipelineLayout>& inPipelineLayout, VkPrimitiveTopology primitiveTopology,
+//                                                                                VkPolygonMode polygonMode)
+// {
+//     auto createdPipelineState                            = std::make_shared<PipelineState>(shaderModules, renderPass, inPipelineLayout);
+//     createdPipelineState->inputAssemblyState.topology    = primitiveTopology;
+//     createdPipelineState->rasterizationState.polygonMode = polygonMode;
+//     return createdPipelineState;
+// }
 
 void Sandbox::Pipeline::CreatePipeline(const std::shared_ptr<PipelineState>& inPipelineState)
 {
@@ -141,7 +143,7 @@ void Sandbox::Pipeline::CreatePipeline(const std::shared_ptr<PipelineState>& inP
     pipelineInfo.pDepthStencilState  = &depthStencil;
     pipelineInfo.pColorBlendState    = &colorBlending;
     pipelineInfo.pDynamicState       = &dynamicState;
-    pipelineInfo.layout              = inPipelineState->pipelineLayout->vkPipelineLayout;
+    pipelineInfo.layout              = pipelineLayout->vkPipelineLayout;
     pipelineInfo.renderPass          = inPipelineState->renderPass->vkRenderPass;
     pipelineInfo.subpass             = 0;
     pipelineInfo.basePipelineHandle  = VK_NULL_HANDLE;  // Optional
@@ -162,5 +164,6 @@ void Sandbox::Pipeline::Cleanup()
         return;
     }
     vkDestroyPipeline(m_device->vkDevice, vkPipeline, nullptr);
+    pipelineLayout->Cleanup();
     m_cleaned = true;
 }

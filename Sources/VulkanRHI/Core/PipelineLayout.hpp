@@ -17,9 +17,8 @@ namespace Sandbox
          * \brief
          * \param device
          * \param shaderModules
-         * \param dynamicBindings 对应 shader 中 binding 为 dynamic 的 uniform buffer 资源
          */
-        PipelineLayout(const std::shared_ptr<Device>& device, const std::vector<std::shared_ptr<ShaderModule>>& shaderModules, const std::vector<uint32_t>& dynamicBindings);
+        PipelineLayout(const std::shared_ptr<Device>& device, const std::vector<std::shared_ptr<ShaderModule>>& shaderModules);
 
         ~PipelineLayout();
 

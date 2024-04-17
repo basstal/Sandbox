@@ -11,7 +11,8 @@ toProcessDirectories = [
     "D:/Documents/GitHub/Sandbox/Sources/Serialization",
     "D:/Documents/GitHub/Sandbox/Sources/Platform",
     "D:/Documents/GitHub/Sandbox/Sources/Serialization/Property",
-    "D:/Documents/GitHub/Sandbox/Sources/Editor/ImGuiWindows"
+    "D:/Documents/GitHub/Sandbox/Sources/Editor/ImGuiWindows",
+    "D:/Documents/GitHub/Sandbox/Sources/Standard",
 ]
 
 # Files to parse which are not included in any directory of toParseDirectories

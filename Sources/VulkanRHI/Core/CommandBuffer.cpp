@@ -134,16 +134,21 @@ void Sandbox::CommandBuffer::BindDescriptorSet(const std::shared_ptr<PipelineLay
 
 void Sandbox::CommandBuffer::BindPipeline(const std::shared_ptr<Pipeline>& pipeline)
 {
-    auto& pipelineState = pipeline->pipelineState;
     vkCmdBindPipeline(vkCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->vkPipeline);
+    // PushConstants(pipeline->pipelineLayout->vkPipelineLayout, pushConstantsInfo);
+    m_boundPipeline = pipeline;
+}
 
-    auto& pushConstantsInfo = pipelineState->pushConstantsInfo;
-    auto& pipelineLayout    = pipelineState->pipelineLayout;
+void Sandbox::CommandBuffer::PushConstants(const PushConstantsInfo& pushConstantsInfo)
+{
+    // auto& pipelineState = m_boundPipeline->pipelineState;
+    // auto& pushConstantsInfo = pipelineState->pushConstantsInfo;
+    // auto& pipelineLayout = pipelineState->pipelineLayout;
+    // TODO:与 m_boundPipeline->pipelineLayout->pushConstantRanges 对齐
     if (pushConstantsInfo.size > 0 && pushConstantsInfo.data != nullptr)
     {
-        vkCmdPushConstants(vkCommandBuffer, pipelineLayout->vkPipelineLayout, pushConstantsInfo.stage, 0, pushConstantsInfo.size, pushConstantsInfo.data);
+        vkCmdPushConstants(vkCommandBuffer, m_boundPipeline->pipelineLayout->vkPipelineLayout, pushConstantsInfo.stage, 0, pushConstantsInfo.size, pushConstantsInfo.data);
     }
-    m_boundPipeline = pipeline;
 }
 
 void Sandbox::CommandBuffer::BindVertexBuffers(const std::shared_ptr<Buffer>& buffer)

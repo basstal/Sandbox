@@ -4,10 +4,10 @@
 
 #include "Device.hpp"
 #include "FileSystem/Logger.hpp"
+#include "Misc/Debug.hpp"
 #include "ShaderModule.hpp"
 
-Sandbox::DescriptorSetLayout::DescriptorSetLayout(const std::shared_ptr<Device>& device, const std::vector<std::shared_ptr<ShaderModule>>& shaderModules,
-                                                  const std::vector<uint32_t>& dynamicBindings)
+Sandbox::DescriptorSetLayout::DescriptorSetLayout(const std::shared_ptr<Device>& device, const std::vector<std::shared_ptr<ShaderModule>>& shaderModules)
 {
     m_device = device;
     std::vector<VkDescriptorSetLayoutBinding> vkDescriptorSetLayoutBindings;
@@ -15,19 +15,19 @@ Sandbox::DescriptorSetLayout::DescriptorSetLayout(const std::shared_ptr<Device>&
     {
         shaderModule->ReflectDescriptorSetLayoutBindings(vkDescriptorSetLayoutBindings, nameToBinding, m_bindingToLayoutBinding);
     }
-    for (auto& vkDescriptorSetLayoutBinding : vkDescriptorSetLayoutBindings)
-    {
-        // 查找 vkDescriptorSetLayoutBinding.binding 是否在 dynamicBindings 中
-        auto it = std::find(dynamicBindings.begin(), dynamicBindings.end(), vkDescriptorSetLayoutBinding.binding);
-        if (it != dynamicBindings.end())
-        {
-            vkDescriptorSetLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
-        }
-    }
-    for (auto& dynamicBinding : dynamicBindings)
-    {
-        m_bindingToLayoutBinding[dynamicBinding].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
-    }
+    // for (auto& vkDescriptorSetLayoutBinding : vkDescriptorSetLayoutBindings)
+    // {
+    //     // 查找 vkDescriptorSetLayoutBinding.binding 是否在 dynamicBindings 中
+    //     auto it = std::find(dynamicBindings.begin(), dynamicBindings.end(), vkDescriptorSetLayoutBinding.binding);
+    //     if (it != dynamicBindings.end())
+    //     {
+    //         vkDescriptorSetLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
+    //     }
+    // }
+    // for (auto& dynamicBinding : dynamicBindings)
+    // {
+    //     m_bindingToLayoutBinding[dynamicBinding].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
+    // }
     VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo{};
     descriptorSetLayoutCreateInfo.sType        = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
     descriptorSetLayoutCreateInfo.bindingCount = static_cast<uint32_t>(vkDescriptorSetLayoutBindings.size());
@@ -37,6 +37,8 @@ Sandbox::DescriptorSetLayout::DescriptorSetLayout(const std::shared_ptr<Device>&
     {
         Logger::Fatal("failed to create descriptor set layout!");
     }
+
+    LOGI("VulkanRHI", "{}\n{}", PtrToHexString(vkDescriptorSetLayout), GetCallStack())
 }
 
 Sandbox::DescriptorSetLayout::~DescriptorSetLayout() { Cleanup(); }
