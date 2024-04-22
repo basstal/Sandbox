@@ -7,13 +7,13 @@
 #include "Device.hpp"
 #include "FileSystem/Logger.hpp"
 #include "Misc/Debug.hpp"
-#include "VulkanRHI/Common/ResourceCaching.hpp"
+#include "Misc/TypeCasting.hpp"
+#include "WriteDescriptorSet.hpp"
 
 
-Sandbox::DescriptorSet::DescriptorSet(const std::shared_ptr<Device>& device, const std::shared_ptr<DescriptorPool>& descriptorPool,
-                                      const std::shared_ptr<DescriptorSetLayout>& descriptorSetLayout)
+Sandbox::DescriptorSet::DescriptorSet(const std::shared_ptr<DescriptorPool>& descriptorPool, const std::shared_ptr<DescriptorSetLayout>& descriptorSetLayout)
 {
-    m_device         = device;
+    m_device         = descriptorPool->GetDevice();
     m_descriptorPool = descriptorPool;
     Allocate(descriptorPool, descriptorSetLayout);
     // Prepare(inBufferInfoMapping, inImageInfoMapping, descriptorSetLayout);
@@ -68,22 +68,26 @@ void Sandbox::DescriptorSet::BindBufferInfoMapping(const BindingMap<VkDescriptor
             }
             bufferInfos[0].range = bufferRangeLimit;
 
-            VkWriteDescriptorSet writeDescriptorSet{};
-            writeDescriptorSet.sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-            writeDescriptorSet.dstBinding      = bindingIndex;
-            writeDescriptorSet.descriptorType  = out.descriptorType;
-            writeDescriptorSet.dstSet          = vkDescriptorSet;
-            writeDescriptorSet.pBufferInfo     = bufferInfos.data();
-            writeDescriptorSet.dstArrayElement = 0;
-            writeDescriptorSet.descriptorCount = out.descriptorCount;
+            WriteDescriptorSet writeDescriptorSet{};
+            auto&              vkWriteDescriptorSet = writeDescriptorSet.vkWriteDescriptorSet;
+            vkWriteDescriptorSet.sType              = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+            vkWriteDescriptorSet.dstBinding         = bindingIndex;
+            vkWriteDescriptorSet.descriptorType     = out.descriptorType;
+            vkWriteDescriptorSet.dstSet             = vkDescriptorSet;
+            vkWriteDescriptorSet.pBufferInfo        = bufferInfos.empty() ? nullptr : bufferInfos.data();
+            vkWriteDescriptorSet.dstArrayElement    = 0;
+            vkWriteDescriptorSet.descriptorCount    = out.descriptorCount;
             writeDescriptorSets.push_back(writeDescriptorSet);
+        }
+        else
+        {
+            LOGW("VulkanRHI", "DescriptorSetLayout::TryGetLayoutBinding() failed with bindingIndex {} not found", std::to_string(bindingIndex))
         }
     }
 }
 
-void Sandbox::DescriptorSet::BindInfoMapping(const std::map<uint32_t, std::vector<VkDescriptorBufferInfo>>& inBufferInfoMapping,
-                                             const std::map<uint32_t, std::vector<VkDescriptorImageInfo>>&  inImageInfoMapping,
-                                             const std::shared_ptr<DescriptorSetLayout>&                    descriptorSetLayout)
+void Sandbox::DescriptorSet::BindImageInfoMapping(const std::map<uint32_t, std::vector<VkDescriptorImageInfo>>& inImageInfoMapping,
+                                                  const std::shared_ptr<DescriptorSetLayout>&                   descriptorSetLayout)
 {
     // if (!writeDescriptorSets.empty() || !writeDescriptorSetsImage.empty())
     // {
@@ -92,7 +96,6 @@ void Sandbox::DescriptorSet::BindInfoMapping(const std::map<uint32_t, std::vecto
     // }
 
     VkDescriptorSetLayoutBinding out;
-    BindBufferInfoMapping(inBufferInfoMapping, descriptorSetLayout);
 
     m_imageInfoMapping = inImageInfoMapping;
     writeDescriptorSetsImage.clear();
@@ -101,44 +104,55 @@ void Sandbox::DescriptorSet::BindInfoMapping(const std::map<uint32_t, std::vecto
         if (descriptorSetLayout->TryGetLayoutBinding(bindingIndex, out))
         {
             assert(imageInfos.size() == out.descriptorCount);
-            VkWriteDescriptorSet writeDescriptorSet{};
-            writeDescriptorSet.sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-            writeDescriptorSet.dstBinding      = bindingIndex;
-            writeDescriptorSet.descriptorType  = out.descriptorType;
-            writeDescriptorSet.pImageInfo      = imageInfos.data();
-            writeDescriptorSet.dstSet          = vkDescriptorSet;
-            writeDescriptorSet.dstArrayElement = 0;
-            writeDescriptorSet.descriptorCount = out.descriptorCount;
+            WriteDescriptorSet writeDescriptorSet{};
+            auto&              vkWriteDescriptorSet = writeDescriptorSet.vkWriteDescriptorSet;
+            vkWriteDescriptorSet.sType              = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+            vkWriteDescriptorSet.dstBinding         = bindingIndex;
+            vkWriteDescriptorSet.descriptorType     = out.descriptorType;
+            vkWriteDescriptorSet.pImageInfo         = imageInfos.data();
+            vkWriteDescriptorSet.dstSet             = vkDescriptorSet;
+            vkWriteDescriptorSet.dstArrayElement    = 0;
+            vkWriteDescriptorSet.descriptorCount    = out.descriptorCount;
             writeDescriptorSetsImage.push_back(writeDescriptorSet);
+        }
+        else
+        {
+            LOGW("VulkanRHI", "DescriptorSetLayout::TryGetLayoutBinding() failed with bindingIndex {} not found", std::to_string(bindingIndex))
         }
     }
 }
 
 void Sandbox::DescriptorSet::Update()
 {
-    std::vector<VkWriteDescriptorSet> writeOperations;
-    std::vector<uint64_t>             writeOperationsHash;
+    if (m_cleaned)
+    {
+        LOGF("VulkanRHI", "Should not call here\n{}", GetCallStack())
+    }
+    std::vector<WriteDescriptorSet>   writeOperations;
+    std::vector<VkWriteDescriptorSet> updateDescriptorSets;
     auto                              totalWriteCount = writeDescriptorSets.size() + writeDescriptorSetsImage.size();
+    // LOGI("VulkanRHI", "totalWriteCount : {}", std::to_string(totalWriteCount))
     for (size_t i = 0; i < totalWriteCount; i++)
     {
-        const VkWriteDescriptorSet& writeOperation     = i < writeDescriptorSets.size() ? writeDescriptorSets[i] : writeDescriptorSetsImage[i - writeDescriptorSets.size()];
-        size_t                      writeOperationHash = 0;
-        HashParam(writeOperationHash, writeOperation);
-        auto it = m_updatedBindings.find(writeOperation.dstBinding);
-        if (it == m_updatedBindings.end() || it->second != writeOperationHash)
+        const WriteDescriptorSet& writeOperation = i < writeDescriptorSets.size() ? writeDescriptorSets[i] : writeDescriptorSetsImage[i - writeDescriptorSets.size()];
+        auto                      it             = m_updatedBindings.find(writeOperation);
+        // LOGD("VulkanRHI", "it == m_updatedBindings.end() : {}, {}", std::to_string(it == m_updatedBindings.end()),
+        if (it == m_updatedBindings.end() || it->second != writeOperation.vkWriteDescriptorSet.dstBinding)
         {
+            LOGD("VulkanRHI", "writeOperation.dstSet : {}, binding : {}", PtrToHexString(writeOperation.vkWriteDescriptorSet.dstSet),
+                 std::to_string(writeOperation.vkWriteDescriptorSet.dstBinding))
             writeOperations.push_back(writeOperation);
-            writeOperationsHash.push_back(writeOperationHash);
+            updateDescriptorSets.push_back(writeOperation.vkWriteDescriptorSet);
         }
     }
+    // LOGI("VulkanRHI", "writeOperations.size() : {}", std::to_string(writeOperations.size()))
     if (!writeOperations.empty())
     {
-        vkUpdateDescriptorSets(m_device->vkDevice, static_cast<uint32_t>(writeOperations.size()), writeOperations.data(), 0, nullptr);
+        vkUpdateDescriptorSets(m_device->vkDevice, ToUInt32(updateDescriptorSets.size()), updateDescriptorSets.data(), 0, nullptr);
     }
     for (size_t i = 0; i < writeOperations.size(); ++i)
     {
-        const VkWriteDescriptorSet& writeOperation     = writeOperations[i];
-        const uint64_t&             writeOperationHash = writeOperationsHash[i];
-        m_updatedBindings[writeOperation.dstBinding]   = writeOperationHash;
+        const WriteDescriptorSet& writeOperation = writeOperations[i];
+        m_updatedBindings[writeOperation]        = writeOperation.vkWriteDescriptorSet.dstBinding;
     }
 }

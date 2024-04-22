@@ -53,6 +53,7 @@ namespace Sandbox NAMESPACE()
         void DrawOverlay();
 
         void OnRecreateFramebuffer();
+        // void OnViewModeChanged(EViewMode inViewMode);
 
         void SelectObject();
 
@@ -63,12 +64,16 @@ namespace Sandbox NAMESPACE()
 
         std::shared_ptr<Camera> mainCamera;
 
-        VkExtent2D resolvedResolution;
+        VkExtent2D                 resolvedResolution;
+        // std::shared_ptr<ImageView> outputImageView;
 
 
     private:
+        // std::shared_ptr<ImageView> m_lastOutputImageView;
+
+        std::vector<VkDescriptorSet> m_lastPresentDescriptorSets;
         ImVec2 CalculateStartPosition(int aspectWidth, int aspectHeight, int resolutionWidth, int resolutionHeight, uint32_t& adjustedWidth, uint32_t& adjustedHeight);
-        void   BindCameraPosition(EViewMode inViewMode);
+        void   OnViewModeChanged(EViewMode inViewMode);
         void   OnAfterDrawMesh(const std::shared_ptr<CommandBuffer>&, uint32_t, std::shared_ptr<Mesh>&);
         // std::shared_ptr<GameObject> m_referenceGameObject;
         ImVec2                    m_startPosition;

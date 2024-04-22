@@ -9,16 +9,16 @@ namespace Sandbox
     class DescriptorSetLayout;
     class ShaderModule;
     class Device;
+    class ShaderLinkage;
 
     class PipelineLayout
     {
     public:
         /**
          * \brief
-         * \param device
-         * \param shaderModules
+         * \param shaderLinkage
          */
-        PipelineLayout(const std::shared_ptr<Device>& device, const std::vector<std::shared_ptr<ShaderModule>>& shaderModules);
+        PipelineLayout(const std::shared_ptr<Device>& device, const std::shared_ptr<ShaderLinkage>& shaderLinkage);
 
         ~PipelineLayout();
 

@@ -1,10 +1,14 @@
 ﻿#pragma once
 #include <vector>
 
+#include "deprecated/stb.h"
 #include "vulkan/vulkan_core.h"
 
 namespace Sandbox
 {
+    /**
+     * \brief Attachment description
+     */
     struct Attachment
     {
         VkFormat              format        = VK_FORMAT_UNDEFINED;
@@ -22,8 +26,11 @@ namespace Sandbox
 
     struct SubpassInfo
     {
-        std::vector<uint32_t> outputAttachments{};
-        std::vector<uint32_t> colorResolveAttachments{};
-        bool                  disableDepthStencilAttachment = false;
+        std::vector<uint32_t> colorAttachments{};
+        std::vector<uint32_t> resolveAttachments{};
+        std::vector<uint32_t> depthStencilAttachments{};
+        std::vector<uint32_t> inputAttachments{};
+        // TODO: deprecate this field
+        bool disableDepthStencilAttachment = false;
     };
 }  // namespace Sandbox

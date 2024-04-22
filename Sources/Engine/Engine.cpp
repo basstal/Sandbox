@@ -15,10 +15,13 @@
 #include "PhysicsSystem.hpp"
 #include "Platform/GlfwCallbackBridge.hpp"
 #include "Platform/Window.hpp"
+#include "RendererSource/BufferRendererSource.hpp"
 #include "RendererSource/PbrRendererSource.hpp"
 #include "RendererSource/UnlitRendererSource.hpp"
 #include "RendererSource/WireframeRendererSource.hpp"
 #include "Timer.hpp"
+#include "VulkanRHI/Common/Caching/PipelineCaching.hpp"
+#include "VulkanRHI/Common/Caching/ShaderModuleCaching.hpp"
 #include "VulkanRHI/Common/Debug.hpp"
 #include "VulkanRHI/Core/Device.hpp"
 #include "VulkanRHI/Renderer.hpp"
@@ -55,6 +58,13 @@ void Sandbox::Engine::Prepare()
     CreateRenderer();
     CreateEditor();
     DataBinding::Create("Engine/Reload")->Bind([this] { shouldRecreateRenderer = true; });
+    DataBinding::Create("Engine/RecompileShaders")
+        ->Bind(
+            [this]
+            {
+                renderer->shaderModuleCaching->RecompileAll();
+                renderer->pipelineCaching->ReloadAll();
+            });
     physicsSystem = std::make_shared<PhysicsSystem>();
     physicsSystem->Prepare();
 
@@ -87,18 +97,19 @@ void Sandbox::Engine::CreateRenderer()
 
     auto pbrRendererSource = std::make_shared<PbrRendererSource>();
     pbrRendererSource->Prepare(renderer);
-    // pbrRendererSource->UpdateModels(renderer, models,TODO);
     renderer->rendererSourceMapping[EViewMode::Lit] = pbrRendererSource;
 
     auto unlitRendererSource = std::make_shared<UnlitRendererSource>();
     unlitRendererSource->Prepare(renderer);
-    // unlitRendererSource->UpdateModels(renderer, models,TODO);
     renderer->rendererSourceMapping[EViewMode::Unlit] = unlitRendererSource;
 
     auto wireframeRendererSource = std::make_shared<WireframeRendererSource>();
     wireframeRendererSource->Prepare(renderer);
-    // wireframeRendererSource->UpdateModels(renderer, models,TODO);
     renderer->rendererSourceMapping[EViewMode::Wireframe] = wireframeRendererSource;
+
+    auto bufferRendererSource = std::make_shared<BufferRendererSource>();
+    bufferRendererSource->Prepare(renderer);
+    renderer->rendererSourceMapping[EViewMode::DepthBuffer] = bufferRendererSource;
 
     renderer->onViewModeChanged.Trigger(Lit);
 }
@@ -149,22 +160,22 @@ void Sandbox::Engine::MainLoop()
         }
         rendererTimer->EndFrame();
 
-        // TODO:重构这个功能
-        if (shouldRecreateRenderer)
-        {
-            shouldRecreateRenderer = false;
-            Logger::onLogMessage.Cleanup();
-            editor->Cleanup();
-            // // TODO:临时放在这里清理
-            // mesh->Cleanup();
-            ValidateVkResult(vkDeviceWaitIdle(renderer->device->vkDevice));
-            renderer->Cleanup();
-            CreateRenderer();
-            CreateEditor();
-            // // 清理完后重新加载
-            // mesh->LoadFromModel(renderer->device, renderer->commandBuffers[0], model);
-            // editor->imGuiRenderer->viewport->mainCamera = camera;
-        }
+        // // TODO:重构这个功能
+        // if (shouldRecreateRenderer)
+        // {
+        //     shouldRecreateRenderer = false;
+        //     Logger::onLogMessage.Cleanup();
+        //     editor->Cleanup();
+        //     // // TODO:临时放在这里清理
+        //     // mesh->Cleanup();
+        //     ValidateVkResult(vkDeviceWaitIdle(renderer->device->vkDevice));
+        //     renderer->Cleanup();
+        //     CreateRenderer();
+        //     CreateEditor();
+        //     // // 清理完后重新加载
+        //     // mesh->LoadFromModel(renderer->device, renderer->commandBuffers[0], model);
+        //     // editor->imGuiRenderer->viewport->mainCamera = camera;
+        // }
     }
     ValidateVkResult(vkDeviceWaitIdle(renderer->device->vkDevice));
     if (Scene::currentScene != nullptr)

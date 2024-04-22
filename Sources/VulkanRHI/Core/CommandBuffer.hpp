@@ -51,10 +51,10 @@ namespace Sandbox
 
         void SetScissor(uint32_t firstScissor, const std::vector<VkRect2D>& scissors);
         void BindDescriptorSet(const std::shared_ptr<PipelineLayout>& pipelineLayout, const std::shared_ptr<DescriptorSet>& descriptorSet,
-                               const std::vector<uint32_t>& dynamicOffsets);
+                               const std::vector<uint32_t>& dynamicOffsets = {});
 
         void BindPipeline(const std::shared_ptr<Pipeline>& pipeline);
-        void PushConstants(const PushConstantsInfo& pushConstantsInfo);
+        void PushConstants(const std::shared_ptr<PipelineLayout>& pipelineLayout, const PushConstantsInfo& pushConstantsInfo);
 
         void BindVertexBuffers(const std::shared_ptr<Buffer>& buffer);
 
@@ -81,14 +81,15 @@ namespace Sandbox
 
         void ImageMemoryBarrier(const std::shared_ptr<Image>& image);
 
-        void BlitImage(const std::shared_ptr<Image>& srcImage, const std::shared_ptr<Image>& dstImage, VkExtent2D size);
+        void                    BlitImage(const std::shared_ptr<Image>& srcImage, const std::shared_ptr<Image>& dstImage, VkExtent2D size);
+        std::shared_ptr<Device> GetDevice();
 
-        std::shared_ptr<Pipeline> GetBoundPipeline();
+        // std::shared_ptr<Pipeline> GetBoundPipeline();
 
         VkCommandBuffer vkCommandBuffer;
 
     private:
-        std::shared_ptr<Pipeline>    m_boundPipeline;
+        // std::shared_ptr<Pipeline>    m_boundPipeline;
         std::shared_ptr<CommandPool> m_commandPool;
         std::shared_ptr<Device>      m_device;
         bool                         m_cleaned = false;

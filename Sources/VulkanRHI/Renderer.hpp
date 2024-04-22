@@ -36,10 +36,11 @@ namespace Sandbox
     class Material;
     class PipelineCaching;
     class ShaderModuleCaching;
+    class DescriptorSetCaching;
 
     struct WindowSerializedProperties;
 
-    class Renderer
+    class Renderer : public std::enable_shared_from_this<Renderer>
     {
     public:
         void Prepare(const std::shared_ptr<Window>& window);
@@ -55,13 +56,14 @@ namespace Sandbox
         void Preset();
         void FrameFlightIndexIncrease();
 
-        void RecordCommandBuffer(std::shared_ptr<CommandBuffer>& commandBuffer);
+        void RecordCommandBuffer(const std::shared_ptr<CommandBuffer>& commandBuffer, const std::shared_ptr<RendererSource>&rendererSource);
 
         void UpdateUniforms(std::shared_ptr<CommandBuffer>& commandBuffer, std::shared_ptr<RendererSource>& rendererSource);
 
         void Cleanup();
 
-        Sandbox::ESwapchainStatus AcquireNextImage();
+        Sandbox::ESwapchainStatus                AcquireNextImage();
+        std::shared_ptr<Sandbox::RendererSource> GetCurrentRendererSource();
 
         void OnAfterRecreateSwapchain();
 
@@ -79,9 +81,10 @@ namespace Sandbox
         std::vector<std::shared_ptr<RenderTarget>>      renderTargets;
         std::vector<std::shared_ptr<RenderAttachments>> renderAttachments;
 
-        std::shared_ptr<PipelineCaching>     pipelineCaching;
-        std::shared_ptr<ShaderModuleCaching> shaderModuleCaching;
-        std::shared_ptr<Pipeline>            pipeline;
+        std::shared_ptr<PipelineCaching>      pipelineCaching;
+        std::shared_ptr<ShaderModuleCaching>  shaderModuleCaching;
+        std::shared_ptr<DescriptorSetCaching> descriptorSetCaching;
+        // std::shared_ptr<Pipeline>             pipeline;
 
         uint32_t maxFramesFlight = 2;
         // 根据最大飞行帧数定制大小

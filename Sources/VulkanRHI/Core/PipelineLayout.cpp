@@ -5,15 +5,16 @@
 #include "DescriptorSetLayout.hpp"
 #include "Device.hpp"
 #include "FileSystem/Logger.hpp"
+#include "Misc/Debug.hpp"
 #include "ShaderModule.hpp"
+#include "VulkanRHI/Rendering/ShaderLinkage.hpp"
 
-Sandbox::PipelineLayout::PipelineLayout(const std::shared_ptr<Device>& device, const std::vector<std::shared_ptr<ShaderModule>>& shaderModules)
+Sandbox::PipelineLayout::PipelineLayout(const std::shared_ptr<Device>& device, const std::shared_ptr<ShaderLinkage>& shaderLinkage)
 {
-    m_device = device;
+    m_device            = device;
+    descriptorSetLayout = std::make_shared<DescriptorSetLayout>(device, shaderLinkage);
 
-    descriptorSetLayout = std::make_shared<DescriptorSetLayout>(device, shaderModules);
-
-    for (const std::shared_ptr<ShaderModule>& shaderModule : shaderModules)
+    for (const auto& [_, shaderModule] : shaderLinkage->shaderModules)
     {
         shaderModule->ReflectPushConstantRanges(pushConstantRanges);
     }
@@ -28,8 +29,8 @@ Sandbox::PipelineLayout::PipelineLayout(const std::shared_ptr<Device>& device, c
     {
         Logger::Fatal("failed to create pipeline layout!");
     }
+    LOGI("VulkanRHI", "{}\n{}", PtrToHexString(vkPipelineLayout), GetCallStack())
 }
-
 Sandbox::PipelineLayout::~PipelineLayout() { Cleanup(); }
 
 void Sandbox::PipelineLayout::Cleanup()
@@ -38,6 +39,7 @@ void Sandbox::PipelineLayout::Cleanup()
     {
         return;
     }
+    LOGD("VulkanRHI", "PipelineLayout Cleanup called {}", PtrToHexString(vkPipelineLayout))
     descriptorSetLayout->Cleanup();
     vkDestroyPipelineLayout(m_device->vkDevice, vkPipelineLayout, nullptr);
     m_cleaned = true;

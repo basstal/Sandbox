@@ -14,27 +14,27 @@ VkImageType FindImageType(const VkExtent3D& extent)
     return types[dim - 1];
 }
 
-Sandbox::Image::Image(const std::shared_ptr<Device>& device, const VkImage& image, const VkExtent3D& extent3D, VkFormat format, VkImageUsageFlags usage,
-                      VkSampleCountFlagBits sampleCount) :
-    vkImage(image),
-    vkDeviceMemory(nullptr),
-    type(FindImageType(extent3D)),
-    extent(extent3D),
-    format(format),
-    usage(usage),
-    sampleCount(sampleCount),
-    tiling(VK_IMAGE_TILING_OPTIMAL),
-    arrayLayerCount(0),
-    m_device(device)
-{
-    subresource.mipLevel   = 1;
-    subresource.arrayLayer = 1;
-
-    // TODO: 可能需要 bind device memory ？？
-}
+// Sandbox::Image::Image(const std::shared_ptr<Device>& device, const VkImage& image, const VkExtent3D& extent3D, VkFormat format, VkImageUsageFlags usage,
+//                       VkSampleCountFlagBits sampleCount) :
+//     vkImage(image), // 复制 vkImage ？？可能会导致资源泄露
+//     vkDeviceMemory(nullptr),
+//     type(FindImageType(extent3D)),
+//     extent(extent3D),
+//     format(format),
+//     usage(usage),
+//     sampleCount(sampleCount),
+//     tiling(VK_IMAGE_TILING_OPTIMAL),
+//     arrayLayerCount(0),
+//     m_device(device)
+// {
+//     subresource.mipLevel   = 1;
+//     subresource.arrayLayer = 1;
+//
+//     // TODO: 可能需要 bind device memory ？？
+// }
 
 Sandbox::Image::Image(const std::shared_ptr<Device>& device, const VkExtent3D& extent3D, VkFormat format, VkImageUsageFlags usage, VkMemoryPropertyFlags properties,
-                      VkSampleCountFlagBits sampleCount, VkImageTiling tiling, uint32_t mipLevels, uint32_t arrayLayers, VkImageCreateFlags flags) :
+                      VkSampleCountFlagBits sampleCount, VkImageTiling tiling, uint32_t mipLevels, uint32_t arrayLayers, VkImageCreateFlags flags, VkImageLayout initialLayout) :
     type(FindImageType(extent3D)), extent(extent3D), format(format), usage(usage), sampleCount(sampleCount), tiling(tiling), arrayLayerCount(arrayLayers), m_device(device)
 {
     assert(0 < mipLevels && "Image should have at least one level");
@@ -51,7 +51,7 @@ Sandbox::Image::Image(const std::shared_ptr<Device>& device, const VkExtent3D& e
     imageCreateInfo.arrayLayers   = arrayLayers;
     imageCreateInfo.format        = format;
     imageCreateInfo.tiling        = tiling;
-    imageCreateInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    imageCreateInfo.initialLayout = initialLayout;
     imageCreateInfo.usage         = usage;
     imageCreateInfo.samples       = sampleCount;
     imageCreateInfo.sharingMode   = VK_SHARING_MODE_EXCLUSIVE;

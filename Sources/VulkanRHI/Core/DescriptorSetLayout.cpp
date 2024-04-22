@@ -6,12 +6,13 @@
 #include "FileSystem/Logger.hpp"
 #include "Misc/Debug.hpp"
 #include "ShaderModule.hpp"
+#include "VulkanRHI/Rendering/ShaderLinkage.hpp"
 
-Sandbox::DescriptorSetLayout::DescriptorSetLayout(const std::shared_ptr<Device>& device, const std::vector<std::shared_ptr<ShaderModule>>& shaderModules)
+Sandbox::DescriptorSetLayout::DescriptorSetLayout(const std::shared_ptr<Device>& device, const std::shared_ptr<ShaderLinkage>& shaderLinkage)
 {
     m_device = device;
     std::vector<VkDescriptorSetLayoutBinding> vkDescriptorSetLayoutBindings;
-    for (const std::shared_ptr<ShaderModule>& shaderModule : shaderModules)
+    for (const auto& [_, shaderModule] : shaderLinkage->shaderModules)
     {
         shaderModule->ReflectDescriptorSetLayoutBindings(vkDescriptorSetLayoutBindings, nameToBinding, m_bindingToLayoutBinding);
     }
@@ -40,7 +41,6 @@ Sandbox::DescriptorSetLayout::DescriptorSetLayout(const std::shared_ptr<Device>&
 
     LOGI("VulkanRHI", "{}\n{}", PtrToHexString(vkDescriptorSetLayout), GetCallStack())
 }
-
 Sandbox::DescriptorSetLayout::~DescriptorSetLayout() { Cleanup(); }
 
 void Sandbox::DescriptorSetLayout::Cleanup()
@@ -49,6 +49,8 @@ void Sandbox::DescriptorSetLayout::Cleanup()
     {
         return;
     }
+    LOGD("VulkanRHI", "DescriptorSetLayout Cleanup called for {}", PtrToHexString(vkDescriptorSetLayout))
+    
     vkDestroyDescriptorSetLayout(m_device->vkDevice, vkDescriptorSetLayout, nullptr);
     m_cleaned = true;
 }

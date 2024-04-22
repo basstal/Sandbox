@@ -75,6 +75,7 @@ namespace Sandbox
         uint32_t GetMaxUniformBuffer() const;
 
         VkSampleCountFlagBits GetMaxUsableSampleCount() const;
+        VkSampleCountFlagBits GetUsableSampleCount(VkSampleCountFlagBits targetSampleCount)const;
 
         uint32_t GetMaxPushConstantsSize() const;
 

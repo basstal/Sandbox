@@ -5,6 +5,7 @@
 #include "Device.hpp"
 #include "FileSystem/Logger.hpp"
 #include "Image.hpp"
+#include "Misc/Debug.hpp"
 
 VkImageSubresource ReconstructSubresource(const std::shared_ptr<Sandbox::Image>& image, uint32_t overrideMipLevels)
 {
@@ -35,6 +36,7 @@ Sandbox::ImageView::ImageView(const std::shared_ptr<Device>& device, VkImage ima
     {
         LOGF_OLD("failed to create image view!")
     }
+    LOGI("VulkanRHI", "ImageView created {}\n{}", PtrToHexString(vkImageView), GetCallStack())
 }
 
 Sandbox::ImageView::ImageView(const std::shared_ptr<Image>& image, VkImageViewType viewType, VkFormat inFormat, uint32_t overrideMipLevels) :

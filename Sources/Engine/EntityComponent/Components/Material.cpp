@@ -6,7 +6,10 @@
 #include "Engine/RendererSource/RendererSource.hpp"
 #include "Generated/Material.rfks.h"
 #include "Mesh.hpp"
+#include "VulkanRHI/Common/Caching/PipelineCaching.hpp"
 #include "VulkanRHI/Core/CommandBuffer.hpp"
+#include "VulkanRHI/Core/Pipeline.hpp"
+#include "VulkanRHI/Renderer.hpp"
 
 Sandbox::Material::Material()
 {
@@ -19,15 +22,19 @@ Sandbox::Material::Material()
             }
         });
 }
-void Sandbox::Material::DrawMesh(const std::shared_ptr<PipelineLayout>& pipelineLayout, const std::shared_ptr<RendererSource>& rendererSource, uint32_t frameFlightIndex,
+void Sandbox::Material::DrawMesh(const std::shared_ptr<Renderer>& inRenderer, const std::shared_ptr<RendererSource>& rendererSource, uint32_t frameFlightIndex,
                                  const std::shared_ptr<CommandBuffer>& commandBuffer, uint32_t dynamicOffsets)
 {
     // TODO:临时写的，这里应该还需要再设计一下
     if (customRendererSource == nullptr)
     {
+        // TODO:这里应该需要确保 pipelineState 没有中途变更
+        auto pipeline = inRenderer->pipelineCaching->GetOrCreatePipeline(rendererSource->pipelineState);
+        // TODO: pipeline 相同不需要 bind，需要合批
+        commandBuffer->BindPipeline(pipeline);
         rendererSource->PushConstants(commandBuffer);
         // commandBuffer->PushConstants(pushConstantsInfo);
-        commandBuffer->BindDescriptorSet(pipelineLayout, rendererSource->descriptorSets[frameFlightIndex], {dynamicOffsets});
+        commandBuffer->BindDescriptorSet(pipeline->pipelineLayout, rendererSource->descriptorSets[frameFlightIndex], {dynamicOffsets});
         commandBuffer->BindVertexBuffers(m_mesh->vertexBuffer);
         commandBuffer->BindIndexBuffer(m_mesh->indexBuffer);
         commandBuffer->DrawIndexed(m_mesh->Indices());
@@ -38,7 +45,7 @@ void Sandbox::Material::DrawMesh(const std::shared_ptr<PipelineLayout>& pipeline
     }
 }
 
-void Sandbox::Material::DrawOverlay(const std::shared_ptr<PipelineLayout>& pipelineLayout, const std::shared_ptr<RendererSource>& rendererSource, uint32_t frameFlightIndex,
+void Sandbox::Material::DrawOverlay(const std::shared_ptr<Renderer>& inRenderer, const std::shared_ptr<RendererSource>& rendererSource, uint32_t frameFlightIndex,
                                     const std::shared_ptr<CommandBuffer>& commandBuffer, uint32_t dynamicOffsets)
 {
     if (customRendererSource == nullptr)

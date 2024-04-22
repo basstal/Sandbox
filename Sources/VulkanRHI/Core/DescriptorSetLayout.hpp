@@ -9,12 +9,13 @@ namespace Sandbox
 {
     class Device;
     class ShaderModule;
-
+    class ShaderLinkage;
+    
     class DescriptorSetLayout
     {
     public:
-        DescriptorSetLayout(const std::shared_ptr<Device>& device, const std::vector<std::shared_ptr<ShaderModule>>& shaderModules);
-        
+        DescriptorSetLayout(const std::shared_ptr<Device>& device, const std::shared_ptr<ShaderLinkage>& shaderLinkage);
+
         ~DescriptorSetLayout();
 
         void Cleanup();

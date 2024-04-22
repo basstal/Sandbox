@@ -5,9 +5,10 @@
 #include "FileSystem/File.hpp"
 
 
-Sandbox::ShaderSource::ShaderSource(const std::string& inFilePath, const std::string& inPreamble, VkShaderStageFlagBits inStage) :
-    filePath(inFilePath), preamble(inPreamble), stage(inStage)
+Sandbox::ShaderSource::ShaderSource(const std::string& inFilePath, const std::string& inPreamble) : filePath(inFilePath), preamble(inPreamble)
 {
     source = File(filePath).ReadFile();
 }
-Sandbox::ShaderSource::ShaderSource(const File& file, const std::string& inPreamble, VkShaderStageFlagBits inStage) : ShaderSource(file.path.string(), inPreamble, inStage) {}
+Sandbox::ShaderSource::ShaderSource(const File& file, const std::string& inPreamble) : ShaderSource(file.path.string(), inPreamble) {}
+
+void Sandbox::ShaderSource::Reload() { source = File(filePath).ReadFile(); }

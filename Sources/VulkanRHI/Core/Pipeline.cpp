@@ -8,6 +8,7 @@
 #include "RenderPass.hpp"
 #include "ShaderModule.hpp"
 #include "VulkanRHI/Rendering/PipelineState.hpp"
+#include "VulkanRHI/Rendering/ShaderLinkage.hpp"
 
 // // TODO: remove this method
 // Sandbox::Pipeline::Pipeline(const std::shared_ptr<Device>& device, const std::vector<std::shared_ptr<ShaderModule>>& shaderModules,
@@ -18,9 +19,9 @@
 // }
 
 Sandbox::Pipeline::Pipeline(const std::shared_ptr<Device>& device, const std::shared_ptr<PipelineState>& pipelineState) :
-    shaderModules(pipelineState->shaderModules), m_device(device)  // pipelineLayout(pipelineState->pipelineLayout), m_device(device)
+    shaderLinkage(pipelineState->shaderLinkage), m_pipelineState(pipelineState), m_device(device)  // pipelineLayout(pipelineState->pipelineLayout), m_device(device)
 {
-    pipelineLayout = std::make_shared<PipelineLayout>(device, pipelineState->shaderModules);
+    pipelineLayout = std::make_shared<PipelineLayout>(device, pipelineState->shaderLinkage);
     CreatePipeline(pipelineState);
 }
 
@@ -66,7 +67,7 @@ void Sandbox::Pipeline::CreatePipeline(const std::shared_ptr<PipelineState>& inP
 
 
     std::vector<VkPipelineShaderStageCreateInfo> shaderStages;
-    for (const auto& shaderModule : inPipelineState->shaderModules)
+    for (const auto& [_, shaderModule] : inPipelineState->shaderLinkage->shaderModules)
     {
         VkPipelineShaderStageCreateInfo vkPipelineShaderStageCreateInfo{};
         vkPipelineShaderStageCreateInfo.sType  = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
@@ -91,9 +92,9 @@ void Sandbox::Pipeline::CreatePipeline(const std::shared_ptr<PipelineState>& inP
 
     VkPipelineMultisampleStateCreateInfo multisampling{};
     multisampling.sType                 = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
-    multisampling.sampleShadingEnable   = VK_TRUE;
-    multisampling.minSampleShading      = .2f;  // Optional
-    multisampling.rasterizationSamples  = m_device->GetMaxUsableSampleCount();
+    multisampling.sampleShadingEnable   = inPipelineState->multisampleState.sampleShadingEnable;
+    multisampling.minSampleShading      = inPipelineState->multisampleState.minSampleShading;
+    multisampling.rasterizationSamples  = m_device->GetUsableSampleCount(inPipelineState->multisampleState.rasterizationSamples);
     multisampling.pSampleMask           = nullptr;  // Optional
     multisampling.alphaToCoverageEnable = VK_FALSE;  // Optional
     multisampling.alphaToOneEnable      = VK_FALSE;  // Optional
@@ -131,6 +132,7 @@ void Sandbox::Pipeline::CreatePipeline(const std::shared_ptr<PipelineState>& inP
     depthStencil.front                 = inPipelineState->depthStencilState.front;
     depthStencil.back                  = inPipelineState->depthStencilState.back;
 
+
     VkGraphicsPipelineCreateInfo pipelineInfo{};
     pipelineInfo.sType               = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
     pipelineInfo.stageCount          = 2;
@@ -166,4 +168,14 @@ void Sandbox::Pipeline::Cleanup()
     vkDestroyPipeline(m_device->vkDevice, vkPipeline, nullptr);
     pipelineLayout->Cleanup();
     m_cleaned = true;
+}
+void Sandbox::Pipeline::Reload()
+{
+    if (vkPipeline != VK_NULL_HANDLE)
+    {
+        vkDestroyPipeline(m_device->vkDevice, vkPipeline, nullptr);
+        pipelineLayout->Cleanup();
+    }
+    pipelineLayout = std::make_shared<PipelineLayout>(m_device, m_pipelineState->shaderLinkage);
+    CreatePipeline(m_pipelineState);
 }

@@ -17,9 +17,13 @@ enum EViewMode
      * \brief 线框
      */
     Wireframe,
+    /**
+     * \brief 深度缓冲区
+     */
+    DepthBuffer
 };
 
 /**
  * \brief 视图模式名称
  */
-inline const char* VIEW_MODE_NAMES[] = {"Lit", "Unlit", "Wireframe"};
+inline const char* VIEW_MODE_NAMES[] = {"Lit", "Unlit", "Wireframe", "DepthBuffer"};

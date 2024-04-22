@@ -13,12 +13,12 @@ namespace Sandbox
         friend class Texture;
 
     public:
-        Image(const std::shared_ptr<Device>& device, const VkImage& image, const VkExtent3D& extent3D, VkFormat format, VkImageUsageFlags usage,
-              VkSampleCountFlagBits sampleCount = VK_SAMPLE_COUNT_1_BIT);
+        // Image(const std::shared_ptr<Device>& device, const VkImage& image, const VkExtent3D& extent3D, VkFormat format, VkImageUsageFlags usage,
+        //       VkSampleCountFlagBits sampleCount = VK_SAMPLE_COUNT_1_BIT);
 
         Image(const std::shared_ptr<Device>& device, const VkExtent3D& extent3D, VkFormat format, VkImageUsageFlags usage, VkMemoryPropertyFlags properties,
               VkSampleCountFlagBits sampleCount = VK_SAMPLE_COUNT_1_BIT, VkImageTiling tiling = VK_IMAGE_TILING_OPTIMAL, uint32_t mipLevels = 1, uint32_t arrayLayers = 1,
-              VkImageCreateFlags flags = 0);
+              VkImageCreateFlags flags = 0, VkImageLayout initialLayout = VK_IMAGE_LAYOUT_UNDEFINED);
 
 
         ~Image();

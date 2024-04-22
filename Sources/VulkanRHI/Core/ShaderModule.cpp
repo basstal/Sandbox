@@ -56,13 +56,17 @@ const std::map<int32_t, VkFormat> GL_DEFINE_TYPE_TO_FORMAT = {
     {GL_FLOAT_MAT2x4, VK_FORMAT_R32G32_SFLOAT},  // GL_FLOAT_MAT2x4
 };
 
-Sandbox::ShaderModule::ShaderModule(const std::shared_ptr<Device>& device, const ShaderSource& glslSource)
+Sandbox::ShaderModule::ShaderModule(const std::shared_ptr<Device>& device, const std::shared_ptr<ShaderSource>& glslSource, VkShaderStageFlagBits inStage)
 {
-    m_device = device;
-    Compile(glslSource.filePath, glslSource.source, glslSource.preamble, glslSource.stage);
+    m_device       = device;
+    m_shaderSource = glslSource;
+    vkShaderStage  = inStage;
+    Compile(glslSource->filePath, glslSource->source, glslSource->preamble, inStage);
 }
 
 Sandbox::ShaderModule::~ShaderModule() { Cleanup(); }
+
+bool Sandbox::ShaderModule::IsValid() { return !m_cleaned; }
 
 void Sandbox::ShaderModule::Cleanup()
 {
@@ -73,9 +77,20 @@ void Sandbox::ShaderModule::Cleanup()
     vkDestroyShaderModule(m_device->vkDevice, vkShaderModule, nullptr);
     m_cleaned = true;
 }
-
-void Sandbox::ShaderModule::Compile(const std::string& shaderName, const std::string& shaderSource, const std::string& preamble, VkShaderStageFlagBits stage)
+void Sandbox::ShaderModule::Recompile()
 {
+    m_shaderSource->Reload();
+    if (vkShaderModule != VK_NULL_HANDLE)
+    {
+        vkDestroyShaderModule(m_device->vkDevice, vkShaderModule, nullptr);
+    }
+    Compile(m_shaderSource->filePath, m_shaderSource->source, m_shaderSource->preamble, vkShaderStage);
+    onShaderRecompile.Trigger(shared_from_this());
+}
+
+void Sandbox::ShaderModule::Compile(const std::string& shaderName, const std::string& inShaderSource, const std::string& preamble, VkShaderStageFlagBits stage)
+{
+    // TODO:recompile 失败了不崩溃
     if (!STAGE_TO_LANGUAGE.contains(stage))
     {
         LOGF_OLD("Stage {} not supported", std::to_string(stage))
@@ -87,7 +102,7 @@ void Sandbox::ShaderModule::Compile(const std::string& shaderName, const std::st
     // std::string shaderName       = glslSource.filePath;
     // std::string shaderSource     = glslSource.source;
     const char* shaderNameCStr   = shaderName.c_str();
-    const char* shaderSourceCStr = shaderSource.c_str();
+    const char* shaderSourceCStr = inShaderSource.c_str();
     auto        vulkanVersion    = glslang::EShTargetVulkan_1_3;
     shader.setPreamble(preamble.c_str());
     shader.setStringsWithLengthsAndNames(&shaderSourceCStr, nullptr, &shaderNameCStr, 1);
@@ -161,7 +176,6 @@ void Sandbox::ShaderModule::Compile(const std::string& shaderName, const std::st
     {
         LOGF_OLD("Failed to create shader module!")
     }
-    vkShaderStage = stage;
 }
 
 void Sandbox::ShaderModule::SetUniformDescriptorMode(const std::string& uniformName, DescriptorMode inMode)
@@ -271,11 +285,14 @@ void Sandbox::ShaderModule::ReflectVertexInputState(VertexInputState& vertexInpu
     vertexInputState.bindings[0].inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
 }
 
+std::shared_ptr<Sandbox::Device> Sandbox::ShaderModule::GetDevice() { return m_device; }
+
 void Sandbox::ShaderModule::LoadUniform(const glslang::TObjectReflection& uniform, VkShaderStageFlagBits stage)
 {
+    auto                    uniformType = uniform.getType();
     ShaderUniformReflection u;
     u.binding         = uniform.getBinding();
-    u.bytes           = ComputeBytes(uniform.getType());
+    u.bytes           = ComputeBytes(uniformType);
     u.glDefineType    = uniform.glDefineType;
     u.offset          = uniform.offset;
     u.stageFlags      = stage;
@@ -296,7 +313,7 @@ void Sandbox::ShaderModule::LoadUniform(const glslang::TObjectReflection& unifor
             existUniformBlock->second.uniforms[uniformName] = u;
             return;
         }
-        LOGF_OLD("Uniform block {} not found for uniform {}", uniformBlockName, uniform.name)
+        LOGF("VulkanRHI", "Uniform block {} not found for uniform {}", uniformBlockName, uniform.name)
     }
     auto existUniform = m_uniforms.find(uniform.name);
     if (existUniform != m_uniforms.end())
@@ -304,11 +321,22 @@ void Sandbox::ShaderModule::LoadUniform(const glslang::TObjectReflection& unifor
         existUniform->second.stageFlags |= stage;
         return;
     }
-    if (!GL_DEFINE_TYPE_TO_DESCRIPTOR_TYPE.contains(uniform.glDefineType))
+    if (uniform.glDefineType != 0 && !GL_DEFINE_TYPE_TO_DESCRIPTOR_TYPE.contains(uniform.glDefineType))
     {
-        LOGF_OLD("Uniform {} has unsupported glDefineType {} for VkDescriptorType", uniform.name, std::to_string(uniform.glDefineType))
+        LOGF("VulkanRHI", "Uniform {} has unsupported glDefineType {} for VkDescriptorType", uniform.name, std::to_string(uniform.glDefineType))
     }
-    u.descriptorType         = GL_DEFINE_TYPE_TO_DESCRIPTOR_TYPE.at(uniform.glDefineType);
+    if (uniform.glDefineType == 0)
+    {
+        auto uniformQualifier = uniformType->getQualifier();
+        if (uniformQualifier.isUniform() && uniformQualifier.layoutAttachment >= 0)  // ??
+        {
+            u.descriptorType = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT;
+        }
+    }
+    else
+    {
+        u.descriptorType = GL_DEFINE_TYPE_TO_DESCRIPTOR_TYPE.at(uniform.glDefineType);
+    }
     m_uniforms[uniform.name] = u;
 }
 

@@ -14,12 +14,11 @@ std::string Sandbox::GetCallStack()
     void*          stack[100];
     unsigned short frames;
     SYMBOL_INFO*   symbol;
-    HANDLE         process;
+    HANDLE         process = GetCurrentProcess();
     std::string    callStack;
 
-    process = GetCurrentProcess();
     SymInitialize(process, NULL, TRUE);
-    frames               = CaptureStackBackTrace(1, 100, stack, NULL);
+    frames               = CaptureStackBackTrace(0, 100, stack, NULL);
     symbol               = (SYMBOL_INFO*)calloc(sizeof(SYMBOL_INFO) + 256 * sizeof(char), 1);
     symbol->MaxNameLen   = 255;
     symbol->SizeOfStruct = sizeof(SYMBOL_INFO);
@@ -28,20 +27,51 @@ std::string Sandbox::GetCallStack()
     line.SizeOfStruct    = sizeof(IMAGEHLP_LINE64);
     DWORD displacement;
 
+    char buffer[512];  // Buffer for formatting the output, moved outside the loop
+    bool inStdLibBlock = false;  // Flag to track blocks of standard library calls
+    int  stdLibCount   = 0;  // Count consecutive standard library frames
+
     for (int i = 0; i < frames; i++)
     {
         DWORD64 address = (DWORD64)(stack[i]);
         SymFromAddr(process, address, 0, symbol);
-        char buffer[512];  // Assume this buffer is large enough.
 
-        if (SymGetLineFromAddr64(process, address, &displacement, &line))
+        bool isStdLib = strstr(symbol->Name, "std::") != nullptr;
+        if (isStdLib)
         {
-            sprintf_s(buffer, "%i: %s - 0x%0llX (File: %s:%lu)\n", frames - i - 1, symbol->Name, symbol->Address, line.FileName, line.LineNumber);
+            if (!inStdLibBlock)
+            {
+                inStdLibBlock = true;
+                stdLibCount   = 1;
+            }
+            else
+            {
+                stdLibCount++;
+            }
         }
         else
         {
-            sprintf_s(buffer, "%i: %s - 0x%0llX\n", frames - i - 1, symbol->Name, symbol->Address);
+            if (inStdLibBlock)
+            {
+                sprintf_s(buffer, "[std library calls x%d]\n", stdLibCount);
+                callStack += buffer;
+                inStdLibBlock = false;
+            }
+            if (SymGetLineFromAddr64(process, address, &displacement, &line))
+            {
+                sprintf_s(buffer, "%i: %s - 0x%0llX (File: %s:%lu)\n", frames - i - 1, symbol->Name, symbol->Address, line.FileName, line.LineNumber);
+            }
+            else
+            {
+                sprintf_s(buffer, "%i: %s - 0x%0llX\n", frames - i - 1, symbol->Name, symbol->Address);
+            }
+            callStack += buffer;
         }
+    }
+
+    if (inStdLibBlock)
+    {
+        sprintf_s(buffer, "[std library calls x%d]\n", stdLibCount);
         callStack += buffer;
     }
 

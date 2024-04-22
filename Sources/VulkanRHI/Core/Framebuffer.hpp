@@ -13,6 +13,9 @@ namespace Sandbox
     {
     public:
         Framebuffer(const std::shared_ptr<Device>& device, const std::shared_ptr<RenderPass>& renderPass, const std::vector<VkImageView>& imageViews, VkExtent2D extent2D);
+        Framebuffer(const std::shared_ptr<Device>& device, const std::shared_ptr<RenderPass>& renderPass, VkImageView imageView, VkExtent2D extent2D);
+
+        void CreateFramebuffer(const std::shared_ptr<RenderPass>& renderPass, const std::vector<VkImageView>* imageViews, VkImageView imageView, VkExtent2D extent2D);
 
         ~Framebuffer();
 

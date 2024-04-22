@@ -2,8 +2,9 @@
 
 #include "Renderer.hpp"
 
-#include "Common/PipelineCaching.hpp"
-#include "Common/ShaderModuleCaching.hpp"
+#include "Common/Caching/DescriptorSetCaching.hpp"
+#include "Common/Caching/PipelineCaching.hpp"
+#include "Common/Caching/ShaderModuleCaching.hpp"
 #include "Common/SubpassComponents.hpp"
 #include "Core/CommandBuffer.hpp"
 #include "Core/CommandPool.hpp"
@@ -11,19 +12,17 @@
 #include "Core/Device.hpp"
 #include "Core/Fence.hpp"
 #include "Core/Instance.hpp"
-#include "Core/Pipeline.hpp"
 #include "Core/RenderPass.hpp"
 #include "Core/Semaphore.hpp"
 #include "Core/ShaderModule.hpp"
 #include "Core/Surface.hpp"
 #include "Core/Swapchain.hpp"
 #include "Engine/EntityComponent/Components/Material.hpp"
-#include "Engine/EntityComponent/Components/Mesh.hpp"
 #include "Engine/RendererSource/RendererSource.hpp"
 #include "FileSystem/Directory.hpp"
 #include "FileSystem/Logger.hpp"
+#include "Misc/Debug.hpp"
 #include "Platform/Window.hpp"
-#include "Rendering/PipelineState.hpp"
 #include "Rendering/RenderAttachments.hpp"
 #include "Rendering/RenderTarget.hpp"
 
@@ -39,23 +38,39 @@ void Sandbox::Renderer::Prepare(const std::shared_ptr<Window>& window)
     descriptorPool                            = std::make_shared<DescriptorPool>(device, 2048);
     swapchain                                 = std::make_shared<Swapchain>(device, surface);
     // NOTE:构造 renderpass 所需数据
+    // TODO: 这个 renderpass 只适合 pbr shader，要考虑挪到 RendererSource 里面
     std::vector<Attachment> attachments = {
         Attachment{VK_FORMAT_R8G8B8A8_UNORM, device->GetMaxUsableSampleCount(), VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, VK_IMAGE_LAYOUT_UNDEFINED,
                    VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL},
         Attachment{VK_FORMAT_D32_SFLOAT_S8_UINT, device->GetMaxUsableSampleCount(), VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_IMAGE_LAYOUT_UNDEFINED,
                    VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL},
-        Attachment{VK_FORMAT_R8G8B8A8_UNORM, VK_SAMPLE_COUNT_1_BIT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL},
+        Attachment{VK_FORMAT_R8G8B8A8_UNORM, VK_SAMPLE_COUNT_1_BIT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, VK_IMAGE_LAYOUT_UNDEFINED,
+                   VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL},
     };
     std::vector<LoadStoreInfo> loadStoreInfos = {
         LoadStoreInfo{VK_ATTACHMENT_LOAD_OP_CLEAR, VK_ATTACHMENT_STORE_OP_STORE},
-        LoadStoreInfo{VK_ATTACHMENT_LOAD_OP_CLEAR, VK_ATTACHMENT_STORE_OP_DONT_CARE},
+        LoadStoreInfo{VK_ATTACHMENT_LOAD_OP_CLEAR, VK_ATTACHMENT_STORE_OP_STORE},
         LoadStoreInfo{VK_ATTACHMENT_LOAD_OP_DONT_CARE, VK_ATTACHMENT_STORE_OP_STORE},
     };
-    std::vector<SubpassInfo> subpassInfos = {
-        SubpassInfo{{0}, {2}, false},
-    };
+    std::vector<SubpassInfo> subpassInfos;
+    SubpassInfo              subpass;
+    subpass.colorAttachments.push_back(0);
+    subpass.depthStencilAttachments.push_back(1);
+    subpass.resolveAttachments.push_back(2);
+    subpassInfos.emplace_back(subpass);
     renderPass = std::make_shared<RenderPass>(device, attachments, loadStoreInfos, subpassInfos);
-    OnAfterRecreateSwapchain();
+    // swapchain resource
+    renderTargets.resize(swapchain->vkImages.size());
+    renderAttachments.resize(renderTargets.size());
+    for (size_t i = 0; i < renderTargets.size(); ++i)
+    {
+        renderAttachments[i] != nullptr ? renderAttachments[i]->Cleanup() : void();
+        renderTargets[i] != nullptr ? renderTargets[i]->Cleanup() : void();
+        std::vector<std::shared_ptr<ImageView>> empty;
+        renderAttachments[i] = std::make_shared<RenderAttachments>(device, renderPass, resolution, empty);
+        renderTargets[i]     = std::make_shared<RenderTarget>(device, renderPass, resolution, renderAttachments[i]);
+    }
+
     if (!glslang::InitializeProcess())
     {
         Logger::Fatal("Failed to initialize glslang process");
@@ -75,8 +90,9 @@ void Sandbox::Renderer::Prepare(const std::shared_ptr<Window>& window)
 
     swapchain->onAfterRecreateSwapchain.BindMember<Sandbox::Renderer, &Renderer::OnAfterRecreateSwapchain>(this);
     onViewModeChanged.BindMember<Renderer, &Renderer::OnViewModeChanged>(this);
-    pipelineCaching     = std::make_shared<PipelineCaching>();
-    shaderModuleCaching = std::make_shared<ShaderModuleCaching>(device);
+    pipelineCaching      = std::make_shared<PipelineCaching>();
+    shaderModuleCaching  = std::make_shared<ShaderModuleCaching>(device);
+    descriptorSetCaching = std::make_shared<DescriptorSetCaching>(device, descriptorPool);
 }
 
 void Sandbox::Renderer::Cleanup()
@@ -126,14 +142,27 @@ Sandbox::ESwapchainStatus Sandbox::Renderer::AcquireNextImage()
     return swapchain->AcquireNextImageIndex(imageAvailableSemaphores[frameFlightIndex]);
 }
 
+std::shared_ptr<Sandbox::RendererSource> Sandbox::Renderer::GetCurrentRendererSource()
+{
+    std::shared_ptr<RendererSource> rendererSource;
+    if (!TryGetRendererSource(viewMode, rendererSource))
+    {
+        LOGF("VulkanRHI", "Renderer source for view mode '{}' not found\n{}", VIEW_MODE_NAMES[static_cast<uint32_t>(viewMode)], GetCallStack())
+    }
+    return rendererSource;
+}
+
 void Sandbox::Renderer::Draw()
 {
-    std::shared_ptr<CommandBuffer>& commandBuffer = commandBuffers[frameFlightIndex];
+    auto                            rendererSource = GetCurrentRendererSource();
+    std::shared_ptr<CommandBuffer>& commandBuffer  = commandBuffers[frameFlightIndex];
     commandBuffer->Reset();
-    RecordCommandBuffer(commandBuffer);
+    RecordCommandBuffer(commandBuffer, rendererSource);
     commandBuffer->Submit(fences[frameFlightIndex], {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT}, {}, {});
     // 等待这个栅栏是为了让其他 commandBuffer 能够用场景输出的数据，例如 color attachment
     fences[frameFlightIndex]->WaitForFence();
+    // // 在这里要保证游戏场景的 renderpass 输出完毕并且 image layout 也转换为纹理采样所需的 image，因为这里会 submit 并等待其他的 viewport 的渲染
+    // commandBuffer->TransitionImageLayout(renderAttachments[imageIndex]->resolveImage, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 }
 
 void Sandbox::Renderer::Preset()
@@ -146,18 +175,14 @@ void Sandbox::Renderer::Preset()
 
 void Sandbox::Renderer::FrameFlightIndexIncrease() { frameFlightIndex = (frameFlightIndex + 1) % maxFramesFlight; }
 
-void Sandbox::Renderer::RecordCommandBuffer(std::shared_ptr<CommandBuffer>& commandBuffer)
+void Sandbox::Renderer::RecordCommandBuffer(const std::shared_ptr<CommandBuffer>& commandBuffer, const std::shared_ptr<RendererSource>& rendererSource)
 {
     commandBuffer->Begin();
-    auto                            imageIndex        = swapchain->acquiredNextImageIndex;
-    std::shared_ptr<Framebuffer>&   framebuffer       = renderTargets[imageIndex]->framebuffer;
-    VkClearColorValue               clearColor        = {{0.8f, 0.8f, 0.8f, 1.0f}};
-    VkClearDepthStencilValue        clearDepthStencil = {1.0f, 0};
-    std::shared_ptr<RendererSource> rendererSource;
-    if (!TryGetRendererSource(viewMode, rendererSource))
-    {
-        LOGF_OLD("Renderer source for view mode '{}' not found", VIEW_MODE_NAMES[static_cast<uint32_t>(viewMode)])
-    }
+    auto                          imageIndex        = swapchain->acquiredNextImageIndex;
+    std::shared_ptr<Framebuffer>& framebuffer       = renderTargets[imageIndex]->framebuffer;
+    VkClearColorValue             clearColor        = {{0.8f, 0.8f, 0.8f, 1.0f}};
+    VkClearDepthStencilValue      clearDepthStencil = {1.0f, 0};
+
     // 绘制场景
     {
         commandBuffer->BeginRenderPass(renderPass, framebuffer, resolution, clearColor, clearDepthStencil);
@@ -178,8 +203,6 @@ void Sandbox::Renderer::RecordCommandBuffer(std::shared_ptr<CommandBuffer>& comm
 
         onBeforeRendererDraw.Trigger(commandBuffer, frameFlightIndex);
 
-        commandBuffer->BindPipeline(pipeline);
-
         uint32_t dynamicAlignment = GetUniformDynamicAlignment(sizeof(glm::mat4));
         uint32_t offset           = 0;
         for (auto& material : queuedMaterials)
@@ -187,7 +210,7 @@ void Sandbox::Renderer::RecordCommandBuffer(std::shared_ptr<CommandBuffer>& comm
             if (material != nullptr)
             {
                 // onBeforeDrawMesh.Trigger(commandBuffer, frameFlightIndex, nextMesh);
-                material->DrawMesh(pipeline->pipelineLayout, rendererSource, frameFlightIndex, commandBuffer, offset++ * dynamicAlignment);
+                material->DrawMesh(this->shared_from_this(), rendererSource, frameFlightIndex, commandBuffer, offset++ * dynamicAlignment);
                 // onAfterDrawMesh.Trigger(commandBuffer, frameFlightIndex, nextMesh);
             }
         }
@@ -197,7 +220,7 @@ void Sandbox::Renderer::RecordCommandBuffer(std::shared_ptr<CommandBuffer>& comm
             if (material != nullptr)
             {
                 // onBeforeDrawMesh.Trigger(commandBuffer, frameFlightIndex, nextMesh);
-                material->DrawOverlay(pipeline->pipelineLayout, rendererSource, frameFlightIndex, commandBuffer, offset++ * dynamicAlignment);
+                material->DrawOverlay(this->shared_from_this(), rendererSource, frameFlightIndex, commandBuffer, offset++ * dynamicAlignment);
                 // onAfterDrawMesh.Trigger(commandBuffer, frameFlightIndex, nextMesh);
             }
         }
@@ -207,9 +230,9 @@ void Sandbox::Renderer::RecordCommandBuffer(std::shared_ptr<CommandBuffer>& comm
         commandBuffer->EndRenderPass();
     }
 
-    onOtherDrawCommands.Trigger(commandBuffer, frameFlightIndex);
-    // 在这里要保证游戏场景的 renderpass 输出完毕并且 image layout 也转换为纹理采样所需的 image，因为这里会 submit 并等待其他的 viewport 的渲染
-    commandBuffer->TransitionImageLayout(renderAttachments[imageIndex]->resolveImage, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+    // onOtherDrawCommands.Trigger(commandBuffer, frameFlightIndex);
+    rendererSource->BlitImage(commandBuffer, renderAttachments[imageIndex], resolution);
+
     commandBuffer->End();
 }
 
@@ -224,9 +247,12 @@ void Sandbox::Renderer::OnAfterRecreateSwapchain()
     {
         renderAttachments[i] != nullptr ? renderAttachments[i]->Cleanup() : void();
         renderTargets[i] != nullptr ? renderTargets[i]->Cleanup() : void();
-        renderAttachments[i] = std::make_shared<RenderAttachments>(device, renderPass, resolution, nullptr);
+        std::vector<std::shared_ptr<ImageView>> empty;
+        renderAttachments[i] = std::make_shared<RenderAttachments>(device, renderPass, resolution, empty);
         renderTargets[i]     = std::make_shared<RenderTarget>(device, renderPass, resolution, renderAttachments[i]);
     }
+    auto rendererSource = GetCurrentRendererSource();
+    rendererSource->OnRecreateSwapchain();
 }
 uint32_t Sandbox::Renderer::GetUniformDynamicAlignment(VkDeviceSize dynamicAlignment) const
 {
@@ -252,8 +278,8 @@ void Sandbox::Renderer::OnViewModeChanged(EViewMode inViewMode)
     {
         LOGF_OLD("Renderer source for view mode '{}' not found", VIEW_MODE_NAMES[static_cast<uint32_t>(viewMode)])
 	}
-	auto shaderModules = rendererSource->shaderModules;
-	pipeline = rendererSource->pipeline;
+	// auto shaderModules = rendererSource->shaderModules;
+	// pipeline = rendererSource->pipeline;
 }
 
 	

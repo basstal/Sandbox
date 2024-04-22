@@ -281,6 +281,17 @@ VkSampleCountFlagBits Sandbox::Device::GetMaxUsableSampleCount() const
     return VK_SAMPLE_COUNT_1_BIT;
 }
 
+VkSampleCountFlagBits Sandbox::Device::GetUsableSampleCount(VkSampleCountFlagBits targetSampleCount) const
+{
+    auto maxUsableSampleCount = GetMaxUsableSampleCount();
+    if (maxUsableSampleCount >= targetSampleCount)
+    {
+        return targetSampleCount;
+    }
+    return maxUsableSampleCount;
+}
+
+
 uint32_t Sandbox::Device::GetMaxPushConstantsSize() const
 {
     VkPhysicalDeviceProperties physicalDeviceProperties;

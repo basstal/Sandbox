@@ -3,37 +3,41 @@
 #include "WireframeRendererSource.hpp"
 
 #include "FileSystem/Directory.hpp"
+#include "VulkanRHI/Common/Caching/DescriptorSetCaching.hpp"
+#include "VulkanRHI/Common/Caching/PipelineCaching.hpp"
+#include "VulkanRHI/Common/Caching/ShaderModuleCaching.hpp"
 #include "VulkanRHI/Common/Macros.hpp"
-#include "VulkanRHI/Common/PipelineCaching.hpp"
-#include "VulkanRHI/Common/ShaderModuleCaching.hpp"
 #include "VulkanRHI/Common/ShaderSource.hpp"
+#include "VulkanRHI/Core/CommandBuffer.hpp"
 #include "VulkanRHI/Core/DescriptorSet.hpp"
+#include "VulkanRHI/Core/Device.hpp"
 #include "VulkanRHI/Core/Pipeline.hpp"
 #include "VulkanRHI/Core/PipelineLayout.hpp"
 #include "VulkanRHI/Core/ShaderModule.hpp"
 #include "VulkanRHI/Renderer.hpp"
 #include "VulkanRHI/Rendering/PipelineState.hpp"
+#include "VulkanRHI/Rendering/ShaderLinkage.hpp"
 #include "VulkanRHI/Rendering/UniformBuffer.hpp"
 void Sandbox::WireframeRendererSource::CreatePipeline(std::shared_ptr<Renderer>& renderer)
 {
     auto device = renderer->device;
 
     Directory assetsDirectory = Directory::GetAssetsDirectory();
-    auto      vertexSource    = ShaderSource(assetsDirectory.GetFile("Shaders/FillModeNonSolid.vert").path.string(), "", VK_SHADER_STAGE_VERTEX_BIT);
-    auto      vertexShader    = renderer->shaderModuleCaching->GetOrCreateShaderModule(vertexSource);
+    shaderLinkage = std::make_shared<ShaderLinkage>();
+    auto vertexSource = std::make_shared<ShaderSource>(assetsDirectory.GetFile("Shaders/FillModeNonSolid.vert").path.string(), "");
+    auto vertexShader = shaderLinkage->CreateShaderModule(renderer, VK_SHADER_STAGE_VERTEX_BIT, vertexSource);
     vertexShader->SetUniformDescriptorMode("Model", Dynamic);
-    shaderModules.push_back(vertexShader);
 
-    auto fragmentSource = ShaderSource(assetsDirectory.GetFile("Shaders/FillModeNonSolid.frag").path.string(), "", VK_SHADER_STAGE_FRAGMENT_BIT);
-    auto fragmentShader = renderer->shaderModuleCaching->GetOrCreateShaderModule(fragmentSource);
-    shaderModules.push_back(fragmentShader);
+    auto fragmentSource = std::make_shared<ShaderSource>(assetsDirectory.GetFile("Shaders/FillModeNonSolid.frag").path.string(), "");
+    auto fragmentShader = shaderLinkage->CreateShaderModule(renderer, VK_SHADER_STAGE_FRAGMENT_BIT, fragmentSource);
     // pipelineLayout                                = std::make_shared<PipelineLayout>(device, shaderModules);
-    pipelineState                                 = std::make_shared<PipelineState>(shaderModules, renderer->renderPass);
+    pipelineState                                 = std::make_shared<PipelineState>(shaderLinkage, renderer->renderPass);
+    pipelineState->multisampleState.rasterizationSamples = renderer->device->GetMaxUsableSampleCount();
     pipelineState->rasterizationState.polygonMode = VK_POLYGON_MODE_LINE;
     pipeline                                      = renderer->pipelineCaching->GetOrCreatePipeline(pipelineState);
-    
-    colorUniformBuffer                            = std::make_shared<UniformBuffer>(device, sizeof(glm::vec3));
-    auto white                                    = glm::vec3(1.0f);
+
+    colorUniformBuffer = std::make_shared<UniformBuffer>(device, sizeof(glm::vec3));
+    auto white         = glm::vec3(1.0f);
     colorUniformBuffer->Update(&white);
 }
 void Sandbox::WireframeRendererSource::CreateDescriptorSets(std::shared_ptr<Renderer>& renderer)
@@ -43,7 +47,7 @@ void Sandbox::WireframeRendererSource::CreateDescriptorSets(std::shared_ptr<Rend
     descriptorSets.resize(frameFlightSize);
     for (size_t i = 0; i < frameFlightSize; ++i)
     {
-        descriptorSets[i] = std::make_shared<DescriptorSet>(device, renderer->descriptorPool, pipeline->pipelineLayout->descriptorSetLayout);
+        descriptorSets[i] = renderer->descriptorSetCaching->GetOrCreateDescriptorSet(pipeline->pipelineLayout->descriptorSetLayout, i);
     }
     UpdateDescriptorSets(renderer);
 }
@@ -60,12 +64,16 @@ void Sandbox::WireframeRendererSource::UpdateDescriptorSets(const std::shared_pt
             {1, {uboMvp[i]->modelsUbo->GetDescriptorBufferInfo(dynamicAlignment)}},
             {2, {colorUniformBuffer->GetDescriptorBufferInfo()}},
         };
-        BindingMap<VkDescriptorImageInfo> imageInfoMapping;
-        descriptorSets[i]->BindInfoMapping(bufferInfoMapping, imageInfoMapping, pipeline->pipelineLayout->descriptorSetLayout);
+        descriptorSets[i]->BindBufferInfoMapping(bufferInfoMapping, pipeline->pipelineLayout->descriptorSetLayout);
     }
 }
 void Sandbox::WireframeRendererSource::Cleanup()
 {
     colorUniformBuffer != nullptr ? colorUniformBuffer->Cleanup() : void();
     RendererSource::Cleanup();
+}
+void Sandbox::WireframeRendererSource::BindPipeline(const std::shared_ptr<CommandBuffer>& inCommandBuffer)
+{
+    RendererSource::BindPipeline(inCommandBuffer);
+    inCommandBuffer->BindPipeline(pipeline);
 }

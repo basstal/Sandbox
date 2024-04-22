@@ -22,6 +22,7 @@ namespace Sandbox
     class GlfwCallbackBridge;
     class TransformGizmo;
     class Window;
+    class ShaderLinkage;
 
 
     class Editor : public std::enable_shared_from_this<Editor>
@@ -47,8 +48,8 @@ namespace Sandbox
         std::shared_ptr<Grid>          grid;
         // std::shared_ptr<Camera>        camera;
 
-        std::vector<std::shared_ptr<ShaderModule>>  shaderModules;
-        std::shared_ptr<PipelineLayout>             pipelineLayout;
+        std::shared_ptr<ShaderLinkage>  shaderLinkage;
+        // std::shared_ptr<PipelineLayout>             pipelineLayout;
         std::vector<std::shared_ptr<DescriptorSet>> descriptorSets;
         // std::shared_ptr<TransformGizmo> transformGizmo;
         std::vector<std::shared_ptr<Models>> models;

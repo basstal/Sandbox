@@ -18,6 +18,8 @@ namespace Sandbox
 
         VkDescriptorPool vkDescriptorPool;
 
+        std::shared_ptr<Device> GetDevice();
+
     private:
         std::shared_ptr<Device> m_device;
         bool                    m_cleaned = false;

@@ -4,6 +4,7 @@
 #include <memory>
 #include <string>
 
+#include "Misc/Event.hpp"
 #include "Standard/Dictionary.hpp"
 #include "vulkan/vulkan_core.h"
 
@@ -57,16 +58,21 @@ namespace Sandbox
     class Device;
     class ShaderSource;
 
-    class ShaderModule
+    class ShaderModule : public std::enable_shared_from_this<ShaderModule>
     {
+        friend class ShaderModuleCaching;
     public:
-        ShaderModule(const std::shared_ptr<Device>& device, const ShaderSource& glslSource);
+        ShaderModule(const std::shared_ptr<Device>& device, const std::shared_ptr<ShaderSource>& glslSource, VkShaderStageFlagBits inStage);
 
         ~ShaderModule();
 
+        bool IsValid();
+
         void Cleanup();
 
-        void Compile(const std::string& shaderName, const std::string& shaderSource, const std::string&preamble,VkShaderStageFlagBits stage);
+        void Recompile();
+
+        void Compile(const std::string& shaderName, const std::string& inShaderSource, const std::string& preamble, VkShaderStageFlagBits stage);
 
         void SetUniformDescriptorMode(const std::string& uniformName, DescriptorMode inMode);
 
@@ -77,11 +83,19 @@ namespace Sandbox
 
         void ReflectVertexInputState(VertexInputState& vertexInputState) const;
 
+        std::shared_ptr<Device> GetDevice();
+
         VkShaderModule vkShaderModule;
 
         VkShaderStageFlagBits vkShaderStage;
 
+
+        Dictionary<std::string, ShaderUniformBlockReflection> GetUniformBlocks() { return m_uniformBlocks; }
+
+        Event<const std::shared_ptr<ShaderModule>&> onShaderRecompile;
+
     private:
+        std::shared_ptr<ShaderSource> m_shaderSource;
         /**
          * \brief 构造统一缓冲区反射信息
          * \param uniform 统一缓冲区反射对象

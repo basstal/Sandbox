@@ -53,9 +53,10 @@ void Sandbox::ImGuiRenderer::Prepare(const std::shared_ptr<Renderer>& renderer, 
     std::vector<LoadStoreInfo> loadStoreInfos = {
         {VK_ATTACHMENT_LOAD_OP_CLEAR, VK_ATTACHMENT_STORE_OP_STORE},
     };
-    std::vector<SubpassInfo> subpassInfos = {
-        {{0}, {}, true},
-    };
+    std::vector<SubpassInfo> subpassInfos;
+    SubpassInfo              subpass;
+    subpass.colorAttachments.push_back(0);
+    subpassInfos.emplace_back(subpass);
     VkSubpassDependency subpassDependency{};
     subpassDependency.srcSubpass    = VK_SUBPASS_EXTERNAL;
     subpassDependency.dstSubpass    = 0;
@@ -251,7 +252,8 @@ void Sandbox::ImGuiRenderer::CreateRenderTarget()
     }
     for (size_t i = 0; i < imageViewSize; ++i)
     {
-        renderAttachments[i] = std::make_shared<RenderAttachments>(m_renderer->device, renderPass, m_renderer->swapchain->imageExtent, m_renderer->swapchain->imageViews[i]);
+        std::vector<std::shared_ptr<ImageView>> inImageViews{m_renderer->swapchain->imageViews[i]};
+        renderAttachments[i] = std::make_shared<RenderAttachments>(m_renderer->device, renderPass, m_renderer->swapchain->imageExtent, inImageViews);
         renderTargets[i]     = std::make_shared<RenderTarget>(m_renderer->device, renderPass, m_renderer->swapchain->imageExtent, renderAttachments[i]);
     }
 }

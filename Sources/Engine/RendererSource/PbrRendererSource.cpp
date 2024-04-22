@@ -8,12 +8,14 @@
 #include "FileSystem/Directory.hpp"
 #include "Misc/Debug.hpp"
 #include "Misc/TypeCasting.hpp"
+#include "VulkanRHI/Common/Caching/DescriptorSetCaching.hpp"
+#include "VulkanRHI/Common/Caching/PipelineCaching.hpp"
+#include "VulkanRHI/Common/Caching/ShaderModuleCaching.hpp"
 #include "VulkanRHI/Common/Macros.hpp"
-#include "VulkanRHI/Common/PipelineCaching.hpp"
-#include "VulkanRHI/Common/ShaderModuleCaching.hpp"
 #include "VulkanRHI/Common/ShaderSource.hpp"
 #include "VulkanRHI/Core/CommandBuffer.hpp"
 #include "VulkanRHI/Core/DescriptorSet.hpp"
+#include "VulkanRHI/Core/Device.hpp"
 #include "VulkanRHI/Core/Image.hpp"
 #include "VulkanRHI/Core/ImageView.hpp"
 #include "VulkanRHI/Core/Pipeline.hpp"
@@ -21,6 +23,7 @@
 #include "VulkanRHI/Core/ShaderModule.hpp"
 #include "VulkanRHI/Renderer.hpp"
 #include "VulkanRHI/Rendering/PipelineState.hpp"
+#include "VulkanRHI/Rendering/ShaderLinkage.hpp"
 #include "VulkanRHI/Rendering/Texture.hpp"
 #include "VulkanRHI/Rendering/UniformBuffer.hpp"
 
@@ -51,23 +54,24 @@ void Sandbox::PbrRendererSource::CreatePipeline(std::shared_ptr<Renderer>& rende
 
 void Sandbox::PbrRendererSource::CreatePipelineWithPreamble(std::shared_ptr<Renderer>& renderer, const std::string& preamble)
 {
-    auto device = renderer->device;
-
+    auto device               = renderer->device;
+    shaderLinkage             = std::make_shared<ShaderLinkage>();
     Directory assetsDirectory = Directory::GetAssetsDirectory();
-    auto      vertexSource    = ShaderSource(assetsDirectory.GetFile("Shaders/PBR.vert").path.string(), preamble, VK_SHADER_STAGE_VERTEX_BIT);
-    auto      vertexShader    = renderer->shaderModuleCaching->GetOrCreateShaderModule(vertexSource);
+    auto      vertexSource    = std::make_shared<ShaderSource>(assetsDirectory.GetFile("Shaders/PBR.vert").path.string(), preamble);
+    auto      vertexShader    = shaderLinkage->CreateShaderModule(renderer, VK_SHADER_STAGE_VERTEX_BIT, vertexSource);
     vertexShader->SetUniformDescriptorMode("Model", Dynamic);
-    shaderModules.push_back(vertexShader);
 
-    auto fragmentSource = ShaderSource(assetsDirectory.GetFile("Shaders/PBR.frag").path.string(), preamble, VK_SHADER_STAGE_FRAGMENT_BIT);
-    auto fragmentShader = renderer->shaderModuleCaching->GetOrCreateShaderModule(fragmentSource);
-    shaderModules.push_back(fragmentShader);
+    auto fragmentSource = std::make_shared<ShaderSource>(assetsDirectory.GetFile("Shaders/PBR.frag").path.string(), preamble);
+
+    auto fragmentShader = shaderLinkage->CreateShaderModule(renderer, VK_SHADER_STAGE_FRAGMENT_BIT, fragmentSource);
+
 
     // pipelineLayout = std::make_shared<PipelineLayout>(device, shaderModules);
-    
-    pipelineState           = std::make_shared<PipelineState>(shaderModules, renderer->renderPass);
-    pipeline                = renderer->pipelineCaching->GetOrCreatePipeline(pipelineState);
-    auto pipelineLayout = pipeline->pipelineLayout;
+
+    pipelineState                                        = std::make_shared<PipelineState>(shaderLinkage, renderer->renderPass);
+    pipelineState->multisampleState.rasterizationSamples = device->GetMaxUsableSampleCount();
+    pipeline                                             = renderer->pipelineCaching->GetOrCreatePipeline(pipelineState);
+    auto pipelineLayout                                  = pipeline->pipelineLayout;
     // TODO:这里只处理了 pushConstants 唯一的情况
     pushConstantsInfo.size  = pipelineLayout->pushConstantRanges[0].size;
     pushConstantsInfo.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
@@ -125,7 +129,7 @@ void Sandbox::PbrRendererSource::CreateDescriptorSets(std::shared_ptr<Renderer>&
     for (size_t i = 0; i < frameFlightSize; ++i)
     {
         uboLights[i]      = std::make_shared<UniformBuffer>(device, sizeof(Light));
-        descriptorSets[i] = std::make_shared<DescriptorSet>(device, renderer->descriptorPool, pipeline->pipelineLayout->descriptorSetLayout);
+        descriptorSets[i] = renderer->descriptorSetCaching->GetOrCreateDescriptorSet(pipeline->pipelineLayout->descriptorSetLayout, i);
     }
     UpdateDescriptorSets(renderer);
 }
@@ -142,17 +146,59 @@ void Sandbox::PbrRendererSource::UpdateDescriptorSets(const std::shared_ptr<Rend
             {1, {uboMvp[i]->modelsUbo->GetDescriptorBufferInfo(dynamicAlignment)}},
             {3, {uboLights[i]->GetDescriptorBufferInfo()}},
         };
-
+        descriptorSets[i]->BindBufferInfoMapping(bufferInfoMapping, pipeline->pipelineLayout->descriptorSetLayout);
         BindingMap<VkDescriptorImageInfo> imageInfoMapping = {
             {2,
              {textures[i][0]->GetDescriptorImageInfo(), textures[i][1]->GetDescriptorImageInfo(), textures[i][2]->GetDescriptorImageInfo(),
               textures[i][3]->GetDescriptorImageInfo()}},
         };
-        descriptorSets[i]->BindInfoMapping(bufferInfoMapping, imageInfoMapping, pipeline->pipelineLayout->descriptorSetLayout);
+        descriptorSets[i]->BindImageInfoMapping(imageInfoMapping, pipeline->pipelineLayout->descriptorSetLayout);
     }
 }
 void Sandbox::PbrRendererSource::PushConstants(const std::shared_ptr<CommandBuffer>& inCommandBuffer)
 {
     RendererSource::PushConstants(inCommandBuffer);
-    inCommandBuffer->PushConstants(pushConstantsInfo);
+    inCommandBuffer->PushConstants(pipeline->pipelineLayout, pushConstantsInfo);
 }
+void Sandbox::PbrRendererSource::BindPipeline(const std::shared_ptr<CommandBuffer>& inCommandBuffer)
+{
+    RendererSource::BindPipeline(inCommandBuffer);
+    inCommandBuffer->BindPipeline(pipeline);
+}
+// void Sandbox::PbrRendererSource::BlitImage(const std::shared_ptr<CommandBuffer>& commandBuffer, const std::shared_ptr<RenderAttachments>& renderAttachments,
+//                                            VkExtent2D resolution)
+// {
+//     RendererSource::BlitImage(commandBuffer, renderAttachments, resolution);
+//
+// }
+// void transitionImageLayout(VkCommandBuffer commandBuffer, VkImage image,
+//                        VkImageLayout oldLayout, VkImageLayout newLayout,
+//                        VkImageSubresourceRange subresourceRange) {
+//     VkImageMemoryBarrier barrier{};
+//     barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+//     barrier.oldLayout = oldLayout;
+//     barrier.newLayout = newLayout;
+//     barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+//     barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+//     barrier.image = image;
+//     barrier.subresourceRange = subresourceRange;
+//
+//     VkPipelineStageFlags sourceStage;
+//     VkPipelineStageFlags destinationStage;
+//
+//     if (oldLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL && newLayout == VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL) {
+//         barrier.srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
+//         barrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+//         sourceStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+//         destinationStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+//     } else {
+//         // Handle other transitions
+//     }
+//
+//     vkCmdPipelineBarrier(commandBuffer,
+//                          sourceStage, destinationStage,
+//                          0, 0, nullptr, 0, nullptr,
+//                          1, &barrier);
+    // }
+
+

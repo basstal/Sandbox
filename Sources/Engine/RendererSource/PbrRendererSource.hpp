@@ -19,9 +19,12 @@ namespace Sandbox
         void UpdateDescriptorSets(const std::shared_ptr<Renderer>& renderer) override;
 
         void PushConstants(const std::shared_ptr<CommandBuffer>& inCommandBuffer) override;
+        void BindPipeline(const std::shared_ptr<CommandBuffer>& inCommandBuffer) override;
+        // void BlitImage(const std::shared_ptr<CommandBuffer>& commandBuffer, const std::shared_ptr<RenderAttachments>& renderAttachments, VkExtent2D resolution) override;
 
         std::vector<std::array<std::shared_ptr<Texture>, 4>> textures;
         std::vector<std::shared_ptr<UniformBuffer>>          uboLights;
-        PushConstantsInfo pushConstantsInfo;
+        PushConstantsInfo                                    pushConstantsInfo;
+        std::shared_ptr<Pipeline>                            pipeline;
     };
 }  // namespace Sandbox

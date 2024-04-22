@@ -4,10 +4,14 @@
 
 #include "Engine/EntityComponent/Scene.hpp"
 #include "FileSystem/Directory.hpp"
-#include "VulkanRHI/Common/PipelineCaching.hpp"
+#include "Misc/Debug.hpp"
+#include "VulkanRHI/Common/Caching/DescriptorSetCaching.hpp"
+#include "VulkanRHI/Common/Caching/PipelineCaching.hpp"
 #include "VulkanRHI/Core/CommandBuffer.hpp"
 #include "VulkanRHI/Core/DescriptorSet.hpp"
+#include "VulkanRHI/Core/Device.hpp"
 #include "VulkanRHI/Core/Pipeline.hpp"
+#include "VulkanRHI/Core/PipelineLayout.hpp"
 #include "VulkanRHI/Core/ShaderModule.hpp"
 #include "VulkanRHI/Renderer.hpp"
 #include "VulkanRHI/Rendering/PipelineState.hpp"
@@ -58,8 +62,13 @@ void Sandbox::StencilRendererSource::CreatePipeline(std::shared_ptr<Renderer>& r
         pipelineState->depthStencilState.back  = backOpState;
         stencilInputLitPipeline                = renderer->pipelineCaching->GetOrCreatePipeline(pipelineState);
     }
-    auto edgeColor                                            = glm::vec3(243.0f / 255, 151.0f / 255, 44.0f / 255);
-    auto pipelineStateOutline                                 = std::make_shared<PipelineState>(shaderModules, renderer->renderPass);
+    auto edgeColor            = glm::vec3(243.0f / 255, 151.0f / 255, 44.0f / 255);
+    auto pipelineStateOutline = std::make_shared<PipelineState>(shaderLinkage, renderer->renderPass);
+    pipelineStateOutline->multisampleState.rasterizationSamples = renderer->device->GetMaxUsableSampleCount();
+    // if (shaderLinkage[0]->GetUniformBlocks().size() != 2)
+    // {
+    //     LOGF("Editor", "StencilRendererSource::CreatePipeline: shaderModules[0]->GetUniformBlocks().size() != 2")
+    // }
     pipelineStateOutline->depthStencilState.stencilTestEnable = VK_TRUE;
     pipelineStateOutline->depthStencilState.depthTestEnable   = VK_FALSE;
 
@@ -73,37 +82,55 @@ void Sandbox::StencilRendererSource::CreatePipeline(std::shared_ptr<Renderer>& r
     pipelineStateOutline->depthStencilState.back  = backOpState;
 
     stencilOutlinePipeline = renderer->pipelineCaching->GetOrCreatePipeline(pipelineStateOutline);
+    if (stencilOutlinePipeline.get() == stencilInputLitPipeline.get())
+    {
+        LOGF("VulkanRHI", "stencilOutlinePipeline == stencilInputLitPipeline pipelineState hash conflict?")
+    }
+    // // TODO: 这里代码从基类复制出来的，先临时修正 descriptorSets 资源数量不正确的问题
+    // auto     device          = renderer->device;
+    // uint32_t frameFlightSize = renderer->maxFramesFlight;
+    // descriptorSets.resize(frameFlightSize);
+    // for (size_t i = 0; i < frameFlightSize; ++i)
+    // {
+    //     descriptorSets[i] = renderer->descriptorSetCaching->GetOrCreateDescriptorSet(stencilOutlinePipeline->pipelineLayout->descriptorSetLayout, i);
+    // }
+    // UpdateDescriptorSets(renderer);
+
     colorUniformBuffer->Update(&edgeColor);
 }
 
 void Sandbox::StencilRendererSource::CustomDrawOverlay(const std::shared_ptr<Mesh>& mesh, const std::shared_ptr<CommandBuffer>& commandBuffer,
                                                        const std::shared_ptr<DescriptorSet>& descriptorSet, uint32_t frameFlightIndex, uint32_t dynamicOffsets)
 {
-    auto boundPipeline = commandBuffer->GetBoundPipeline();
+    // auto boundPipeline = commandBuffer->GetBoundPipeline();
     // 修改缩放再绘制一次
     auto transform = mesh->transform.lock();
     // TODO:已经缩放很大的物体可能选中边界会很小
     transform->scale += 0.05f;
     Tick(m_renderer);
+    // LOGD("Engine", "CustomDrawOverlay bind stencilOutlinePipeline {}", PtrToHexString(stencilOutlinePipeline->vkPipeline))
     commandBuffer->BindPipeline(stencilOutlinePipeline);
+    // LOGD("Engine", "CustomDrawOverlay BindDescriptorSet {}", PtrToHexString(stencilOutlinePipeline->pipelineLayout->vkPipelineLayout))
     commandBuffer->BindDescriptorSet(stencilOutlinePipeline->pipelineLayout, descriptorSets[frameFlightIndex], {dynamicOffsets});
     commandBuffer->BindVertexBuffers(mesh->vertexBuffer);
     commandBuffer->BindIndexBuffer(mesh->indexBuffer);
     commandBuffer->DrawIndexed(mesh->Indices());
+
     transform->scale -= 0.05f;
-    commandBuffer->BindPipeline(boundPipeline);
+    // commandBuffer->BindPipeline(boundPipeline);
 }
 void Sandbox::StencilRendererSource::CustomDrawMesh(const std::shared_ptr<Mesh>& mesh, const std::shared_ptr<CommandBuffer>& commandBuffer,
                                                     const std::shared_ptr<DescriptorSet>& descriptorSet, uint32_t frameFlightIndex, uint32_t dynamicOffsets)
 {
     WireframeRendererSource::CustomDrawMesh(mesh, commandBuffer, descriptorSet, frameFlightIndex, dynamicOffsets);
-    auto boundPipeline = commandBuffer->GetBoundPipeline();
+    // auto boundPipeline = commandBuffer->GetBoundPipeline();
     commandBuffer->BindPipeline(stencilInputLitPipeline);
+    // LOGD("Engine", "CustomDrawMesh BindDescriptorSet {}", PtrToHexString(stencilOutlinePipeline->pipelineLayout->vkPipelineLayout))
     commandBuffer->BindDescriptorSet(stencilInputLitPipeline->pipelineLayout, descriptorSet, {dynamicOffsets});
     commandBuffer->BindVertexBuffers(mesh->vertexBuffer);
     commandBuffer->BindIndexBuffer(mesh->indexBuffer);
     commandBuffer->DrawIndexed(mesh->Indices());
-    commandBuffer->BindPipeline(boundPipeline);
+    // commandBuffer->BindPipeline(boundPipeline);
 }
 
 void Sandbox::StencilRendererSource::Cleanup(){

@@ -11,6 +11,7 @@
 #include "FileSystem/Logger.hpp"
 #include "Framebuffer.hpp"
 #include "Image.hpp"
+#include "Misc/TypeCasting.hpp"
 #include "Pipeline.hpp"
 #include "PipelineLayout.hpp"
 #include "RenderPass.hpp"
@@ -128,18 +129,21 @@ void Sandbox::CommandBuffer::BindDescriptorSet(const std::shared_ptr<PipelineLay
                                                const std::vector<uint32_t>& dynamicOffsets)
 {
     descriptorSet->Update();
-    vkCmdBindDescriptorSets(vkCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout->vkPipelineLayout, 0, 1, &descriptorSet->vkDescriptorSet,
-                            static_cast<uint32_t>(dynamicOffsets.size()), dynamicOffsets.data());
+    // LOGD("VulkanRHI", "pipelineLayout->vkPipelineLayout : {}, descriptorSet->vkDescriptorSet : {}\n{}", PtrToHexString(pipelineLayout->vkPipelineLayout),
+    //      PtrToHexString(descriptorSet->vkDescriptorSet), GetCallStack())
+    auto dynamicOffsetCount = ToUInt32(dynamicOffsets.size());
+    vkCmdBindDescriptorSets(vkCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout->vkPipelineLayout, 0, 1, &descriptorSet->vkDescriptorSet, dynamicOffsetCount,
+                            dynamicOffsetCount > 0 ? dynamicOffsets.data() : nullptr);
 }
 
 void Sandbox::CommandBuffer::BindPipeline(const std::shared_ptr<Pipeline>& pipeline)
 {
     vkCmdBindPipeline(vkCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->vkPipeline);
     // PushConstants(pipeline->pipelineLayout->vkPipelineLayout, pushConstantsInfo);
-    m_boundPipeline = pipeline;
+    // m_boundPipeline = pipeline;
 }
 
-void Sandbox::CommandBuffer::PushConstants(const PushConstantsInfo& pushConstantsInfo)
+void Sandbox::CommandBuffer::PushConstants(const std::shared_ptr<PipelineLayout>& pipelineLayout, const PushConstantsInfo& pushConstantsInfo)
 {
     // auto& pipelineState = m_boundPipeline->pipelineState;
     // auto& pushConstantsInfo = pipelineState->pushConstantsInfo;
@@ -147,7 +151,7 @@ void Sandbox::CommandBuffer::PushConstants(const PushConstantsInfo& pushConstant
     // TODO:与 m_boundPipeline->pipelineLayout->pushConstantRanges 对齐
     if (pushConstantsInfo.size > 0 && pushConstantsInfo.data != nullptr)
     {
-        vkCmdPushConstants(vkCommandBuffer, m_boundPipeline->pipelineLayout->vkPipelineLayout, pushConstantsInfo.stage, 0, pushConstantsInfo.size, pushConstantsInfo.data);
+        vkCmdPushConstants(vkCommandBuffer, pipelineLayout->vkPipelineLayout, pushConstantsInfo.stage, 0, pushConstantsInfo.size, pushConstantsInfo.data);
     }
 }
 
@@ -160,9 +164,17 @@ void Sandbox::CommandBuffer::BindVertexBuffers(const std::shared_ptr<Buffer>& bu
 
 void Sandbox::CommandBuffer::BindIndexBuffer(const std::shared_ptr<Buffer>& buffer) { vkCmdBindIndexBuffer(vkCommandBuffer, buffer->vkBuffer, 0, VK_INDEX_TYPE_UINT32); }
 
-void Sandbox::CommandBuffer::DrawIndexed(uint32_t indexCount) { vkCmdDrawIndexed(vkCommandBuffer, indexCount, 1, 0, 0, 0); }
+void Sandbox::CommandBuffer::DrawIndexed(uint32_t indexCount)
+{
+    // LOGD("VulkanRHI", "DrawIndexed\n{}", GetCallStack())
+    vkCmdDrawIndexed(vkCommandBuffer, indexCount, 1, 0, 0, 0);
+}
 
-void Sandbox::CommandBuffer::Draw(uint32_t count) { vkCmdDraw(vkCommandBuffer, count, 1, 0, 0); }
+void Sandbox::CommandBuffer::Draw(uint32_t count)
+{
+    // LOGD("VulkanRHI", "CommandBuffer call Draw\n{}", GetCallStack())
+    vkCmdDraw(vkCommandBuffer, count, 1, 0, 0);
+}
 
 
 void Sandbox::CommandBuffer::CopyDataToBuffer(const void* inData, VkDeviceSize size, const std::shared_ptr<Buffer>& dstBuffer)
@@ -322,8 +334,9 @@ void Sandbox::CommandBuffer::TransitionImageLayout(const std::shared_ptr<Image>&
             barrier.srcAccessMask = 0;
             barrier.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
 
-            sourceStage      = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
-            destinationStage = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+            sourceStage                         = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+            destinationStage                    = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+            barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
         }
         else if (newLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
         {
@@ -332,6 +345,14 @@ void Sandbox::CommandBuffer::TransitionImageLayout(const std::shared_ptr<Image>&
 
             sourceStage      = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
             destinationStage = VK_PIPELINE_STAGE_VERTEX_SHADER_BIT;
+        }
+        else if (newLayout == VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL)
+        {
+            barrier.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_COLOR_ATTACHMENT_READ_BIT;
+            barrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+
+            sourceStage      = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;  // 第一个渲染通道的最后一个阶段
+            destinationStage = VK_PIPELINE_STAGE_TRANSFER_BIT;  // 第二个渲染通道的第一个阶段
         }
         else
         {
@@ -424,6 +445,24 @@ void Sandbox::CommandBuffer::TransitionImageLayout(const std::shared_ptr<Image>&
         sourceStage      = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;  // 在片段着色器读取完成后
         destinationStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;  // 在颜色附件输出之前
     }
+    else if (oldLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL && newLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL)
+    {
+        barrier.srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+        barrier.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT;
+
+        sourceStage                         = VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+        destinationStage                    = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+        barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
+    }
+    else if (oldLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL && newLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL)
+    {
+        barrier.srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT;
+        barrier.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+
+        sourceStage                         = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+        destinationStage                    = VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+        barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
+    }
     else
     {
         Logger::Fatal("unsupported layout transition!");
@@ -514,7 +553,7 @@ void Sandbox::CommandBuffer::BlitImage(const std::shared_ptr<Image>& srcImage, c
     imageBlit.dstSubresource.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
     imageBlit.dstSubresource.mipLevel       = 0;
     imageBlit.dstSubresource.baseArrayLayer = 0;
-    imageBlit.dstSubresource.layerCount = 1;
+    imageBlit.dstSubresource.layerCount     = 1;
 
     // 目标图像的拷贝区域
     imageBlit.dstOffsets[0] = {0, 0, 0}; // 目标起始点
@@ -528,7 +567,10 @@ void Sandbox::CommandBuffer::BlitImage(const std::shared_ptr<Image>& srcImage, c
         VK_FILTER_LINEAR // 使用线性滤波
     );
 }
-
-std::shared_ptr<Sandbox::Pipeline> Sandbox::CommandBuffer::GetBoundPipeline(){
-    return m_boundPipeline;
+std::shared_ptr<Sandbox::Device> Sandbox::CommandBuffer::GetDevice(){
+    return m_device;
 }
+
+// std::shared_ptr<Sandbox::Pipeline> Sandbox::CommandBuffer::GetBoundPipeline(){
+//     return m_boundPipeline;
+// }

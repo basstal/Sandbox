@@ -2,52 +2,68 @@
 
 #include "RenderAttachments.hpp"
 
+#include "FileSystem/Logger.hpp"
+#include "Misc/Debug.hpp"
 #include "VulkanRHI/Common/SubpassComponents.hpp"
 #include "VulkanRHI/Core/Image.hpp"
 #include "VulkanRHI/Core/ImageView.hpp"
 #include "VulkanRHI/Core/RenderPass.hpp"
 
 Sandbox::RenderAttachments::RenderAttachments(const std::shared_ptr<Device>& device, const std::shared_ptr<RenderPass>& renderPass, VkExtent2D extent2D,
-                                              const std::shared_ptr<ImageView>& inResolveImageView)
+                                              std::vector<std::shared_ptr<ImageView>>& inImageViews)
 {
     VkExtent3D extent3D = {extent2D.width, extent2D.height, 1};
-    if (renderPass->attachments.size() > 1)  // 如果只有一个 imageView，则不创建额外的 color 和 depth attachment 对象
+    if (!inImageViews.empty() && renderPass->attachments.size() != inImageViews.size())
     {
-        colorImage     = std::make_shared<Image>(device, extent3D, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
-                                             VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, renderPass->attachments[0].samples);
-        colorImageView = std::make_shared<ImageView>(colorImage, VK_IMAGE_VIEW_TYPE_2D);
-        attachments.push_back(colorImageView->vkImageView);
-        auto enableDepth = !renderPass->subpasses[0].disableDepthStencilAttachment;
-        if (enableDepth)
+        LOGF("VulkanRHI", "RenderAttachments::RenderAttachments: renderPass->attachments.size() != inImageViews.size()")
+    }
+    if (inImageViews.empty())
+    {
+        inImageViews.resize(renderPass->attachments.size());
+    }
+    uint32_t index = 0;
+    // 资源一一对应
+    attachments.resize(renderPass->attachments.size());
+    for (auto& imageView : inImageViews)
+    {
+        if (imageView != nullptr)
         {
-            VkFormat              depthFormat  = VK_FORMAT_UNDEFINED;
-            VkSampleCountFlagBits depthSamples = VK_SAMPLE_COUNT_1_BIT;
-            for (const Attachment& attachment : renderPass->attachments)
-            {
-                if (attachment.usage == VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT)
-                {
-                    depthFormat  = attachment.format;
-                    depthSamples = attachment.samples;
-                    break;
-                }
-            }
-            depthImage = std::make_shared<Image>(device, extent3D, depthFormat, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, depthSamples);
-            depthImageView = std::make_shared<ImageView>(depthImage, VK_IMAGE_VIEW_TYPE_2D);
-            attachments.push_back(depthImageView->vkImageView);
+            attachments[index++] = imageView->vkImageView;
+            continue;
         }
-    }
-    if (inResolveImageView == nullptr)
-    {
-        resolveImage =
-            std::make_shared<Image>(device, extent3D, VK_FORMAT_R8G8B8A8_UNORM,
-                                    VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT,
-                                    VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VK_SAMPLE_COUNT_1_BIT);
-        resolveImageView = std::make_shared<ImageView>(resolveImage, VK_IMAGE_VIEW_TYPE_2D);
-        attachments.push_back(resolveImageView->vkImageView);
-    }
-    else
-    {
-        attachments.push_back(inResolveImageView->vkImageView);
+        auto& renderPassAttachment = renderPass->attachments[index];
+        if (renderPassAttachment.usage & VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT)
+        {
+            VkImageUsageFlags usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+            if (renderPassAttachment.samples != VK_SAMPLE_COUNT_1_BIT)
+            {
+                usage |= VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT;
+            }
+            else
+            {
+                usage |= VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+            }
+            auto colorImage = std::make_shared<Image>(device, extent3D, VK_FORMAT_R8G8B8A8_UNORM, usage, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, renderPassAttachment.samples);
+            LOGD("VulkanRHI", "index {} colorImage : {}", std::to_string(index), PtrToHexString(colorImage->vkImage))
+            auto colorImageView = std::make_shared<ImageView>(colorImage, VK_IMAGE_VIEW_TYPE_2D);
+            images.push_back(colorImage);
+            imageViews.push_back(colorImageView);
+            attachments[index++] = colorImageView->vkImageView;
+        }
+        else if (renderPassAttachment.usage & VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT)
+        {
+            auto depthImage =
+                std::make_shared<Image>(device, extent3D, renderPassAttachment.format, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT,
+                                        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, renderPassAttachment.samples);
+            auto depthImageView = std::make_shared<ImageView>(depthImage, VK_IMAGE_VIEW_TYPE_2D);
+            images.push_back(depthImage);
+            imageViews.push_back(depthImageView);
+            attachments[index++] = depthImageView->vkImageView;
+        }
+        else
+        {
+            LOGF("VulkanRHI", "RenderAttachments::RenderAttachments: renderPassAttachment.usage {} not supported", std::to_string(renderPassAttachment.usage))
+        }
     }
 }
 
@@ -59,11 +75,13 @@ void Sandbox::RenderAttachments::Cleanup()
     {
         return;
     }
-    resolveImageView != nullptr ? resolveImageView->Cleanup() : void();
-    resolveImage != nullptr ? resolveImage->Cleanup() : void();
-    depthImageView != nullptr ? depthImageView->Cleanup() : void();
-    depthImage != nullptr ? depthImage->Cleanup() : void();
-    colorImageView != nullptr ? colorImageView->Cleanup() : void();
-    colorImage != nullptr ? colorImage->Cleanup() : void();
+    for (auto& imageView : imageViews)
+    {
+        imageView->Cleanup();
+    }
+    for (auto& image : images)
+    {
+        image->Cleanup();
+    }
     m_cleaned = true;
 }

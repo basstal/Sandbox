@@ -5,6 +5,7 @@
 #include "Editor.hpp"
 #include "Engine/EntityComponent/Components/Camera.hpp"
 #include "Engine/EntityComponent/Scene.hpp"
+#include "Misc/TypeCasting.hpp"
 #include "VulkanRHI/Core/Buffer.hpp"
 #include "VulkanRHI/Core/CommandBuffer.hpp"
 #include "VulkanRHI/Core/Pipeline.hpp"
@@ -96,7 +97,7 @@ void Sandbox::Grid::DrawGrid(const std::shared_ptr<CommandBuffer>& commandBuffer
     commandBuffer->BindDescriptorSet(m_editor->pipelineLineList->pipelineLayout, m_editor->descriptorSets[frameFlightIndex],
                                      {static_cast<uint32_t>(offset * dynamicAlignment)});
     commandBuffer->BindVertexBuffers(lineListBuffer);
-    commandBuffer->Draw(static_cast<uint32_t>(lineListProperties.size()));
+    commandBuffer->Draw(ToUInt32(lineListProperties.size()));
 }
 
 void Sandbox::Grid::Cleanup()

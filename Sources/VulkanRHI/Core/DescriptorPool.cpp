@@ -14,6 +14,7 @@ Sandbox::DescriptorPool::DescriptorPool(const std::shared_ptr<Device>& device, u
     poolSizes.push_back({VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, descriptorCount});
     poolSizes.push_back({VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, descriptorCount});
     poolSizes.push_back({VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, descriptorCount});
+    poolSizes.push_back({VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, descriptorCount});
     VkDescriptorPoolCreateInfo poolInfo{};
     poolInfo.sType         = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
     poolInfo.poolSizeCount = static_cast<uint32_t>(poolSizes.size());
@@ -37,3 +38,4 @@ void Sandbox::DescriptorPool::Cleanup()
     vkDestroyDescriptorPool(m_device->vkDevice, vkDescriptorPool, nullptr);
     m_cleaned = true;
 }
+std::shared_ptr<Sandbox::Device> Sandbox::DescriptorPool::GetDevice() { return m_device; }

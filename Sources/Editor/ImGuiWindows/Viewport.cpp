@@ -40,10 +40,11 @@ Sandbox::Viewport::Viewport(const std::shared_ptr<Renderer>& inRenderer)
     flags          = ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse;
     m_renderer     = inRenderer;
     presentSampler = std::make_shared<Sampler>(m_renderer->device, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE);
+    // m_renderer->onViewModeChanged.BindMember<Viewport, &Viewport::OnViewModeChanged>(this);
     m_renderer->swapchain->onAfterRecreateSwapchain.BindMember<Viewport, &Viewport::OnRecreateFramebuffer>(this);
     m_renderer->surface->window->callbackBridge->onMouseButton.BindMember<Viewport, &Viewport::SwitchCursorForCameraMovement>(this);
-    BindCameraPosition(inRenderer->viewMode);
-    inRenderer->onViewModeChanged.BindMember<Viewport, &Viewport::BindCameraPosition>(this);
+    OnViewModeChanged(inRenderer->viewMode);
+    inRenderer->onViewModeChanged.BindMember<Viewport, &Viewport::OnViewModeChanged>(this);
     IComponent::onComponentCreate.Bind(
         [this](const std::shared_ptr<IComponent>& inComponent)
         {
@@ -60,13 +61,14 @@ void Sandbox::Viewport::Prepare()
 {
     IImGuiWindow::Prepare();
     OnRecreateFramebuffer();
+    // OnViewModeChanged(m_renderer->viewMode);
     // 绘制 viewport 选中框的 rendererSource
     m_stencilRendererSource = std::make_shared<StencilRendererSource>();
     m_stencilRendererSource->Prepare(m_renderer);
     Scene::onSceneChange.Bind(
         [this](const std::shared_ptr<Scene>& inScene)
         {
-            BindCameraPosition(m_renderer->viewMode);
+            OnViewModeChanged(m_renderer->viewMode);
             inScene->onRendererSourceTick.Bind([this](const std::shared_ptr<Renderer>& renderer) { m_stencilRendererSource->Tick(renderer); });
         });
     Scene::onReconstructMeshes.Bind([this] { m_stencilRendererSource->RecreateUniformModels(m_renderer); });
@@ -246,6 +248,12 @@ void Sandbox::Viewport::Cleanup()
     m_stencilRendererSource->Cleanup();
     IImGuiWindow::Cleanup();
     presentSampler->Cleanup();
+    // m_lastOutputImageView != nullptr ? m_lastOutputImageView->Cleanup() : void();
+    // outputImageView != nullptr ? outputImageView->Cleanup() : void();
+    for (auto& presentDescriptorSet : m_lastPresentDescriptorSets)
+    {
+        ImGui_ImplVulkan_RemoveTexture(presentDescriptorSet);
+    }
     for (auto& presentDescriptorSet : presentDescriptorSets)
     {
         ImGui_ImplVulkan_RemoveTexture(presentDescriptorSet);
@@ -438,14 +446,24 @@ void Sandbox::Viewport::DrawOverlay()
 
 void Sandbox::Viewport::OnRecreateFramebuffer()
 {
-    auto imageViewSize = m_renderer->swapchain->imageViews.size();
+    auto rendererSource = m_renderer->GetCurrentRendererSource();
+    
+    // outputImageView     = std::make_shared<ImageView>(rendererSource->outputImage, VK_IMAGE_VIEW_TYPE_2D);
+    auto imageViewSize  = m_renderer->swapchain->imageViews.size();
     presentDescriptorSets.resize(imageViewSize);
     for (size_t i = 0; i < imageViewSize; ++i)
     {
-        VkImageView offlineImageView = m_renderer->renderAttachments[i]->resolveImageView->vkImageView;  // Vulkan图像视图，已经创建并指向包含渲染结果的图像
-        presentDescriptorSets[i]     = ImGui_ImplVulkan_AddTexture(presentSampler->vkSampler, offlineImageView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+        // VkImageView offlineImageView = m_renderer->renderAttachments[i]->resolveImageView->vkImageView;  // Vulkan图像视图，已经创建并指向包含渲染结果的图像
+        presentDescriptorSets[i] = ImGui_ImplVulkan_AddTexture(presentSampler->vkSampler, rendererSource->outputImageView->vkImageView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
     }
 }
+
+
+// void Sandbox::Viewport::OnViewModeChanged(EViewMode inViewMode)
+// {
+//
+// }
+
 
 void Sandbox::Viewport::SelectObject()
 {
@@ -572,7 +590,7 @@ ImVec2 Sandbox::Viewport::CalculateStartPosition(int aspectWidth, int aspectHeig
 }
 
 
-void Sandbox::Viewport::BindCameraPosition(EViewMode inViewMode)
+void Sandbox::Viewport::OnViewModeChanged(EViewMode inViewMode)
 {
     std::shared_ptr<RendererSource> rendererSource;
     if (m_renderer->TryGetRendererSource(inViewMode, rendererSource))
@@ -592,6 +610,25 @@ void Sandbox::Viewport::BindCameraPosition(EViewMode inViewMode)
         // // TODO:因为这里 position 是 Vector3 派生自 rfk::Object 虚函数表指针要求 8 字节对齐，因此不满足传递给 GPU 对齐要求
         //     rendererSource->pipeline->pipelineState->pushConstantsInfo.data = &gameObject->transform->position.vec;
         // }
+        // m_lastOutputImageView != nullptr ? m_lastOutputImageView->Cleanup() : void();
+        // m_lastOutputImageView = outputImageView;
+        // outputImageView       = std::make_shared<ImageView>(rendererSource->outputImage, VK_IMAGE_VIEW_TYPE_2D);
+        auto imageViewSize    = m_renderer->swapchain->imageViews.size();
+        if (!m_lastPresentDescriptorSets.empty())
+        {
+            for (auto& presentDescriptorSet : m_lastPresentDescriptorSets)
+            {
+                ImGui_ImplVulkan_RemoveTexture(presentDescriptorSet);
+            }
+        }
+        m_lastPresentDescriptorSets = presentDescriptorSets;
+        presentDescriptorSets.clear();
+        presentDescriptorSets.resize(imageViewSize);
+        for (size_t i = 0; i < imageViewSize; ++i)
+        {
+            // VkImageView offlineImageView = m_renderer->renderAttachments[i]->resolveImageView->vkImageView;  // Vulkan图像视图，已经创建并指向包含渲染结果的图像
+            presentDescriptorSets[i] = ImGui_ImplVulkan_AddTexture(presentSampler->vkSampler, rendererSource->outputImageView->vkImageView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+        }
     }
 }
 

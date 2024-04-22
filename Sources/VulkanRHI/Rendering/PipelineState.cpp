@@ -2,19 +2,25 @@
 
 #include "PipelineState.hpp"
 
+#include "ShaderLinkage.hpp"
 #include "VulkanRHI/Core/PipelineLayout.hpp"
 #include "VulkanRHI/Core/ShaderModule.hpp"
 
-Sandbox::PipelineState::PipelineState(const std::vector<std::shared_ptr<ShaderModule>>& inShaderModules, const std::shared_ptr<RenderPass>& inRenderPass)
+Sandbox::PipelineState::PipelineState(const std::shared_ptr<ShaderLinkage>& inShaderLinkage, const std::shared_ptr<RenderPass>& inRenderPass)
 {
-    renderPass    = inRenderPass;
-    shaderModules = inShaderModules;
-    for (const auto& shaderModule : shaderModules)
+    renderPass        = inRenderPass;
+    shaderLinkage     = inShaderLinkage;
+    auto vertexShader = shaderLinkage->GetShaderModuleByStage(VK_SHADER_STAGE_VERTEX_BIT);
+    if (vertexShader != nullptr)
     {
-        if (shaderModule->vkShaderStage == VK_SHADER_STAGE_VERTEX_BIT)
-        {
-            shaderModule->ReflectVertexInputState(vertexInputState);
-        }
+        vertexShader->ReflectVertexInputState(vertexInputState);
+        vertexShader->onShaderRecompile.Bind(
+            [this](const std::shared_ptr<ShaderModule>& recompiledShader)
+            {
+                vertexInputState.attributes.clear();
+                vertexInputState.bindings.clear();
+                recompiledShader->ReflectVertexInputState(vertexInputState);
+            });
     }
     // pipelineLayout = inPipelineLayout;
     // if (!pipelineLayout->pushConstantRanges.empty())
@@ -26,11 +32,18 @@ Sandbox::PipelineState::PipelineState(const std::vector<std::shared_ptr<ShaderMo
 Sandbox::PipelineState::PipelineState(const PipelineState& other)
 {
     renderPass       = other.renderPass;
-    shaderModules    = other.shaderModules;
+    shaderLinkage    = other.shaderLinkage;
     vertexInputState = other.vertexInputState;
     // pipelineLayout   = other.pipelineLayout;
     // pushConstantsInfo  = other.pushConstantsInfo;
     inputAssemblyState = other.inputAssemblyState;
     rasterizationState = other.rasterizationState;
     depthStencilState  = other.depthStencilState;
+    multisampleState   = other.multisampleState;
+}
+
+bool Sandbox::PipelineState::operator==(const PipelineState& other) const
+{
+    return inputAssemblyState == other.inputAssemblyState && vertexInputState == other.vertexInputState && rasterizationState == other.rasterizationState &&
+        depthStencilState == other.depthStencilState && shaderLinkage.get() == other.shaderLinkage.get() && renderPass.get() == other.renderPass.get();
 }

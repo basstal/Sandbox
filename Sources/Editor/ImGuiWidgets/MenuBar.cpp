@@ -67,6 +67,11 @@ bool Sandbox::MenuBar::Draw(const std::vector<std::shared_ptr<IImGuiWindow>>& wi
                 DataBinding::Get<void>("Engine/Reload")->Trigger();
             }
 
+            if (ImGui::MenuItem("Recompile Shaders"))
+            {
+                DataBinding::Get<void>("Engine/RecompileShaders")->Trigger();
+            }
+
             ImGui::EndMenu();
         }
         ImGui::EndMainMenuBar();
