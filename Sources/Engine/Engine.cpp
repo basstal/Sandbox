@@ -2,6 +2,7 @@
 
 #include "Engine.hpp"
 
+#include "BasicMeshData.hpp"
 #include "Editor/Editor.hpp"
 #include "Editor/ImGuiRenderer.hpp"
 #include "Editor/ImGuiWindows/Hierarchy.hpp"
@@ -85,8 +86,11 @@ void Sandbox::Engine::CreateEditor()
 void Sandbox::Engine::CreateRenderer()
 {
     renderer = std::make_shared<Renderer>();
-    LOGD_OLD("CreateRenderer render ptr {}", PtrToHexString(renderer.get()))
+    // LOGD_OLD("CreateRenderer render ptr {}", PtrToHexString(renderer.get()))
     renderer->Prepare(window);
+
+    BasicMeshData::Instance = std::make_shared<BasicMeshData>();
+    BasicMeshData::Instance->Prepare(renderer->device, renderer->commandBuffers[0]);
 
     auto maxFramesFlight = renderer->maxFramesFlight;
     models.resize(maxFramesFlight);
@@ -153,8 +157,11 @@ void Sandbox::Engine::MainLoop()
             if (renderer->AcquireNextImage() == Continue)
             {
                 // 绘制场景
+                // LOGD("Engine", "renderer->Draw()")
                 renderer->Draw();
+                // LOGD("Engine", "editor->Draw()")
                 editor->Draw();
+                // LOGD("Engine", "renderer->Preset()")
                 renderer->Preset();
             }
         }
@@ -194,6 +201,7 @@ void Sandbox::Engine::Pause(GLFWwindow* inWindow, int key, int scancode, int act
 
 void Sandbox::Engine::Cleanup()
 {
+    BasicMeshData::Instance->Cleanup();
     physicsSystem->Cleanup();
     window->Cleanup();
     editor->Cleanup();

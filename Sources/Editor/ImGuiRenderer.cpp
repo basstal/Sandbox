@@ -48,7 +48,8 @@ void Sandbox::ImGuiRenderer::Prepare(const std::shared_ptr<Renderer>& renderer, 
     m_renderer = renderer;
     // 构建 GUI renderPass
     std::vector<Attachment> attachments = {
-        {VK_FORMAT_R8G8B8A8_UNORM, VK_SAMPLE_COUNT_1_BIT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR},
+        {VK_FORMAT_R8G8B8A8_UNORM, VK_SAMPLE_COUNT_1_BIT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
+         VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL},
     };
     std::vector<LoadStoreInfo> loadStoreInfos = {
         {VK_ATTACHMENT_LOAD_OP_CLEAR, VK_ATTACHMENT_STORE_OP_STORE},
@@ -57,14 +58,15 @@ void Sandbox::ImGuiRenderer::Prepare(const std::shared_ptr<Renderer>& renderer, 
     SubpassInfo              subpass;
     subpass.colorAttachments.push_back(0);
     subpassInfos.emplace_back(subpass);
-    VkSubpassDependency subpassDependency{};
+    VkSubpassDependency2KHR subpassDependency{};
+    subpassDependency.sType = VK_STRUCTURE_TYPE_SUBPASS_DEPENDENCY_2;
     subpassDependency.srcSubpass    = VK_SUBPASS_EXTERNAL;
     subpassDependency.dstSubpass    = 0;
     subpassDependency.srcStageMask  = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
     subpassDependency.dstStageMask  = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
     subpassDependency.srcAccessMask = 0;
     subpassDependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-    renderPass                      = std::make_shared<RenderPass>(renderer->device, attachments, loadStoreInfos, subpassInfos, subpassDependency);
+    renderPass                      = std::make_shared<RenderPass>(renderer->device, attachments, loadStoreInfos, subpassInfos, std::vector{subpassDependency});
     ImGuiPrepare(renderer, renderPass);
 
     auto maxFramesFlight = m_renderer->maxFramesFlight;

@@ -61,6 +61,7 @@ namespace Sandbox
     class ShaderModule : public std::enable_shared_from_this<ShaderModule>
     {
         friend class ShaderModuleCaching;
+
     public:
         ShaderModule(const std::shared_ptr<Device>& device, const std::shared_ptr<ShaderSource>& glslSource, VkShaderStageFlagBits inStage);
 

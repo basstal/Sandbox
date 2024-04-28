@@ -13,9 +13,12 @@ namespace Sandbox
     {
     public:
         RenderAttachments(const std::shared_ptr<Device>& device, const std::shared_ptr<RenderPass>& renderPass, VkExtent2D extent2D,
-                          std::vector<std::shared_ptr<ImageView>>& inImageViews);
+                          const std::vector<std::shared_ptr<ImageView>>& inImageViews);
+        RenderAttachments(const std::shared_ptr<Device>& device, const std::shared_ptr<RenderPass>& renderPass, VkExtent2D extent2D);
 
         ~RenderAttachments();
+
+        void ImageCreation(const std::shared_ptr<Device>& device, const std::shared_ptr<RenderPass>& renderPass, VkExtent2D extent2D);
 
         void Cleanup();
 

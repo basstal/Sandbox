@@ -1,8 +1,7 @@
 ﻿#pragma once
-#include "VulkanRHI/Common/Macros.hpp"
 #include "Misc/Hasher.hpp"
 #include "Standard/Dictionary.hpp"
-#include "VulkanRHI/Core/RenderPass.hpp"
+#include "VulkanRHI/Common/Macros.hpp"
 #include "VulkanRHI/Rendering/PipelineState.hpp"
 
 
@@ -24,7 +23,8 @@ namespace Sandbox
 
     private:
         Dictionary<PipelineState, std::shared_ptr<Sandbox::Pipeline>> m_pipelines;
-        std::shared_ptr<Sandbox::Pipeline>                            CreatePipeline(const std::shared_ptr<PipelineState>& pipelineState);
+
+        std::shared_ptr<Sandbox::Pipeline> CreatePipeline(const std::shared_ptr<PipelineState>& pipelineState);
     };
 
 

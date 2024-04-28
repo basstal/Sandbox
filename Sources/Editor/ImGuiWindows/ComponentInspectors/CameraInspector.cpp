@@ -3,7 +3,9 @@
 #include "CameraInspector.hpp"
 
 #include "Engine/EntityComponent/Components/Camera.hpp"
+#include "Engine/PostProcess.hpp"
 #include "Generated/CameraInspector.rfks.h"
+#include "VulkanRHI/Common/ShaderSource.hpp"
 
 
 void Sandbox::CameraInspector::OnInspectorGui()
@@ -21,6 +23,25 @@ void Sandbox::CameraInspector::OnInspectorGui()
 
     ImGui::InputFloat("nearPlane", &camera->nearPlane, 0.1f, 1.0f, "%.3f");
     ImGui::InputFloat("farPlane", &camera->farPlane, 0.1f, 1.0f, "%.3f");
+
+    for (auto& [shaderSource, isEnabled] : camera->postProcessFragShaders)
+    {
+        auto file = File(shaderSource->filePath);
+        // bool enabled = postProcess != nullptr;
+        auto enabled = isEnabled;
+        if (ImGui::Checkbox(file.GetName().c_str(), &enabled))
+        {
+            if (enabled)
+            {
+                camera->postProcess->AddPostProcess(shaderSource);
+            }
+            else
+            {
+                camera->postProcess->RemovePostProcess(shaderSource);
+            }
+            camera->postProcessFragShaders[shaderSource] = enabled;
+        }
+    }
 
     // DrawFieldsReflected<Camera>(camera);
 }

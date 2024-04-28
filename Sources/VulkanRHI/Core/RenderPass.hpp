@@ -18,12 +18,15 @@ namespace Sandbox
                    const std::vector<SubpassInfo>& inSubpassInfos);
 
         RenderPass(const std::shared_ptr<Device>& device, const std::vector<Attachment>& inAttachments, const std::vector<LoadStoreInfo>& inLoadStoreInfos,
-                        const std::vector<SubpassInfo>& inSubpassInfos, VkSubpassDependency inSubpassDependency);
-        void CreateRenderPass(VkSubpassDependency inSubpassDependency);
+                        const std::vector<SubpassInfo>& inSubpassInfos, const std::vector<VkSubpassDependency2KHR>& inSubpassDependency);
+        void AttachmentReferenceMaker(std::vector<VkAttachmentReference2KHR>& result, const std::vector<uint32_t>& attachmentIndices,
+                                      const std::vector<VkAttachmentDescription2KHR>& attachmentDescriptions);
 
-        VkSubpassDependency CreateDefaultDependency();
+        void CreateRenderPass(const std::vector<VkSubpassDependency2KHR>& inSubpassDependency);
 
-        std::vector<VkAttachmentDescription> GetAttachmentDescriptions(const std::vector<Attachment>& inAttachments, const std::vector<LoadStoreInfo>& inLoadStoreInfos);
+        static VkSubpassDependency2KHR CreateDefaultDependency();
+
+        std::vector<VkAttachmentDescription2KHR> GetAttachmentDescriptions(const std::vector<Attachment>& inAttachments, const std::vector<LoadStoreInfo>& inLoadStoreInfos);
 
         ~RenderPass();
 

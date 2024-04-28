@@ -3,8 +3,13 @@
 #include "Camera.hpp"
 
 #include "Engine/EntityComponent/GameObject.hpp"
+#include "Engine/PostProcess.hpp"
+#include "Engine/RendererSource/PbrRendererSource.hpp"
+#include "FileSystem/Directory.hpp"
 #include "Generated/Camera.rfks.h"
 #include "Misc/GlmExtensions.hpp"
+#include "VulkanRHI/Common/ShaderSource.hpp"
+#include "VulkanRHI/Renderer.hpp"
 
 /**
  * \brief 默认的相机速度
@@ -20,6 +25,8 @@ const glm::vec3 DEFAULT_WORLD_UP = glm::vec3(0.0f, 0.0f, 1.0f);
 
 Sandbox::Camera::Camera()
 {
+    postProcess = std::make_shared<PostProcess>();
+
     worldUp  = DEFAULT_WORLD_UP;
     worldUp1 = DEFAULT_WORLD_UP;
     onComponentCreate.Bind(
@@ -30,6 +37,13 @@ Sandbox::Camera::Camera()
                 UpdateCameraVectors();
             }
         });
+    auto postProcessDirectory = Directory::GetAssetsDirectory().GetDirectory("Shaders/PostProcess");
+    auto postProcessFiles     = postProcessDirectory.GetFiles();
+    for (auto file : postProcessFiles)
+    {
+        std::shared_ptr<ShaderSource> postProcessSource = std::make_shared<ShaderSource>(file, "");
+        postProcessFragShaders[postProcessSource]       = false;
+    }
 }
 
 Sandbox::Camera::Camera(float inAspectRatio)
@@ -149,7 +163,7 @@ std::string Sandbox::Camera::GetDerivedClassName() { return getArchetype().getNa
 const rfk::Class* Sandbox::Camera::GetDerivedClass() { return rfk::classCast(rfk::getArchetype<Camera>()); }
 
 
-Sandbox::Vector3 Sandbox::Camera::NDCToWorld(const float& x, const float& y, const float& z)
+Sandbox::Vector3 Sandbox::Camera::NdcToWorld(const float& x, const float& y, const float& z)
 {
     glm::mat4 projectionMatrix        = GetProjectionMatrix();
     glm::vec4 clipPosition            = glm::vec4(x, y, z, 1.0);
@@ -164,7 +178,4 @@ Sandbox::Vector3 Sandbox::Camera::NDCToWorld(const float& x, const float& y, con
     return Vector3(worldPosition);
 }
 
-Sandbox::Vector3 Sandbox::Camera::NDCToWorld(const Vector3& ndcCoordinate)
-{
-    return NDCToWorld(ndcCoordinate.x, ndcCoordinate.y, ndcCoordinate.z);
-}
+Sandbox::Vector3 Sandbox::Camera::NdcToWorld(const Vector3& ndcCoordinate) { return NdcToWorld(ndcCoordinate.x, ndcCoordinate.y, ndcCoordinate.z); }

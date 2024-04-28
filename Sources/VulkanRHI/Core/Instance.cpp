@@ -3,31 +3,7 @@
 #include "Instance.hpp"
 
 #include "FileSystem/Logger.hpp"
-
-
-static void CheckExtensionsSupport(uint32_t extensionsCount, const char** extensions)
-{
-    uint32_t extensionCount = 0;
-    vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, nullptr);
-    std::vector<VkExtensionProperties> vkExtensionPropertiesSet(extensionCount);
-    vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, vkExtensionPropertiesSet.data());
-    for (uint32_t i = 0; i < extensionsCount; i++)
-    {
-        bool isContained = false;
-        for (const auto& vkExtensionProperties : vkExtensionPropertiesSet)
-        {
-            if (strcmp(extensions[i], vkExtensionProperties.extensionName) == 0)
-            {
-                isContained = true;
-                break;
-            }
-        }
-        if (!isContained)
-        {
-            LOGF_OLD("{} is not supported in vkExtensionProperties.", extensions[i])
-        }
-    }
-}
+#include "VulkanRHI/Common/Debug.hpp"
 
 
 static std::vector<const char*> GetRequiredExtensions()
@@ -37,13 +13,44 @@ static std::vector<const char*> GetRequiredExtensions()
     glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
 
     std::vector<const char*> extensions(glfwExtensions, glfwExtensions + glfwExtensionCount);
-    CheckExtensionsSupport(glfwExtensionCount, glfwExtensions);
-
     return extensions;
 }
 
-Sandbox::Instance::Instance(uint32_t inApiVersion, const char* applicationName) : apiVersion(inApiVersion)
+
+void Sandbox::Instance::IsExtensionsSupported(const std::vector<const char*>& inExtensions)
 {
+    uint32_t extensionCount = 0;
+    ValidateVkResult(vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, nullptr));
+    std::vector<VkExtensionProperties> availableExtensions(extensionCount);
+    ValidateVkResult(vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, availableExtensions.data()));
+
+    for (const char* extension : inExtensions)
+    {
+        bool found = false;
+        for (const auto& availableExtension : availableExtensions)
+        {
+            if (strcmp(extension, availableExtension.extensionName) == 0)
+            {
+                found = true;
+                break;
+            }
+        }
+        if (!found)
+        {
+            LOGF("VulkanRHI", "{} extension is not supported!", extension)
+        }
+    }
+}
+
+Sandbox::Instance::Instance(uint32_t inApiVersion, const char* applicationName, const std::vector<const char*>& inExtensions) : apiVersion(inApiVersion)
+{
+    auto requiredExtensions = GetRequiredExtensions();
+    for (auto& extension : inExtensions)
+    {
+        requiredExtensions.push_back(extension);
+    }
+    IsExtensionsSupported(requiredExtensions);
+
     VkApplicationInfo appInfo{};
     appInfo.sType              = VK_STRUCTURE_TYPE_APPLICATION_INFO;
     appInfo.pApplicationName   = applicationName;
@@ -52,7 +59,6 @@ Sandbox::Instance::Instance(uint32_t inApiVersion, const char* applicationName) 
     appInfo.engineVersion      = VK_MAKE_VERSION(1, 0, 0);
     appInfo.apiVersion         = apiVersion;
 
-    auto                 requiredExtensions = GetRequiredExtensions();
     VkInstanceCreateInfo createInfo{};
     createInfo.sType                   = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
     createInfo.pApplicationInfo        = &appInfo;
@@ -61,12 +67,8 @@ Sandbox::Instance::Instance(uint32_t inApiVersion, const char* applicationName) 
     createInfo.enabledExtensionCount   = static_cast<uint32_t>(requiredExtensions.size());
     createInfo.ppEnabledExtensionNames = requiredExtensions.data();
 
-    if (vkCreateInstance(&createInfo, nullptr, &vkInstance) != VK_SUCCESS)
-    {
-        LOGF_OLD("failed to create instance!")
-    }
+    ValidateVkResult(vkCreateInstance(&createInfo, nullptr, &vkInstance));
 }
-
 Sandbox::Instance::~Instance() { Cleanup(); }
 
 void Sandbox::Instance::Cleanup()

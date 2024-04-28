@@ -53,6 +53,7 @@ namespace Sandbox
 
         VkExtent2D imageExtent;
 
+        // TODO:这个值的位置和获取都不太方便合理
         uint32_t acquiredNextImageIndex;
 
         Event<void> onBeforeRecreateSwapchain;

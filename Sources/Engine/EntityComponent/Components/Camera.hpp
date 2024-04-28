@@ -6,10 +6,14 @@
 #include "Engine/EntityComponent/IComponent.hpp"
 #include "Generated/Camera.rfkh.h"
 #include "Math/Vector3.hpp"
+#include "Standard/Dictionary.hpp"
 
 namespace Sandbox NAMESPACE()
 {
     class UniformBuffer;
+    class ShaderSource;
+    class PostProcess;
+    class Renderer;
 
     struct ViewAndProjection
     {
@@ -140,10 +144,12 @@ namespace Sandbox NAMESPACE()
 
         const rfk::Class* GetDerivedClass() override;
 
-        Vector3 NDCToWorld(const float& x, const float& y, const float& z);
+        Vector3 NdcToWorld(const float& x, const float& y, const float& z);
 
-        Vector3 NDCToWorld(const Vector3& ndcCoordinate);
+        Vector3 NdcToWorld(const Vector3& ndcCoordinate);
 
+        Dictionary<std::shared_ptr<ShaderSource>, bool> postProcessFragShaders;
+        std::shared_ptr<PostProcess> postProcess;
         Sandbox_Camera_GENERATED
 	};
 } // namespace Sandbox NAMESPACE()

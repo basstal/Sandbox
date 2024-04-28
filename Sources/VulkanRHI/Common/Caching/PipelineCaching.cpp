@@ -6,6 +6,7 @@
 #include "Misc/Debug.hpp"
 #include "ResourceCaching.hpp"
 #include "VulkanRHI/Core/Pipeline.hpp"
+#include "VulkanRHI/Rendering/PipelineState.hpp"
 
 std::shared_ptr<Sandbox::Pipeline> Sandbox::PipelineCaching::GetOrCreatePipeline(const std::shared_ptr<PipelineState>& pipelineState)
 {
@@ -17,7 +18,7 @@ std::shared_ptr<Sandbox::Pipeline> Sandbox::PipelineCaching::GetOrCreatePipeline
         // LOGD("VulkanRHI", "reuse pipeline vkPipeline : {}", PtrToHexString(m_pipelines.at(*pipelineState)->vkPipeline))
         return m_pipelines.at(*pipelineState);
     }
-    auto newPipeline          = CreatePipeline(pipelineState);
+    auto newPipeline            = CreatePipeline(pipelineState);
     m_pipelines[*pipelineState] = newPipeline;
     return newPipeline;
 }

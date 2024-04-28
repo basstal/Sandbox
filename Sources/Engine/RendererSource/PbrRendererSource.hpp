@@ -20,11 +20,14 @@ namespace Sandbox
 
         void PushConstants(const std::shared_ptr<CommandBuffer>& inCommandBuffer) override;
         void BindPipeline(const std::shared_ptr<CommandBuffer>& inCommandBuffer) override;
-        // void BlitImage(const std::shared_ptr<CommandBuffer>& commandBuffer, const std::shared_ptr<RenderAttachments>& renderAttachments, VkExtent2D resolution) override;
+        void BlitImage(const std::shared_ptr<CommandBuffer>& commandBuffer, const std::shared_ptr<RenderAttachments>& renderAttachments, VkExtent2D resolution) override;
+        void Tick(const std::shared_ptr<Renderer>& renderer) override;
+        // void ApplyPostProcess(const std::shared_ptr<PostProcess>& postProcess);
 
         std::vector<std::array<std::shared_ptr<Texture>, 4>> textures;
         std::vector<std::shared_ptr<UniformBuffer>>          uboLights;
         PushConstantsInfo                                    pushConstantsInfo;
         std::shared_ptr<Pipeline>                            pipeline;
+        // std::vector<std::shared_ptr<PostProcess>>            postProcesses;
     };
 }  // namespace Sandbox

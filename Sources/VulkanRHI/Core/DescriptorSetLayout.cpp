@@ -50,7 +50,7 @@ void Sandbox::DescriptorSetLayout::Cleanup()
         return;
     }
     LOGD("VulkanRHI", "DescriptorSetLayout Cleanup called for {}", PtrToHexString(vkDescriptorSetLayout))
-    
+
     vkDestroyDescriptorSetLayout(m_device->vkDevice, vkDescriptorSetLayout, nullptr);
     m_cleaned = true;
 }

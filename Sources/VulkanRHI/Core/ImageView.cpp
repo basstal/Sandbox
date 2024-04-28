@@ -19,9 +19,21 @@ Sandbox::ImageView::ImageView(const std::shared_ptr<Device>& device, VkImage ima
     format(inFormat)
 {
     assert(inFormat != VK_FORMAT_UNDEFINED && "format must be specified");
-    m_device = device;
-    subresourceRange.aspectMask =
-        std::string(vk::componentName(static_cast<vk::Format>(inFormat), 0)) == "D" ? VkImageAspectFlagBits::VK_IMAGE_ASPECT_DEPTH_BIT : VK_IMAGE_ASPECT_COLOR_BIT;
+    m_device                    = device;
+    auto vkFormat               = static_cast<vk::Format>(inFormat);
+    subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    // if (vk::componentCount(vkFormat) == 2)
+    // {
+    //     if (std::string(vk::componentName(vkFormat, 0)) == "D" && std::string(vk::componentName(vkFormat, 1)) == "S")
+    //     {
+    //         subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
+    //     }
+    // }
+    // else
+        if (std::string(vk::componentName(vkFormat, 0)) == "D")
+    {
+        subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
+    }
     subresourceRange.baseMipLevel   = 0;
     subresourceRange.levelCount     = imageSubresource.mipLevel;
     subresourceRange.baseArrayLayer = 0;
@@ -29,6 +41,7 @@ Sandbox::ImageView::ImageView(const std::shared_ptr<Device>& device, VkImage ima
     VkImageViewCreateInfo viewInfo{};
     viewInfo.sType            = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
     viewInfo.image            = image;
+    imageReference            = image;
     viewInfo.viewType         = viewType;
     viewInfo.format           = inFormat;
     viewInfo.subresourceRange = subresourceRange;

@@ -65,7 +65,7 @@ void Sandbox::Editor::CleanupOnGui()
     // pipelineLayout->Cleanup();
     pipelineGizmo->Cleanup();
     pipelineLineList->Cleanup();
-    shaderLinkage->Cleanup();
+    // shaderLinkage->Cleanup();
     // for (auto& shaderModule : shaderLinkage)
     // {
     //     shaderModule->Cleanup();
@@ -77,10 +77,10 @@ void Sandbox::Editor::PrepareOnGui()
     auto device = m_renderer->device;
     shaderLinkage = std::make_shared<ShaderLinkage>();
     auto vertexShaderSource = std::make_shared<ShaderSource>(Directory::GetAssetsDirectory().GetFile("Shaders/FillModeNonSolidGrid.vert"), "");
-    auto vertexShaderModule = shaderLinkage->CreateShaderModule(m_renderer, VK_SHADER_STAGE_VERTEX_BIT, vertexShaderSource);
+    auto vertexShaderModule = shaderLinkage->LinkShaderModule(m_renderer, VK_SHADER_STAGE_VERTEX_BIT, vertexShaderSource);
     vertexShaderModule->SetUniformDescriptorMode("Model", Dynamic);
     auto fragmentShaderSource = std::make_shared<ShaderSource>(Directory::GetAssetsDirectory().GetFile("Shaders/FillModeNonSolidGrid.frag"), "");
-    shaderLinkage->CreateShaderModule(m_renderer, VK_SHADER_STAGE_FRAGMENT_BIT, fragmentShaderSource);
+    shaderLinkage->LinkShaderModule(m_renderer, VK_SHADER_STAGE_FRAGMENT_BIT, fragmentShaderSource);
 
     // pipelineLayout                                     = std::make_shared<PipelineLayout>(device, shaderModules);
     auto renderPass                                    = m_renderer->renderPass;

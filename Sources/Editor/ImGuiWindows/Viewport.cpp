@@ -483,7 +483,7 @@ void Sandbox::Viewport::SelectObject()
     float yNDC = 1.0f - (2.0f * screenY / ToFloat(resolvedResolution.height));  // Y轴翻转
     float zNDC = 0.01f;  // vulkan 将 Z 设为 1.0f 以表示远平面， 0. 0表示近平面
     LOGD("Editor", "xNDC {}, yNDC {}, zNDC {}", xNDC, yNDC, zNDC)
-    auto worldPosition   = mainCamera->NDCToWorld(xNDC, yNDC, zNDC);
+    auto worldPosition   = mainCamera->NdcToWorld(xNDC, yNDC, zNDC);
     auto cameraTransform = mainCamera->transform.lock();
     auto ray             = Ray(cameraTransform->position, worldPosition - cameraTransform->position);
     if (m_selectionCollector == nullptr)

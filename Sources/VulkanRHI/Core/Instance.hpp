@@ -10,7 +10,8 @@ namespace Sandbox
     class Instance
     {
     public:
-        Instance(uint32_t inApiVersion, const char* applicationName);
+        void IsExtensionsSupported(const std::vector<const char*>& inExtensions);
+             Instance(uint32_t inApiVersion, const char* applicationName, const std::vector<const char*>& inExtensions);
 
         ~Instance();
 

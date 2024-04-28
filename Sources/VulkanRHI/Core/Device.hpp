@@ -75,13 +75,13 @@ namespace Sandbox
         uint32_t GetMaxUniformBuffer() const;
 
         VkSampleCountFlagBits GetMaxUsableSampleCount() const;
-        VkSampleCountFlagBits GetUsableSampleCount(VkSampleCountFlagBits targetSampleCount)const;
+        VkSampleCountFlagBits GetUsableSampleCount(VkSampleCountFlagBits targetSampleCount) const;
 
         uint32_t GetMaxPushConstantsSize() const;
 
         float GetMaxAnisotropy() const;
 
-        VkDeviceSize GetMinUniformBufferOffsetAlignment(VkDeviceSize& dynamicAlignment);
+        VkDeviceSize          GetMinUniformBufferOffsetAlignment(VkDeviceSize& dynamicAlignment);VkResolveModeFlagBits  GetDepthResolveMode(VkResolveModeFlagBits inFlagBits)const;
 
         VkPhysicalDevice vkPhysicalDevice;
         VkDevice         vkDevice;
@@ -96,7 +96,9 @@ namespace Sandbox
 
         QueueFamilyIndices queueFamilyIndices;
 
+        std::shared_ptr<Instance> GetInstance();
     private:
+        std::shared_ptr<Instance> m_instance;
         bool m_cleaned = false;
     };
 }

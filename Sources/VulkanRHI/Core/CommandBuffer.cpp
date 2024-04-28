@@ -11,11 +11,14 @@
 #include "FileSystem/Logger.hpp"
 #include "Framebuffer.hpp"
 #include "Image.hpp"
+#include "ImageMemoryBarrier.hpp"
+#include "ImageView.hpp"
 #include "Misc/TypeCasting.hpp"
 #include "Pipeline.hpp"
 #include "PipelineLayout.hpp"
 #include "RenderPass.hpp"
 #include "Semaphore.hpp"
+#include "VulkanRHI/Common/Checker.hpp"
 #include "VulkanRHI/Common/Debug.hpp"
 #include "VulkanRHI/Common/SubpassComponents.hpp"
 #include "VulkanRHI/Rendering/PipelineState.hpp"
@@ -124,6 +127,12 @@ void Sandbox::CommandBuffer::SetScissor(uint32_t firstScissor, const std::vector
     vkCmdSetScissor(vkCommandBuffer, firstScissor, static_cast<uint32_t>(scissors.size()), scissors.data());
 }
 
+
+void Sandbox::CommandBuffer::BindDescriptorSet(const std::shared_ptr<PipelineLayout>& pipelineLayout, const std::shared_ptr<DescriptorSet>& descriptorSet)
+{
+    descriptorSet->Update();
+    vkCmdBindDescriptorSets(vkCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout->vkPipelineLayout, 0, 1, &descriptorSet->vkDescriptorSet, 0, nullptr);
+}
 
 void Sandbox::CommandBuffer::BindDescriptorSet(const std::shared_ptr<PipelineLayout>& pipelineLayout, const std::shared_ptr<DescriptorSet>& descriptorSet,
                                                const std::vector<uint32_t>& dynamicOffsets)
@@ -295,8 +304,49 @@ void Sandbox::CommandBuffer::CopyBufferToImage(Buffer& buffer, VkImage vkImage, 
     vkCmdCopyBufferToImage(vkCommandBuffer, buffer.vkBuffer, vkImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
 }
 
+void Sandbox::CommandBuffer::TransitionImageLayout(const std::shared_ptr<ImageView>& imageView, const ImageMemoryBarrier& barrier, VkDependencyFlags dependencyFlags)
+{
+    // Adjust barrier's subresource range for depth images
+    auto subresourceRange = imageView->subresourceRange;
+    auto format           = imageView->format;
+    if (IsDepthOnlyFormat(format))
+    {
+        subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
+    }
+    else if (IsDepthStencilFormat(format))
+    {
+        subresourceRange.aspectMask = VK_IMAGE_ASPECT_STENCIL_BIT | VK_IMAGE_ASPECT_DEPTH_BIT;
+    }
+
+
+    // Create an image barrier object
+    VkImageMemoryBarrier imageMemoryBarrier{};
+    imageMemoryBarrier.sType               = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+    imageMemoryBarrier.srcAccessMask       = barrier.srcAccessMask;
+    imageMemoryBarrier.dstAccessMask       = barrier.dstAccessMask;
+    imageMemoryBarrier.oldLayout           = barrier.oldLayout;
+    imageMemoryBarrier.newLayout           = barrier.newLayout;
+    imageMemoryBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    imageMemoryBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    imageMemoryBarrier.image               = imageView->imageReference;
+    imageMemoryBarrier.subresourceRange    = subresourceRange;
+    // LOGD("VulkanRHI", "Transition Image Layout from {} to {}\n{}", std::to_string(barrier.oldLayout), std::to_string(barrier.newLayout), GetCallStack())
+
+    vkCmdPipelineBarrier(vkCommandBuffer, barrier.srcStageMask, barrier.dstStageMask, dependencyFlags, 0, nullptr, 0, nullptr, 1, &imageMemoryBarrier);
+}
+
+void Sandbox::CommandBuffer::TransitionImageLayoutInstant(const std::shared_ptr<Image>& vkImage, VkImageLayout oldLayout, VkImageLayout newLayout, uint32_t mipLevels)
+{
+    Begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
+    TransitionImageLayout(vkImage, oldLayout, newLayout, mipLevels);
+    EndAndSubmit();
+}
+
+
 void Sandbox::CommandBuffer::TransitionImageLayout(const std::shared_ptr<Image>& vkImage, VkImageLayout oldLayout, VkImageLayout newLayout, uint32_t mipLevels)
 {
+    // LOGD("VulkanRHI", "Transition Image Layout from {} to {}\n{}", std::to_string(oldLayout), std::to_string(newLayout), GetCallStack())
+
     VkImageMemoryBarrier barrier{};
     VkPipelineStageFlags sourceStage{}, destinationStage{};
     barrier.sType                           = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
@@ -315,10 +365,10 @@ void Sandbox::CommandBuffer::TransitionImageLayout(const std::shared_ptr<Image>&
     {
         if (newLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)
         {
-            barrier.srcAccessMask = 0;
+            barrier.srcAccessMask = VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_SHADER_WRITE_BIT;
             barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
 
-            sourceStage      = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+            sourceStage      = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
             destinationStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
         }
         else if (newLayout == VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL)
@@ -392,6 +442,14 @@ void Sandbox::CommandBuffer::TransitionImageLayout(const std::shared_ptr<Image>&
             sourceStage      = VK_PIPELINE_STAGE_TRANSFER_BIT;
             destinationStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
         }
+        else if (newLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)
+        {
+            barrier.srcAccessMask = VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_SHADER_WRITE_BIT;
+            barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+
+            sourceStage      = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+            destinationStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+        }
         else
         {
             Logger::Fatal("unsupported new layout {} from VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL!", static_cast<uint32_t>(newLayout));
@@ -437,35 +495,50 @@ void Sandbox::CommandBuffer::TransitionImageLayout(const std::shared_ptr<Image>&
             Logger::Fatal("unsupported new layout {} from VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL!", static_cast<uint32_t>(newLayout));
         }
     }
-    else if (oldLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL && newLayout == VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL)
+    else if (oldLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
     {
-        barrier.srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
-        barrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+        if (newLayout == VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL)
+        {
+            barrier.srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
+            barrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
 
-        sourceStage      = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;  // 在片段着色器读取完成后
-        destinationStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;  // 在颜色附件输出之前
+            sourceStage      = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;  // 在片段着色器读取完成后
+            destinationStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;  // 在颜色附件输出之前
+        }
+        else if (newLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)
+        {
+            barrier.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+            barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+
+            sourceStage      = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;  // 第一个渲染通道的最后一个阶段
+            destinationStage = VK_PIPELINE_STAGE_TRANSFER_BIT;  // 第二个渲染通道的第一个阶段
+        }
+        else
+        {
+            Logger::Fatal("unsupported new layout {} from VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL!", static_cast<uint32_t>(newLayout));
+        }
     }
     else if (oldLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL && newLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL)
     {
-        barrier.srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
-        barrier.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT;
+        barrier.srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT;
+        barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
 
         sourceStage                         = VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
-        destinationStage                    = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+        destinationStage                    = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
         barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
     }
-    else if (oldLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL && newLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL)
-    {
-        barrier.srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT;
-        barrier.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
-
-        sourceStage                         = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
-        destinationStage                    = VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
-        barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
-    }
+    // else if (oldLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL && newLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL)
+    // {
+    //     barrier.srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
+    //     barrier.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+    //
+    //     sourceStage                         = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+    //     destinationStage                    = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+    //     barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
+    // }
     else
     {
-        Logger::Fatal("unsupported layout transition!");
+        LOGF("VulkanRHI", "unsupported layout transition from {} to {}!", ToUInt32(oldLayout), ToUInt32(newLayout));
     }
     vkCmdPipelineBarrier(vkCommandBuffer, sourceStage, destinationStage, 0, 0, nullptr, 0, nullptr, 1, &barrier);
 }
@@ -514,28 +587,7 @@ void Sandbox::CommandBuffer::BufferMemoryBarrier(const std::shared_ptr<Buffer>& 
     vkCmdPipelineBarrier(vkCommandBuffer, sourceStage, destinationStage, 0, 0, nullptr, 1, &bufferMemoryBarrier, 0, nullptr);
 }
 
-void Sandbox::CommandBuffer::ImageMemoryBarrier(const std::shared_ptr<Image>& image)
-{
-    // TODO:这应该是一个 image layout transition
-    // VkImageMemoryBarrier imageMemoryBarrier{};
-    // imageMemoryBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-    // imageMemoryBarrier.oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-    // imageMemoryBarrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-    // imageMemoryBarrier.image = image->vkImage;
-    // imageMemoryBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-    // imageMemoryBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-    // imageMemoryBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-    // imageMemoryBarrier.subresourceRange.baseArrayLayer = 0;
-    // imageMemoryBarrier.subresourceRange.layerCount = 1;
-    // imageMemoryBarrier.subresourceRange.levelCount = 1;
-    // imageMemoryBarrier.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-    // imageMemoryBarrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-    // VkPipelineStageFlags sourceStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-    // VkPipelineStageFlags destinationStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-    // vkCmdPipelineBarrier(vkCommandBuffer, sourceStage, destinationStage, 0, 0, nullptr, 0, nullptr, 1, &imageMemoryBarrier);
-}
-
-void Sandbox::CommandBuffer::BlitImage(const std::shared_ptr<Image>& srcImage, const std::shared_ptr<Image>& dstImage, VkExtent2D size)
+void Sandbox::CommandBuffer::BlitImage(const std::shared_ptr<Image>& srcImage, const std::shared_ptr<Image>& dstImage, VkExtent2D size, VkFilter filter)
 {
     VkImageBlit imageBlit{};
 
@@ -556,7 +608,7 @@ void Sandbox::CommandBuffer::BlitImage(const std::shared_ptr<Image>& srcImage, c
     imageBlit.dstSubresource.layerCount     = 1;
 
     // 目标图像的拷贝区域
-    imageBlit.dstOffsets[0] = {0, 0, 0}; // 目标起始点
+    imageBlit.dstOffsets[0] = {0, 0, 0};  // 目标起始点
     imageBlit.dstOffsets[1] = VkOffset3D{static_cast<int32_t>(size.width), static_cast<int32_t>(size.height), 1}; // 目标终点，同样假设是2D图像
 
     vkCmdBlitImage(
@@ -564,11 +616,15 @@ void Sandbox::CommandBuffer::BlitImage(const std::shared_ptr<Image>& srcImage, c
         srcImage->vkImage, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, // 源图像及其布局
         dstImage->vkImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, // 目标图像及其布局
         1, &imageBlit, // Blit操作的数量和具体操作
-        VK_FILTER_LINEAR // 使用线性滤波
+        filter // 使用线性滤波
     );
 }
 std::shared_ptr<Sandbox::Device> Sandbox::CommandBuffer::GetDevice(){
     return m_device;
+}
+
+void Sandbox::CommandBuffer::NextSubpass(){
+    vkCmdNextSubpass(vkCommandBuffer, VK_SUBPASS_CONTENTS_INLINE);
 }
 
 // std::shared_ptr<Sandbox::Pipeline> Sandbox::CommandBuffer::GetBoundPipeline(){

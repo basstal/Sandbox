@@ -15,6 +15,9 @@ namespace Sandbox
 
         File GetFile(const std::string& name) const;
 
+        Directory GetDirectory(const std::string& name) const;
+
+
         std::vector<Sandbox::FileSystemBase> DirectoryIterator();
 
         std::vector<File> GetFiles() const;

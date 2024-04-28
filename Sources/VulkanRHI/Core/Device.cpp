@@ -10,6 +10,7 @@ bool Sandbox::QueueFamilyIndices::isComplete() const { return graphicsFamily.has
 
 Sandbox::Device::Device(const std::shared_ptr<Instance>& instance, const std::shared_ptr<Surface>& surface, const std::vector<const char*>& deviceExtensions)
 {
+    m_instance = instance;
     SelectPhysicalDevice(instance->vkInstance, surface->vkSurfaceKhr, deviceExtensions);
     CreateLogicalDevice(surface->vkSurfaceKhr, deviceExtensions);
 }
@@ -317,3 +318,30 @@ VkDeviceSize Sandbox::Device::GetMinUniformBufferOffsetAlignment(VkDeviceSize& d
     }
     return minUboAlignment;
 }
+
+
+VkResolveModeFlagBits Sandbox::Device::GetDepthResolveMode(VkResolveModeFlagBits inFlagBits) const
+{
+    VkPhysicalDeviceDepthStencilResolvePropertiesKHR depthStencilResolveProperties = {};
+    depthStencilResolveProperties.sType                                            = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEPTH_STENCIL_RESOLVE_PROPERTIES_KHR;
+    depthStencilResolveProperties.pNext                                            = nullptr;  // 确保 pNext 是 nullptr 除非你需要链式连接更多的结构
+    VkPhysicalDeviceProperties2 deviceProperties2                                  = {};
+    deviceProperties2.sType                                                        = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
+    deviceProperties2.pNext                                                        = &depthStencilResolveProperties;  // 将 depthStencilResolveProperties 链接到 pNext
+
+    PFN_vkGetPhysicalDeviceProperties2KHR pfnVkGetPhysicalDeviceProperties2KHR =
+        reinterpret_cast<PFN_vkGetPhysicalDeviceProperties2KHR>(vkGetInstanceProcAddr(m_instance->vkInstance, "vkGetPhysicalDeviceProperties2KHR"));
+    pfnVkGetPhysicalDeviceProperties2KHR(vkPhysicalDevice, &deviceProperties2);
+    // 使用 depthStencilResolveProperties 中的数据
+    std::cout << "Supported depth resolve modes: " << depthStencilResolveProperties.supportedDepthResolveModes << std::endl;
+    std::cout << "Supported stencil resolve modes: " << depthStencilResolveProperties.supportedStencilResolveModes << std::endl;
+    std::cout << "Independent resolve is: " << (depthStencilResolveProperties.independentResolve ? "supported" : "not supported") << std::endl;
+    std::cout << "Independent resolve none is: " << (depthStencilResolveProperties.independentResolveNone ? "supported" : "not supported") << std::endl;
+    if (depthStencilResolveProperties.supportedDepthResolveModes & inFlagBits)
+    {
+        return inFlagBits;
+    }
+    return VK_RESOLVE_MODE_NONE;
+}
+
+std::shared_ptr<Sandbox::Instance> Sandbox::Device::GetInstance() { return m_instance; }

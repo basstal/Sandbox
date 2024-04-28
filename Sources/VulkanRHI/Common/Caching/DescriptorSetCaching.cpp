@@ -8,12 +8,11 @@
 #include "VulkanRHI/Core/DescriptorSetLayout.hpp"
 
 
-
-
 Sandbox::DescriptorSetCaching::DescriptorSetCaching(const std::shared_ptr<Device>& inDevice, const std::shared_ptr<DescriptorPool>& inDescriptorPool) :
     m_device(inDevice), m_descriptorPool(inDescriptorPool)
 {
 }
+
 std::shared_ptr<Sandbox::DescriptorSet> Sandbox::DescriptorSetCaching::GetOrCreateDescriptorSet(const std::shared_ptr<DescriptorSetLayout>& inDescriptorSetLayout,
                                                                                                 size_t                                      frameFlightIndex)
 {
@@ -30,7 +29,11 @@ std::shared_ptr<Sandbox::DescriptorSet> Sandbox::DescriptorSetCaching::GetOrCrea
     {
         return m_descriptorSets.at(key);
     }
-    auto newDescriptorSet = std::make_shared<DescriptorSet>(m_descriptorPool, inDescriptorSetLayout);
-    m_descriptorSets[key] = newDescriptorSet;
-    return newDescriptorSet;
+    m_descriptorSets[key] = CreateDescriptorSet(inDescriptorSetLayout);
+    return m_descriptorSets[key];
+}
+
+std::shared_ptr<Sandbox::DescriptorSet> Sandbox::DescriptorSetCaching::CreateDescriptorSet(const std::shared_ptr<DescriptorSetLayout>& inDescriptorSetLayout)
+{
+    return std::make_shared<DescriptorSet>(m_descriptorPool, inDescriptorSetLayout);
 }

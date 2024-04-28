@@ -5,6 +5,7 @@
 #include "Engine/EntityComponent/Components/Camera.hpp"
 #include "Engine/Image.hpp"
 #include "Engine/Light.hpp"
+#include "Engine/PostProcess.hpp"
 #include "FileSystem/Directory.hpp"
 #include "Misc/Debug.hpp"
 #include "Misc/TypeCasting.hpp"
@@ -39,6 +40,10 @@ void Sandbox::PbrRendererSource::UpdateUniforms(uint32_t frameFlightIndex)
 }
 void Sandbox::PbrRendererSource::Cleanup()
 {
+    if (camera != nullptr)
+    {
+        camera->postProcess->Cleanup();
+    }
     for (size_t i = 0; i < descriptorSets.size(); ++i)
     {
         descriptorSets[i]->Cleanup();
@@ -58,12 +63,12 @@ void Sandbox::PbrRendererSource::CreatePipelineWithPreamble(std::shared_ptr<Rend
     shaderLinkage             = std::make_shared<ShaderLinkage>();
     Directory assetsDirectory = Directory::GetAssetsDirectory();
     auto      vertexSource    = std::make_shared<ShaderSource>(assetsDirectory.GetFile("Shaders/PBR.vert").path.string(), preamble);
-    auto      vertexShader    = shaderLinkage->CreateShaderModule(renderer, VK_SHADER_STAGE_VERTEX_BIT, vertexSource);
+    auto      vertexShader    = shaderLinkage->LinkShaderModule(renderer, VK_SHADER_STAGE_VERTEX_BIT, vertexSource);
     vertexShader->SetUniformDescriptorMode("Model", Dynamic);
 
     auto fragmentSource = std::make_shared<ShaderSource>(assetsDirectory.GetFile("Shaders/PBR.frag").path.string(), preamble);
 
-    auto fragmentShader = shaderLinkage->CreateShaderModule(renderer, VK_SHADER_STAGE_FRAGMENT_BIT, fragmentSource);
+    auto fragmentShader = shaderLinkage->LinkShaderModule(renderer, VK_SHADER_STAGE_FRAGMENT_BIT, fragmentSource);
 
 
     // pipelineLayout = std::make_shared<PipelineLayout>(device, shaderModules);
@@ -165,6 +170,52 @@ void Sandbox::PbrRendererSource::BindPipeline(const std::shared_ptr<CommandBuffe
     RendererSource::BindPipeline(inCommandBuffer);
     inCommandBuffer->BindPipeline(pipeline);
 }
+void Sandbox::PbrRendererSource::BlitImage(const std::shared_ptr<CommandBuffer>& commandBuffer, const std::shared_ptr<RenderAttachments>& renderAttachments,
+                                           VkExtent2D resolution)
+{
+    RendererSource::BlitImage(commandBuffer, renderAttachments, resolution);
+    if (camera != nullptr)
+    {
+        // for (auto& postProcess : camera->postProcess)
+        // {
+        // if (camera->postProcess->IsPrepared())
+        // {
+        camera->postProcess->Apply(commandBuffer, renderAttachments, resolution, shared_from_this());
+        // RendererSource::BlitImage(commandBuffer, renderAttachments, resolution);
+        // }
+        // }
+        // if (!postProcesses.empty())
+        // {
+        // }
+    }
+}
+void Sandbox::PbrRendererSource::Tick(const std::shared_ptr<Renderer>& renderer)
+{
+    RendererSource::Tick(renderer);
+    if (camera != nullptr)
+    {
+        if (!camera->postProcess->IsPrepared())
+        {
+            camera->postProcess->Prepare(renderer);
+        }
+        // for (auto& [_, postProcess] : camera->postProcessFragShaders)
+        // {
+        //     if (postProcess != nullptr && !postProcess->IsPrepared())
+        //     {
+        //         postProcess->Prepare(renderer);
+        //         postProcesses.push_back(postProcess);
+        //     }
+        // }
+        // for (int i = ToInt32(postProcesses.size()) - 1; i >= 0; --i)
+        // {
+        //     if (!postProcesses[i]->IsPrepared())
+        //     {
+        //         postProcesses.erase(postProcesses.begin() + i);
+        //     }
+        // }
+    }
+}
+
 // void Sandbox::PbrRendererSource::BlitImage(const std::shared_ptr<CommandBuffer>& commandBuffer, const std::shared_ptr<RenderAttachments>& renderAttachments,
 //                                            VkExtent2D resolution)
 // {

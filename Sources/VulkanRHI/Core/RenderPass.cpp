@@ -4,26 +4,24 @@
 
 #include "Device.hpp"
 #include "FileSystem/Logger.hpp"
+#include "Instance.hpp"
 #include "Misc/TypeCasting.hpp"
+#include "VulkanRHI/Common/Checker.hpp"
+#include "VulkanRHI/Common/Debug.hpp"
 #include "VulkanRHI/Common/SubpassComponents.hpp"
 #include "VulkanRHI/Renderer.hpp"
 
-bool IsDepthFormat(VkFormat format)
-{
-    return format == VK_FORMAT_D16_UNORM || format == VK_FORMAT_D32_SFLOAT  // only depth
-        || format == VK_FORMAT_D16_UNORM_S8_UINT || format == VK_FORMAT_D24_UNORM_S8_UINT || format == VK_FORMAT_D32_SFLOAT_S8_UINT;  // depth and stencil
-}
 
 Sandbox::RenderPass::RenderPass(const std::shared_ptr<Device>& device, const std::vector<Attachment>& inAttachments, const std::vector<LoadStoreInfo>& inLoadStoreInfos,
                                 const std::vector<SubpassInfo>& inSubpassInfos) :
-    RenderPass(device, inAttachments, inLoadStoreInfos, inSubpassInfos, CreateDefaultDependency())
+    RenderPass(device, inAttachments, inLoadStoreInfos, inSubpassInfos, std::vector{RenderPass::CreateDefaultDependency()})
 {
 }
 
 Sandbox::RenderPass::RenderPass(const std::shared_ptr<Device>& device, const std::vector<Attachment>& inAttachments, const std::vector<LoadStoreInfo>& inLoadStoreInfos,
-                                const std::vector<SubpassInfo>& inSubpassInfos, VkSubpassDependency inSubpassDependency)
+                                const std::vector<SubpassInfo>& inSubpassInfos, const std::vector<VkSubpassDependency2KHR>& inSubpassDependency)
 {
-    assert(inSubpassInfos.size() == 1 && "Only support one subpass now");
+    // assert(inSubpassInfos.size() == 1 && "Only support one subpass now");
     m_device      = device;
     attachments   = inAttachments;
     loadStoreInfo = inLoadStoreInfos;
@@ -31,105 +29,95 @@ Sandbox::RenderPass::RenderPass(const std::shared_ptr<Device>& device, const std
     CreateRenderPass(inSubpassDependency);
 }
 
-void Sandbox::RenderPass::CreateRenderPass(VkSubpassDependency inSubpassDependency)
+void Sandbox::RenderPass::AttachmentReferenceMaker(std::vector<VkAttachmentReference2KHR>& result, const std::vector<uint32_t>& attachmentIndices,
+                                                   const std::vector<VkAttachmentDescription2KHR>& attachmentDescriptions)
 {
-    std::vector<VkAttachmentDescription>            attachmentDescriptions = GetAttachmentDescriptions(attachments, loadStoreInfo);
-    std::vector<std::vector<VkAttachmentReference>> inputAttachmentReferences;
-    std::vector<std::vector<VkAttachmentReference>> colorAttachmentReferences;
-    std::vector<std::vector<VkAttachmentReference>> depthStencilAttachmentReferences;
-    std::vector<std::vector<VkAttachmentReference>> resolveAttachmentReferences;
-    size_t                                          subpassCount = subpasses.size();
-    inputAttachmentReferences.resize(subpassCount);
-    colorAttachmentReferences.resize(subpassCount);
-    depthStencilAttachmentReferences.resize(subpassCount);
-    resolveAttachmentReferences.resize(subpassCount);
-    for (size_t i = 0; i < subpassCount; ++i)
+    for (auto& index : attachmentIndices)
     {
-        auto& subpass = subpasses[i];
-        for (auto& colorAttachmentIndex : subpass.colorAttachments)
-        {
-            const Attachment& attachment    = attachments[colorAttachmentIndex];
-            auto              initialLayout = attachment.initialLayout == VK_IMAGE_LAYOUT_UNDEFINED ? VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL : attachment.initialLayout;
-            auto&             description   = attachmentDescriptions[colorAttachmentIndex];
-
-            if (IsDepthFormat(description.format))
-            {
-                LOGF("VulkanRHI", "Attachment {} is a depth attachment, format wrong", std::to_string(colorAttachmentIndex))
-            }
-            colorAttachmentReferences[i].push_back(VkAttachmentReference{colorAttachmentIndex, initialLayout});
-        }
-
-        for (auto& resolveAttachmentIndex : subpass.resolveAttachments)
-        {
-            const Attachment& attachment    = attachments[resolveAttachmentIndex];
-            auto              initialLayout = attachment.initialLayout == VK_IMAGE_LAYOUT_UNDEFINED ? attachment.finalLayout : attachment.initialLayout;
-            resolveAttachmentReferences[i].push_back(VkAttachmentReference{resolveAttachmentIndex, initialLayout});
-        }
-
-        for (auto& depthStencilAttachment : subpass.depthStencilAttachments)
-        {
-            const Attachment& attachment = attachments[depthStencilAttachment];
-            if (!IsDepthFormat(attachment.format))
-            {
-                LOGF("VulkanRHI", "Attachment {} is not a depth attachment, format {} wrong", std::to_string(depthStencilAttachment), std::to_string(attachment.format));
-            }
-            auto initialLayout = attachment.initialLayout == VK_IMAGE_LAYOUT_UNDEFINED ? VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL : attachment.initialLayout;
-            depthStencilAttachmentReferences[i].push_back(VkAttachmentReference{depthStencilAttachment, initialLayout});
-        }
-
-        for (auto& inputAttachmentIndex : subpass.inputAttachments)
-        {
-            const Attachment& attachment    = attachments[inputAttachmentIndex];
-            auto              initialLayout = attachment.initialLayout == VK_IMAGE_LAYOUT_UNDEFINED ? attachment.finalLayout : attachment.initialLayout;
-            inputAttachmentReferences[i].push_back(VkAttachmentReference{inputAttachmentIndex, initialLayout});
-        }
-        // if (!subpass.disableDepthStencilAttachment)
-        // {
-        //     auto it = std::find_if(inAttachments.begin(), inAttachments.end(), [this](const Attachment& attachment) { return IsDepthFormat(attachment.format); });
-        //     if (it != inAttachments.end())
-        //     {
-        //         auto depthStencilIndex = static_cast<uint32_t>(std::distance(inAttachments.begin(), it));
-        //         auto initialLayout     = it->initialLayout == VK_IMAGE_LAYOUT_UNDEFINED ? VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL : it->initialLayout;
-        //         depthStencilAttachmentReferences[i].push_back(VkAttachmentReference{depthStencilIndex, initialLayout});
-        //     }
-        // }
+        const Attachment&         attachment      = attachments[index];
+        auto                      referenceLayout = attachment.referenceLayout == VK_IMAGE_LAYOUT_UNDEFINED
+                                 ? (attachment.initialLayout == VK_IMAGE_LAYOUT_UNDEFINED ? attachment.finalLayout : attachment.initialLayout)
+                                 : attachment.referenceLayout;
+        auto                      description     = attachmentDescriptions[index];
+        auto                      aspectMask      = IsDepthFormat(description.format) ? VK_IMAGE_ASPECT_DEPTH_BIT : VK_IMAGE_ASPECT_COLOR_BIT;
+        VkAttachmentReference2KHR reference{};
+        reference.sType      = VK_STRUCTURE_TYPE_ATTACHMENT_REFERENCE_2;
+        reference.attachment = index;
+        reference.layout     = referenceLayout;
+        reference.aspectMask = aspectMask;
+        result.emplace_back(reference);
     }
+}
+void Sandbox::RenderPass::CreateRenderPass(const std::vector<VkSubpassDependency2KHR>& inSubpassDependency)
+{
+    std::vector<VkAttachmentDescription2KHR>            attachmentDescriptions = GetAttachmentDescriptions(attachments, loadStoreInfo);
+    size_t                                              subpassCount           = subpasses.size();
+    std::vector<std::vector<VkAttachmentReference2KHR>> inputAttachmentReferences(subpassCount);
+    std::vector<std::vector<VkAttachmentReference2KHR>> colorAttachmentReferences(subpassCount);
+    std::vector<std::vector<VkAttachmentReference2KHR>> depthStencilAttachmentReferences(subpassCount);
+    std::vector<std::vector<VkAttachmentReference2KHR>> resolveAttachmentReferences(subpassCount);
+    std::vector<std::vector<VkAttachmentReference2>>    depthStencilResolveAttachments(subpassCount);
+    std::vector<VkSubpassDescription2KHR>               subpassDescriptions;
 
-    std::vector<VkSubpassDescription> subpassDescriptions;
     for (size_t i = 0; i < subpassCount; ++i)
     {
-        VkSubpassDescription vkSubpassDescription;
+        auto&                    subpass = subpasses[i];
+        VkSubpassDescription2KHR vkSubpassDescription{};
+        vkSubpassDescription.sType                   = VK_STRUCTURE_TYPE_SUBPASS_DESCRIPTION_2;
+        vkSubpassDescription.pNext                   = nullptr;
         vkSubpassDescription.pipelineBindPoint       = VK_PIPELINE_BIND_POINT_GRAPHICS;
-        vkSubpassDescription.colorAttachmentCount    = static_cast<uint32_t>(colorAttachmentReferences[i].size());
-        vkSubpassDescription.pColorAttachments       = colorAttachmentReferences[i].empty() ? nullptr : colorAttachmentReferences[i].data();
-        vkSubpassDescription.inputAttachmentCount    = ToUInt32(inputAttachmentReferences[i].size());
-        vkSubpassDescription.pInputAttachments       = inputAttachmentReferences[i].empty() ? nullptr : inputAttachmentReferences[i].data();
         vkSubpassDescription.preserveAttachmentCount = 0;
         vkSubpassDescription.pPreserveAttachments    = nullptr;
-        vkSubpassDescription.pDepthStencilAttachment = depthStencilAttachmentReferences[i].empty() ? nullptr : depthStencilAttachmentReferences[i].data();
-        vkSubpassDescription.pResolveAttachments     = resolveAttachmentReferences[i].empty() ? nullptr : resolveAttachmentReferences[i].data();
         vkSubpassDescription.flags                   = 0;
+
+        AttachmentReferenceMaker(colorAttachmentReferences[i], subpass.colorAttachments, attachmentDescriptions);
+        vkSubpassDescription.colorAttachmentCount = static_cast<uint32_t>(colorAttachmentReferences[i].size());
+        vkSubpassDescription.pColorAttachments    = colorAttachmentReferences[i].empty() ? nullptr : colorAttachmentReferences[i].data();
+
+        AttachmentReferenceMaker(resolveAttachmentReferences[i], subpass.resolveAttachments, attachmentDescriptions);
+        vkSubpassDescription.pResolveAttachments = resolveAttachmentReferences[i].empty() ? nullptr : resolveAttachmentReferences[i].data();
+
+        AttachmentReferenceMaker(depthStencilAttachmentReferences[i], subpass.depthStencilAttachments, attachmentDescriptions);
+        vkSubpassDescription.pDepthStencilAttachment = depthStencilAttachmentReferences[i].empty() ? nullptr : depthStencilAttachmentReferences[i].data();
+
+        AttachmentReferenceMaker(inputAttachmentReferences[i], subpass.inputAttachments, attachmentDescriptions);
+        vkSubpassDescription.inputAttachmentCount = ToUInt32(inputAttachmentReferences[i].size());
+        vkSubpassDescription.pInputAttachments    = inputAttachmentReferences[i].empty() ? nullptr : inputAttachmentReferences[i].data();
+
+        if (!subpass.depthStencilResolveAttachments.empty())
+        {
+            VkSubpassDescriptionDepthStencilResolveKHR subpassDescriptionDepthStencilResolve{};
+            subpassDescriptionDepthStencilResolve.sType              = VK_STRUCTURE_TYPE_SUBPASS_DESCRIPTION_DEPTH_STENCIL_RESOLVE_KHR;
+            subpassDescriptionDepthStencilResolve.depthResolveMode   = m_device->GetDepthResolveMode(VK_RESOLVE_MODE_MIN_BIT);
+            subpassDescriptionDepthStencilResolve.stencilResolveMode = VK_RESOLVE_MODE_NONE;
+            AttachmentReferenceMaker(depthStencilResolveAttachments[i], subpass.depthStencilResolveAttachments, attachmentDescriptions);
+            subpassDescriptionDepthStencilResolve.pDepthStencilResolveAttachment =
+                depthStencilResolveAttachments[i].empty() ? nullptr : depthStencilResolveAttachments[i].data();
+            vkSubpassDescription.pNext = &subpassDescriptionDepthStencilResolve;
+        }
+
         subpassDescriptions.push_back(vkSubpassDescription);
     }
 
-    VkRenderPassCreateInfo renderPassCreateInfo = {};
-    renderPassCreateInfo.sType                  = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-    renderPassCreateInfo.attachmentCount        = static_cast<uint32_t>(attachmentDescriptions.size());
-    renderPassCreateInfo.pAttachments           = attachmentDescriptions.data();
-    renderPassCreateInfo.subpassCount           = static_cast<uint32_t>(subpassDescriptions.size());
-    renderPassCreateInfo.pSubpasses             = subpassDescriptions.data();
-    renderPassCreateInfo.dependencyCount        = 1;
-    renderPassCreateInfo.pDependencies          = &inSubpassDependency;
 
-    if (vkCreateRenderPass(m_device->vkDevice, &renderPassCreateInfo, nullptr, &vkRenderPass) != VK_SUCCESS)
-    {
-        Logger::Fatal("failed to create editor render pass!");
-    }
+    VkRenderPassCreateInfo2KHR renderPassCreateInfo = {};
+    renderPassCreateInfo.sType                      = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO_2;
+    renderPassCreateInfo.attachmentCount            = ToUInt32(attachmentDescriptions.size());
+    renderPassCreateInfo.pAttachments               = attachmentDescriptions.data();
+    renderPassCreateInfo.subpassCount               = ToUInt32(subpassDescriptions.size());
+    renderPassCreateInfo.pSubpasses                 = subpassDescriptions.data();
+    renderPassCreateInfo.dependencyCount            = ToUInt32(inSubpassDependency.size());
+    renderPassCreateInfo.pDependencies              = inSubpassDependency.data();
+
+    // 假设你已有有效的 VkDevice 对象名为 device
+    PFN_vkCreateRenderPass2KHR pfnVkCreateRenderPass2KHR = reinterpret_cast<PFN_vkCreateRenderPass2KHR>(vkGetDeviceProcAddr(m_device->vkDevice, "vkCreateRenderPass2KHR"));
+    ValidateVkResult(pfnVkCreateRenderPass2KHR(m_device->vkDevice, &renderPassCreateInfo, nullptr, &vkRenderPass));
 }
 
-VkSubpassDependency Sandbox::RenderPass::CreateDefaultDependency()
+VkSubpassDependency2KHR Sandbox::RenderPass::CreateDefaultDependency()
 {
-    VkSubpassDependency dependency{};
+    VkSubpassDependency2KHR dependency{};
+    dependency.sType         = VK_STRUCTURE_TYPE_SUBPASS_DEPENDENCY_2;
     dependency.srcSubpass    = VK_SUBPASS_EXTERNAL;
     dependency.dstSubpass    = 0;
     dependency.srcStageMask  = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
@@ -139,18 +127,19 @@ VkSubpassDependency Sandbox::RenderPass::CreateDefaultDependency()
     return dependency;
 }
 
-std::vector<VkAttachmentDescription> Sandbox::RenderPass::GetAttachmentDescriptions(const std::vector<Attachment>&    inAttachments,
-                                                                                    const std::vector<LoadStoreInfo>& inLoadStoreInfos)
+std::vector<VkAttachmentDescription2KHR> Sandbox::RenderPass::GetAttachmentDescriptions(const std::vector<Attachment>&    inAttachments,
+                                                                                        const std::vector<LoadStoreInfo>& inLoadStoreInfos)
 {
-    std::vector<VkAttachmentDescription> result;
+    std::vector<VkAttachmentDescription2KHR> result;
     for (size_t i = 0; i < inAttachments.size(); ++i)
     {
-        const Attachment&       attachment = inAttachments[i];
-        VkAttachmentDescription attachmentDescription{};
+        const Attachment&           attachment = inAttachments[i];
+        VkAttachmentDescription2KHR attachmentDescription{};
+        attachmentDescription.sType         = VK_STRUCTURE_TYPE_ATTACHMENT_DESCRIPTION_2;
         attachmentDescription.format        = attachment.format;
         attachmentDescription.samples       = attachment.samples;
         attachmentDescription.initialLayout = attachment.initialLayout;
-        attachmentDescription.finalLayout   = IsDepthFormat(attachmentDescription.format) ? VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL : attachment.finalLayout;
+        attachmentDescription.finalLayout   = attachment.finalLayout;
         if (i < inLoadStoreInfos.size())
         {
             attachmentDescription.loadOp         = inLoadStoreInfos[i].loadOp;

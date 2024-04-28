@@ -34,7 +34,7 @@
 #include <glslang/MachineIndependent/gl_types.h>
 
 // vulkan
-#include <vulkan/vulkan.hpp>
+#include <vulkan/vulkan_core.h>
 #include <vulkan/vulkan_format_traits.hpp>
 
 // glfw

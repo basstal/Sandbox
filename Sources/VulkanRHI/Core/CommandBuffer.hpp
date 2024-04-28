@@ -24,6 +24,8 @@ namespace Sandbox
     class Fence;
     class Semaphore;
     class PipelineLayout;
+    class ImageView;
+    class ImageMemoryBarrier;
 
     class CommandBuffer
     {
@@ -50,8 +52,9 @@ namespace Sandbox
         void SetViewport(uint32_t firstViewport, const std::vector<VkViewport>& viewports);
 
         void SetScissor(uint32_t firstScissor, const std::vector<VkRect2D>& scissors);
+        void BindDescriptorSet(const std::shared_ptr<PipelineLayout>& pipelineLayout, const std::shared_ptr<DescriptorSet>& descriptorSet);
         void BindDescriptorSet(const std::shared_ptr<PipelineLayout>& pipelineLayout, const std::shared_ptr<DescriptorSet>& descriptorSet,
-                               const std::vector<uint32_t>& dynamicOffsets = {});
+                               const std::vector<uint32_t>& dynamicOffsets);
 
         void BindPipeline(const std::shared_ptr<Pipeline>& pipeline);
         void PushConstants(const std::shared_ptr<PipelineLayout>& pipelineLayout, const PushConstantsInfo& pushConstantsInfo);
@@ -71,6 +74,8 @@ namespace Sandbox
         void GenerateMipmaps(VkImage vkImage, VkFormat imageFormat, int32_t texWidth, int32_t texHeight, uint32_t mipLevels);
 
         void CopyBufferToImage(Buffer& buffer, VkImage vkImage, uint32_t width, uint32_t height);
+        void TransitionImageLayout(const std::shared_ptr<ImageView>& imageView, const ImageMemoryBarrier& barrier, VkDependencyFlags dependencyFlags = 0);
+        void TransitionImageLayoutInstant(const std::shared_ptr<Image>& vkImage, VkImageLayout oldLayout, VkImageLayout newLayout, uint32_t mipLevels = 1);
 
         void TransitionImageLayout(const std::shared_ptr<Image>& vkImage, VkImageLayout oldLayout, VkImageLayout newLayout, uint32_t mipLevels = 1);
 
@@ -79,10 +84,12 @@ namespace Sandbox
 
         void BufferMemoryBarrier(const std::shared_ptr<Buffer>& buffer);
 
-        void ImageMemoryBarrier(const std::shared_ptr<Image>& image);
+        // void ImageMemoryBarrier(const std::shared_ptr<Image>& image);
 
-        void                    BlitImage(const std::shared_ptr<Image>& srcImage, const std::shared_ptr<Image>& dstImage, VkExtent2D size);
+        void                    BlitImage(const std::shared_ptr<Image>& srcImage, const std::shared_ptr<Image>& dstImage, VkExtent2D size, VkFilter filter = VK_FILTER_LINEAR);
         std::shared_ptr<Device> GetDevice();
+
+        void NextSubpass();
 
         // std::shared_ptr<Pipeline> GetBoundPipeline();
 

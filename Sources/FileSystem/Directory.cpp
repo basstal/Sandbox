@@ -6,7 +6,8 @@
 
 Sandbox::Directory::Directory(const std::string& inPath) { path = std::filesystem::path(inPath); }
 
-Sandbox::File Sandbox::Directory::GetFile(const std::string& name) const { return File((path / name).string()); }
+Sandbox::File      Sandbox::Directory::GetFile(const std::string& name) const { return File((path / name).string()); }
+Sandbox::Directory Sandbox::Directory::GetDirectory(const std::string& name) const { return Directory((path / name).string()); }
 
 std::vector<Sandbox::FileSystemBase> Sandbox::Directory::DirectoryIterator()
 {

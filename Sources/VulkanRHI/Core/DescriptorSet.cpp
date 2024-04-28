@@ -139,8 +139,8 @@ void Sandbox::DescriptorSet::Update()
         // LOGD("VulkanRHI", "it == m_updatedBindings.end() : {}, {}", std::to_string(it == m_updatedBindings.end()),
         if (it == m_updatedBindings.end() || it->second != writeOperation.vkWriteDescriptorSet.dstBinding)
         {
-            LOGD("VulkanRHI", "writeOperation.dstSet : {}, binding : {}", PtrToHexString(writeOperation.vkWriteDescriptorSet.dstSet),
-                 std::to_string(writeOperation.vkWriteDescriptorSet.dstBinding))
+            // LOGD("VulkanRHI", "writeOperation.dstSet : {}, binding : {}", PtrToHexString(writeOperation.vkWriteDescriptorSet.dstSet),
+            //      std::to_string(writeOperation.vkWriteDescriptorSet.dstBinding))
             writeOperations.push_back(writeOperation);
             updateDescriptorSets.push_back(writeOperation.vkWriteDescriptorSet);
         }

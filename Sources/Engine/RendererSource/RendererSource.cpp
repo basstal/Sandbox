@@ -110,7 +110,7 @@ void Sandbox::RendererSource::Cleanup()
     // shaderLinkage.clear();
     outputImageView->Cleanup();
     outputImage->Cleanup();
-    shaderLinkage->Cleanup();
+    // shaderLinkage->Cleanup();
     for (size_t i = 0; i < uboMvp.size(); ++i)
     {
         uboMvp[i]->modelsUbo->Cleanup();
@@ -159,6 +159,7 @@ void Sandbox::RendererSource::SetCamera(const std::shared_ptr<Camera>& inCamera)
 void Sandbox::RendererSource::BlitImage(const std::shared_ptr<CommandBuffer>& commandBuffer, const std::shared_ptr<RenderAttachments>& renderAttachments, VkExtent2D resolution)
 {
     commandBuffer->TransitionImageLayout(renderAttachments->images[2], VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
+    // TODO:这段应该不能放在这里
     if (outputImage->extent.width != resolution.width || outputImage->extent.height != resolution.height)
     {
         outputImageView != nullptr ? outputImageView->Cleanup() : void();

@@ -17,11 +17,12 @@ namespace Sandbox
     class Pipeline
     {
         friend class PipelineCaching;
+
     public:
+        Pipeline(const std::shared_ptr<Device>& device, const std::shared_ptr<PipelineState>& pipelineState);
         // Pipeline(const std::shared_ptr<Device>& device, const std::vector<std::shared_ptr<ShaderModule>>& shaderModules, const std::shared_ptr<RenderPass>& renderPass,
         //          const std::shared_ptr<PipelineLayout>& pipelineLayout, VkPrimitiveTopology primitiveTopology, VkPolygonMode polygonMode);
 
-        Pipeline(const std::shared_ptr<Device>& device, const std::shared_ptr<PipelineState>& pipelineState);
 
         // std::shared_ptr<Sandbox::PipelineState> CreatePipelineState(const std::vector<std::shared_ptr<ShaderModule>>& shaderModules,
         //                                                             const std::shared_ptr<RenderPass>& renderPass, const std::shared_ptr<PipelineLayout>& pipelineLayout,

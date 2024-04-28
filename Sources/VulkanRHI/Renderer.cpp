@@ -11,6 +11,7 @@
 #include "Core/DescriptorPool.hpp"
 #include "Core/Device.hpp"
 #include "Core/Fence.hpp"
+#include "Core/ImageMemoryBarrier.hpp"
 #include "Core/Instance.hpp"
 #include "Core/RenderPass.hpp"
 #include "Core/Semaphore.hpp"
@@ -29,27 +30,34 @@
 void Sandbox::Renderer::Prepare(const std::shared_ptr<Window>& window)
 {
     // LOGD("Test", "测试一下中文字体")
-    resolution                                = VkExtent2D{1920, 1080};
-    instance                                  = std::make_shared<Instance>(VK_API_VERSION_1_0, "Sandbox");
-    surface                                   = std::make_shared<Surface>(instance, window);
-    std::vector<const char*> deviceExtensions = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
-    device                                    = std::make_shared<Device>(instance, surface, deviceExtensions);
-    commandPool                               = std::make_shared<CommandPool>(device);
-    descriptorPool                            = std::make_shared<DescriptorPool>(device, 2048);
-    swapchain                                 = std::make_shared<Swapchain>(device, surface);
+    resolution                                  = VkExtent2D{1920, 1080};
+    std::vector<const char*> instanceExtensions = {VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME};
+    instance                                    = std::make_shared<Instance>(VK_API_VERSION_1_2, "Sandbox", instanceExtensions);
+    surface                                     = std::make_shared<Surface>(instance, window);
+    std::vector<const char*> deviceExtensions   = {
+        VK_KHR_SWAPCHAIN_EXTENSION_NAME,
+        // for multisample depth resolve, reference to https://www.khronos.org/assets/uploads/developers/presentations/Vulkan-Depth-Stencil-Resolve-GDC-Mar19.pdf
+        VK_KHR_MULTIVIEW_EXTENSION_NAME, VK_KHR_MAINTENANCE2_EXTENSION_NAME, VK_KHR_CREATE_RENDERPASS_2_EXTENSION_NAME, VK_KHR_DEPTH_STENCIL_RESOLVE_EXTENSION_NAME};
+    device         = std::make_shared<Device>(instance, surface, deviceExtensions);
+    commandPool    = std::make_shared<CommandPool>(device);
+    descriptorPool = std::make_shared<DescriptorPool>(device, 2048);
+    swapchain      = std::make_shared<Swapchain>(device, surface);
     // NOTE:构造 renderpass 所需数据
     // TODO: 这个 renderpass 只适合 pbr shader，要考虑挪到 RendererSource 里面
     std::vector<Attachment> attachments = {
         Attachment{VK_FORMAT_R8G8B8A8_UNORM, device->GetMaxUsableSampleCount(), VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, VK_IMAGE_LAYOUT_UNDEFINED,
                    VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL},
         Attachment{VK_FORMAT_D32_SFLOAT_S8_UINT, device->GetMaxUsableSampleCount(), VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_IMAGE_LAYOUT_UNDEFINED,
-                   VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL},
-        Attachment{VK_FORMAT_R8G8B8A8_UNORM, VK_SAMPLE_COUNT_1_BIT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, VK_IMAGE_LAYOUT_UNDEFINED,
-                   VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL},
+                   VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL},
+        Attachment{VK_FORMAT_R8G8B8A8_UNORM, VK_SAMPLE_COUNT_1_BIT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL},
+        Attachment{VK_FORMAT_D32_SFLOAT_S8_UINT, VK_SAMPLE_COUNT_1_BIT,
+                   VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+                   VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL},
     };
     std::vector<LoadStoreInfo> loadStoreInfos = {
-        LoadStoreInfo{VK_ATTACHMENT_LOAD_OP_CLEAR, VK_ATTACHMENT_STORE_OP_STORE},
-        LoadStoreInfo{VK_ATTACHMENT_LOAD_OP_CLEAR, VK_ATTACHMENT_STORE_OP_STORE},
+        LoadStoreInfo{VK_ATTACHMENT_LOAD_OP_CLEAR, VK_ATTACHMENT_STORE_OP_DONT_CARE},
+        LoadStoreInfo{VK_ATTACHMENT_LOAD_OP_CLEAR, VK_ATTACHMENT_STORE_OP_DONT_CARE},
+        LoadStoreInfo{VK_ATTACHMENT_LOAD_OP_DONT_CARE, VK_ATTACHMENT_STORE_OP_STORE},
         LoadStoreInfo{VK_ATTACHMENT_LOAD_OP_DONT_CARE, VK_ATTACHMENT_STORE_OP_STORE},
     };
     std::vector<SubpassInfo> subpassInfos;
@@ -57,6 +65,7 @@ void Sandbox::Renderer::Prepare(const std::shared_ptr<Window>& window)
     subpass.colorAttachments.push_back(0);
     subpass.depthStencilAttachments.push_back(1);
     subpass.resolveAttachments.push_back(2);
+    subpass.depthStencilResolveAttachments.push_back(3);
     subpassInfos.emplace_back(subpass);
     renderPass = std::make_shared<RenderPass>(device, attachments, loadStoreInfos, subpassInfos);
     // swapchain resource
@@ -66,8 +75,8 @@ void Sandbox::Renderer::Prepare(const std::shared_ptr<Window>& window)
     {
         renderAttachments[i] != nullptr ? renderAttachments[i]->Cleanup() : void();
         renderTargets[i] != nullptr ? renderTargets[i]->Cleanup() : void();
-        std::vector<std::shared_ptr<ImageView>> empty;
-        renderAttachments[i] = std::make_shared<RenderAttachments>(device, renderPass, resolution, empty);
+        // std::vector<std::shared_ptr<ImageView>> empty;
+        renderAttachments[i] = std::make_shared<RenderAttachments>(device, renderPass, resolution);
         renderTargets[i]     = std::make_shared<RenderTarget>(device, renderPass, resolution, renderAttachments[i]);
     }
 
@@ -182,7 +191,6 @@ void Sandbox::Renderer::RecordCommandBuffer(const std::shared_ptr<CommandBuffer>
     std::shared_ptr<Framebuffer>& framebuffer       = renderTargets[imageIndex]->framebuffer;
     VkClearColorValue             clearColor        = {{0.8f, 0.8f, 0.8f, 1.0f}};
     VkClearDepthStencilValue      clearDepthStencil = {1.0f, 0};
-
     // 绘制场景
     {
         commandBuffer->BeginRenderPass(renderPass, framebuffer, resolution, clearColor, clearDepthStencil);
@@ -247,8 +255,7 @@ void Sandbox::Renderer::OnAfterRecreateSwapchain()
     {
         renderAttachments[i] != nullptr ? renderAttachments[i]->Cleanup() : void();
         renderTargets[i] != nullptr ? renderTargets[i]->Cleanup() : void();
-        std::vector<std::shared_ptr<ImageView>> empty;
-        renderAttachments[i] = std::make_shared<RenderAttachments>(device, renderPass, resolution, empty);
+        renderAttachments[i] = std::make_shared<RenderAttachments>(device, renderPass, resolution);
         renderTargets[i]     = std::make_shared<RenderTarget>(device, renderPass, resolution, renderAttachments[i]);
     }
     auto rendererSource = GetCurrentRendererSource();

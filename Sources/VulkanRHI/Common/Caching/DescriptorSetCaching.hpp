@@ -12,7 +12,6 @@ namespace Sandbox
     class DescriptorSetLayout;
     class Device;
 
-    
 
     class DescriptorSetCaching
     {
@@ -22,9 +21,9 @@ namespace Sandbox
         std::shared_ptr<DescriptorSet> GetOrCreateDescriptorSet(const std::shared_ptr<DescriptorSetLayout>& inDescriptorSetLayout, size_t frameFlightIndex);
 
     private:
+        std::shared_ptr<Sandbox::DescriptorSet>                      CreateDescriptorSet(const std::shared_ptr<DescriptorSetLayout>& inDescriptorSetLayout);
         Dictionary<DescriptorSetKey, std::shared_ptr<DescriptorSet>> m_descriptorSets;
         std::shared_ptr<Device>                                      m_device;
         std::shared_ptr<DescriptorPool>                              m_descriptorPool;
     };
 }  // namespace Sandbox
-

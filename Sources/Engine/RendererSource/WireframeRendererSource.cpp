@@ -25,11 +25,11 @@ void Sandbox::WireframeRendererSource::CreatePipeline(std::shared_ptr<Renderer>&
     Directory assetsDirectory = Directory::GetAssetsDirectory();
     shaderLinkage = std::make_shared<ShaderLinkage>();
     auto vertexSource = std::make_shared<ShaderSource>(assetsDirectory.GetFile("Shaders/FillModeNonSolid.vert").path.string(), "");
-    auto vertexShader = shaderLinkage->CreateShaderModule(renderer, VK_SHADER_STAGE_VERTEX_BIT, vertexSource);
+    auto vertexShader = shaderLinkage->LinkShaderModule(renderer, VK_SHADER_STAGE_VERTEX_BIT, vertexSource);
     vertexShader->SetUniformDescriptorMode("Model", Dynamic);
 
     auto fragmentSource = std::make_shared<ShaderSource>(assetsDirectory.GetFile("Shaders/FillModeNonSolid.frag").path.string(), "");
-    auto fragmentShader = shaderLinkage->CreateShaderModule(renderer, VK_SHADER_STAGE_FRAGMENT_BIT, fragmentSource);
+    auto fragmentShader = shaderLinkage->LinkShaderModule(renderer, VK_SHADER_STAGE_FRAGMENT_BIT, fragmentSource);
     // pipelineLayout                                = std::make_shared<PipelineLayout>(device, shaderModules);
     pipelineState                                 = std::make_shared<PipelineState>(shaderLinkage, renderer->renderPass);
     pipelineState->multisampleState.rasterizationSamples = renderer->device->GetMaxUsableSampleCount();

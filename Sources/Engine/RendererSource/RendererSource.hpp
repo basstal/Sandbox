@@ -16,7 +16,7 @@ namespace Sandbox
     class PipelineState;
     class ShaderLinkage;
 
-    class RendererSource
+    class RendererSource : public std::enable_shared_from_this<RendererSource>
     {
     public:
         virtual ~RendererSource() = default;
@@ -38,7 +38,7 @@ namespace Sandbox
         virtual void CustomDrawOverlay(const std::shared_ptr<Sandbox::Mesh>& mesh, const std::shared_ptr<Sandbox::CommandBuffer>& shared,
                                        const std::shared_ptr<Sandbox::DescriptorSet>& descriptorSet, uint32_t frameFlightIndex, uint32_t dynamicOffsets);
         void         SyncViewAndProjection();
-        void         Tick(const std::shared_ptr<Renderer>& renderer);
+        virtual void Tick(const std::shared_ptr<Renderer>& renderer);
         void         SetCamera(const std::shared_ptr<Camera>& inCamera);
         virtual void BlitImage(const std::shared_ptr<CommandBuffer>& commandBuffer, const std::shared_ptr<RenderAttachments>& renderAttachments, VkExtent2D resolution);
 
@@ -53,7 +53,7 @@ namespace Sandbox
         std::shared_ptr<PipelineState> pipelineState;
         std::shared_ptr<Camera>        camera;
         std::shared_ptr<Image>         outputImage;
-        std::shared_ptr<ImageView> outputImageView;
+        std::shared_ptr<ImageView>     outputImageView;
 
 
         // PushConstantsInfo pushConstantsInfo;

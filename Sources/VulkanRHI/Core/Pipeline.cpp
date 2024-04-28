@@ -147,7 +147,7 @@ void Sandbox::Pipeline::CreatePipeline(const std::shared_ptr<PipelineState>& inP
     pipelineInfo.pDynamicState       = &dynamicState;
     pipelineInfo.layout              = pipelineLayout->vkPipelineLayout;
     pipelineInfo.renderPass          = inPipelineState->renderPass->vkRenderPass;
-    pipelineInfo.subpass             = 0;
+    pipelineInfo.subpass             = inPipelineState->subpassIndex;
     pipelineInfo.basePipelineHandle  = VK_NULL_HANDLE;  // Optional
     pipelineInfo.basePipelineIndex   = -1;  // Optional
 

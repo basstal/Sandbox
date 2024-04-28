@@ -86,6 +86,7 @@ namespace Sandbox
     {
     public:
         PipelineState(const std::shared_ptr<ShaderLinkage>& inShaderLinkage, const std::shared_ptr<RenderPass>& renderPass);
+        PipelineState(const std::shared_ptr<ShaderLinkage>& inShaderLinkage, const std::shared_ptr<RenderPass>& renderPass, uint32_t inSubpassIndex);
 
         ~PipelineState() = default;
 
@@ -101,6 +102,7 @@ namespace Sandbox
         DepthStencilState  depthStencilState;
 
         // PushConstantsInfo pushConstantsInfo;
+        uint32_t subpassIndex;
 
         std::shared_ptr<ShaderLinkage> shaderLinkage;
         // TODO: remove this
@@ -213,6 +215,8 @@ namespace std
             Sandbox::HashCombined(result, pipelineState.vertexInputState);
             Sandbox::HashCombined(result, pipelineState.rasterizationState);
             Sandbox::HashCombined(result, pipelineState.depthStencilState);
+            Sandbox::HashCombined(result, pipelineState.multisampleState);
+            Sandbox::HashCombined(result, pipelineState.subpassIndex);
             Sandbox::HashCombined(result, pipelineState.shaderLinkage);
             // for (auto& shaderModule : pipelineState.shaderLinkage)
             // {

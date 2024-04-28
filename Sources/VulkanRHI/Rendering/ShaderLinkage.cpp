@@ -8,22 +8,23 @@
 
 Sandbox::ShaderLinkage::ShaderLinkage() {}
 
-Sandbox::ShaderLinkage::~ShaderLinkage() { Cleanup(); }
-void                     Sandbox::ShaderLinkage::Cleanup()
-{
-    if (m_cleaned)
-    {
-        return;
-    }
-    for (auto& [_, shaderModule] : shaderModules)
-    {
-        shaderModule->Cleanup();
-    }
-    m_cleaned = true;
-}
+Sandbox::ShaderLinkage::~ShaderLinkage() { }//Cleanup(); }
 
-std::shared_ptr<Sandbox::ShaderModule> Sandbox::ShaderLinkage::CreateShaderModule(const std::shared_ptr<Renderer>& inRenderer, VkShaderStageFlagBits stage,
-                                                                                  const std::shared_ptr<ShaderSource>& shaderSource)
+// void Sandbox::ShaderLinkage::Cleanup()
+// {
+//     if (m_cleaned)
+//     {
+//         return;
+//     }
+//     // for (auto& [_, shaderModule] : shaderModules)
+//     // {
+//     //     shaderModule->Cleanup();
+//     // }
+//     m_cleaned = true;
+// }
+
+std::shared_ptr<Sandbox::ShaderModule> Sandbox::ShaderLinkage::LinkShaderModule(const std::shared_ptr<Renderer>& inRenderer, VkShaderStageFlagBits stage,
+                                                                                const std::shared_ptr<ShaderSource>& shaderSource)
 {
     auto shaderModule    = inRenderer->shaderModuleCaching->GetOrCreateShaderModule(shaderSource, stage);
     shaderModules[stage] = shaderModule;

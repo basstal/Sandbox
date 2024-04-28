@@ -18,10 +18,10 @@ namespace Sandbox
 
         ~ShaderLinkage();
 
-        void Cleanup();
+        // void Cleanup();
 
-        std::shared_ptr<Sandbox::ShaderModule> CreateShaderModule(const std::shared_ptr<Renderer>& inRenderer, VkShaderStageFlagBits stage,
-                                                                  const std::shared_ptr<ShaderSource>& shaderSource);
+        std::shared_ptr<Sandbox::ShaderModule> LinkShaderModule(const std::shared_ptr<Renderer>& inRenderer, VkShaderStageFlagBits stage,
+                                                                const std::shared_ptr<ShaderSource>& shaderSource);
         std::shared_ptr<ShaderModule>          GetShaderModuleByStage(VkShaderStageFlagBits stage);
 
 
@@ -30,7 +30,7 @@ namespace Sandbox
         // Event<const std::shared_ptr<ShaderLinkage>> onReload;
 
     private:
-        bool m_cleaned = false;
+        // bool m_cleaned = false;
     };
 }  // namespace Sandbox
 

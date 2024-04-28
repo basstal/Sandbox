@@ -12,9 +12,12 @@ namespace Sandbox
     class DescriptorPool;
     class Device;
     class DescriptorSetLayout;
+    class DescriptorSetCaching;
 
     class DescriptorSet
     {
+        friend class DescriptorSetCaching;
+
     public:
         DescriptorSet(const std::shared_ptr<DescriptorPool>& descriptorPool, const std::shared_ptr<DescriptorSetLayout>& descriptorSetLayout);
 
@@ -25,6 +28,7 @@ namespace Sandbox
         void Allocate(const std::shared_ptr<DescriptorPool>& descriptorPool, const std::shared_ptr<DescriptorSetLayout>& descriptorSetLayout);
 
         void BindBufferInfoMapping(const BindingMap<VkDescriptorBufferInfo>& inBufferInfoMapping, const std::shared_ptr<DescriptorSetLayout>& descriptorSetLayout);
+
         void BindImageInfoMapping(const std::map<uint32_t, std::vector<VkDescriptorImageInfo>>& inImageInfoMapping,
                                   const std::shared_ptr<DescriptorSetLayout>&                   descriptorSetLayout);
 
