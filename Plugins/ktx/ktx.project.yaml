@@ -1,0 +1,9 @@
+type: Cpp
+sub_type: Library
+additional_include_paths:
+  - KTX-Software/include
+dll_paths:
+  - KTX-Software/build/Debug/ktx.dll
+lib_paths:
+  - KTX-Software/build/Debug/ktx.lib
+#  - KTX-Software/build/Debug/

@@ -4,6 +4,7 @@
 
 #include "Engine/EntityComponent/Components/Camera.hpp"
 #include "Engine/PostProcess.hpp"
+#include "Engine/Skybox.hpp"
 #include "Generated/CameraInspector.rfks.h"
 #include "VulkanRHI/Common/ShaderSource.hpp"
 
@@ -23,6 +24,11 @@ void Sandbox::CameraInspector::OnInspectorGui()
 
     ImGui::InputFloat("nearPlane", &camera->nearPlane, 0.1f, 1.0f, "%.3f");
     ImGui::InputFloat("farPlane", &camera->farPlane, 0.1f, 1.0f, "%.3f");
+
+    if (ImGui::Checkbox("useSkybox", &camera->useSkybox))
+    {
+        camera->skybox = camera->useSkybox ? std::make_shared<Skybox>() : nullptr;
+    }
 
     for (auto& [shaderSource, isEnabled] : camera->postProcessFragShaders)
     {

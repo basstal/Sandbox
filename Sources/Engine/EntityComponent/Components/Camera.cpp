@@ -5,6 +5,7 @@
 #include "Engine/EntityComponent/GameObject.hpp"
 #include "Engine/PostProcess.hpp"
 #include "Engine/RendererSource/PbrRendererSource.hpp"
+#include "Engine/Skybox.hpp"
 #include "FileSystem/Directory.hpp"
 #include "Generated/Camera.rfks.h"
 #include "Misc/GlmExtensions.hpp"
@@ -25,18 +26,18 @@ const glm::vec3 DEFAULT_WORLD_UP = glm::vec3(0.0f, 0.0f, 1.0f);
 
 Sandbox::Camera::Camera()
 {
-    postProcess = std::make_shared<PostProcess>();
-
-    worldUp  = DEFAULT_WORLD_UP;
-    worldUp1 = DEFAULT_WORLD_UP;
     onComponentCreate.Bind(
         [this](const std::shared_ptr<IComponent>& inComponent)
         {
             if (inComponent.get() == this)
             {
+                skybox = useSkybox ? std::make_shared<Skybox>() : nullptr;
                 UpdateCameraVectors();
             }
         });
+    postProcess               = std::make_shared<PostProcess>();
+    worldUp                   = DEFAULT_WORLD_UP;
+    worldUp1                  = DEFAULT_WORLD_UP;
     auto postProcessDirectory = Directory::GetAssetsDirectory().GetDirectory("Shaders/PostProcess");
     auto postProcessFiles     = postProcessDirectory.GetFiles();
     for (auto file : postProcessFiles)
@@ -179,3 +180,10 @@ Sandbox::Vector3 Sandbox::Camera::NdcToWorld(const float& x, const float& y, con
 }
 
 Sandbox::Vector3 Sandbox::Camera::NdcToWorld(const Vector3& ndcCoordinate) { return NdcToWorld(ndcCoordinate.x, ndcCoordinate.y, ndcCoordinate.z); }
+
+
+void Sandbox::Camera::Cleanup()
+{
+    IComponent::Cleanup();
+    skybox != nullptr ? skybox->Cleanup() : void();
+}

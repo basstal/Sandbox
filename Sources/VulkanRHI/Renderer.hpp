@@ -6,6 +6,7 @@
 #include "Common/ViewMode.hpp"
 #include "Core/Swapchain.hpp"
 #include "Misc/Event.hpp"
+#include "Misc/PriorityEvent.hpp"
 
 
 namespace Sandbox
@@ -56,7 +57,7 @@ namespace Sandbox
         void Preset();
         void FrameFlightIndexIncrease();
 
-        void RecordCommandBuffer(const std::shared_ptr<CommandBuffer>& commandBuffer, const std::shared_ptr<RendererSource>&rendererSource);
+        void RecordCommandBuffer(const std::shared_ptr<CommandBuffer>& commandBuffer, const std::shared_ptr<RendererSource>& rendererSource);
 
         void UpdateUniforms(std::shared_ptr<CommandBuffer>& commandBuffer, std::shared_ptr<RendererSource>& rendererSource);
 
@@ -104,11 +105,11 @@ namespace Sandbox
          */
         uint32_t frameFlightIndex = 0;
 
-        Event<const std::shared_ptr<CommandBuffer>&, uint32_t>                         onBeforeRendererDraw;
-        Event<const std::shared_ptr<CommandBuffer>&, uint32_t>                         onAfterRendererDraw;
-        Event<const std::shared_ptr<CommandBuffer>&, uint32_t>                         onOtherDrawCommands;
-        Event<const std::shared_ptr<CommandBuffer>&, uint32_t, std::shared_ptr<Mesh>&> onBeforeDrawMesh;
-        Event<const std::shared_ptr<CommandBuffer>&, uint32_t, std::shared_ptr<Mesh>&> onAfterDrawMesh;
+        PriorityEvent<const std::shared_ptr<CommandBuffer>&, uint32_t> onBeforeRendererDraw;
+        Event<const std::shared_ptr<CommandBuffer>&, uint32_t>         onAfterRendererDraw;
+        Event<const std::shared_ptr<CommandBuffer>&, uint32_t>         onOtherDrawCommands;
+        // Event<const std::shared_ptr<CommandBuffer>&, uint32_t, std::shared_ptr<Mesh>&> onBeforeDrawMesh;
+        // Event<const std::shared_ptr<CommandBuffer>&, uint32_t, std::shared_ptr<Mesh>&> onAfterDrawMesh;
 
         Event<uint32_t> onOtherCommandBuffer;
 

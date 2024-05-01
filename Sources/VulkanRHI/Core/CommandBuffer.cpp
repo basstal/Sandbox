@@ -213,8 +213,36 @@ void Sandbox::CommandBuffer::CopyDataToImage(const std::shared_ptr<Resource::Ima
     EndAndSubmit();
 }
 
+void Sandbox::CommandBuffer::CopyDataToImageMultiLayers(const std::vector<std::shared_ptr<Resource::Image>>& imageResources, const std::shared_ptr<Image>& image,
+                                                        VkFormat format)
+{
+    // NOTE:这里假定了传入的所有 imageResources 都具有相同尺寸
+    auto         imageCount      = imageResources.size();
+    auto         width           = imageResources[0]->width;
+    auto         height          = imageResources[0]->height;
+    size_t       singleImageSize = ToSizeT(width) * height * sizeof(float);
+    VkDeviceSize deviceSize      = (VkDeviceSize)(singleImageSize * imageCount);
+    Buffer       stagingBuffer(m_device, deviceSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+    for (size_t i = 0; i < imageCount; ++i)
+    {
+        // 加载每个图像到对应的位置
+        stagingBuffer.UpdateOffsetSize(imageResources[i]->pixels, singleImageSize * i, singleImageSize);
+    }
+
+    Begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
+    TransitionImageLayout(image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, ToUInt32(imageCount));
+    auto vkImage = image->vkImage;
+    CopyBufferToImage(stagingBuffer, vkImage, width, height, imageCount, singleImageSize);
+    // GenerateMipmaps(vkImage, format, width, height, 1);
+    EndAndSubmit();
+}
+
 void Sandbox::CommandBuffer::GenerateMipmaps(VkImage vkImage, VkFormat imageFormat, int32_t texWidth, int32_t texHeight, uint32_t mipLevels)
 {
+    if (mipLevels <= 1)
+    {
+        return;
+    }
     // Check if image format supports linear blitting
     VkFormatProperties formatProperties;
     vkGetPhysicalDeviceFormatProperties(m_device->vkPhysicalDevice, imageFormat, &formatProperties);
@@ -287,22 +315,39 @@ void Sandbox::CommandBuffer::GenerateMipmaps(VkImage vkImage, VkFormat imageForm
     vkCmdPipelineBarrier(vkCommandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, nullptr, 0, nullptr, 1, &barrier);
 }
 
-void Sandbox::CommandBuffer::CopyBufferToImage(Buffer& buffer, VkImage vkImage, uint32_t width, uint32_t height)
+void Sandbox::CommandBuffer::CopyBufferToImage(Buffer& buffer, VkImage vkImage, uint32_t width, uint32_t height, size_t regionCount, size_t countOffset)
 {
-    VkBufferImageCopy region;
-    region.bufferOffset      = 0;
-    region.bufferRowLength   = 0;
-    region.bufferImageHeight = 0;
-
-    region.imageSubresource.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
-    region.imageSubresource.mipLevel       = 0;
-    region.imageSubresource.baseArrayLayer = 0;
-    region.imageSubresource.layerCount     = 1;
-
-    region.imageOffset = {0, 0, 0};
-    region.imageExtent = {width, height, 1};
-    vkCmdCopyBufferToImage(vkCommandBuffer, buffer.vkBuffer, vkImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+    VkBufferImageCopy region = {
+        .bufferOffset      = 0,
+        .bufferRowLength   = 0,
+        .bufferImageHeight = 0,
+        .imageSubresource =
+            {
+                .aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT,
+                .mipLevel       = 0,
+                .baseArrayLayer = 0,
+                .layerCount     = 1,
+            },
+        .imageOffset = {0, 0, 0},
+        .imageExtent = {width, height, 1},
+    };
+    if (regionCount > 1)
+    {
+        std::vector<VkBufferImageCopy> regions;
+        for (size_t i = 0; i < regionCount; ++i)
+        {
+            region.bufferOffset                    = (VkDeviceSize)(countOffset * i);
+            region.imageSubresource.baseArrayLayer = ToUInt32(i);
+            regions.push_back(region);
+        }
+        vkCmdCopyBufferToImage(vkCommandBuffer, buffer.vkBuffer, vkImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, ToUInt32(regionCount), regions.data());
+    }
+    else
+    {
+        vkCmdCopyBufferToImage(vkCommandBuffer, buffer.vkBuffer, vkImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+    }
 }
+void Sandbox::CommandBuffer::CopyBufferToImage(Buffer& buffer, VkImage vkImage, uint32_t width, uint32_t height) { CopyBufferToImage(buffer, vkImage, width, height, 1, 0); }
 
 void Sandbox::CommandBuffer::TransitionImageLayout(const std::shared_ptr<ImageView>& imageView, const ImageMemoryBarrier& barrier, VkDependencyFlags dependencyFlags)
 {
@@ -335,15 +380,16 @@ void Sandbox::CommandBuffer::TransitionImageLayout(const std::shared_ptr<ImageVi
     vkCmdPipelineBarrier(vkCommandBuffer, barrier.srcStageMask, barrier.dstStageMask, dependencyFlags, 0, nullptr, 0, nullptr, 1, &imageMemoryBarrier);
 }
 
-void Sandbox::CommandBuffer::TransitionImageLayoutInstant(const std::shared_ptr<Image>& vkImage, VkImageLayout oldLayout, VkImageLayout newLayout, uint32_t mipLevels)
+void Sandbox::CommandBuffer::TransitionImageLayoutInstant(const std::shared_ptr<Image>& vkImage, VkImageLayout oldLayout, VkImageLayout newLayout, uint32_t mipLevels, uint32_t layerCount)
 {
     Begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
-    TransitionImageLayout(vkImage, oldLayout, newLayout, mipLevels);
+    TransitionImageLayout(vkImage, oldLayout, newLayout, mipLevels, layerCount);
     EndAndSubmit();
 }
 
 
-void Sandbox::CommandBuffer::TransitionImageLayout(const std::shared_ptr<Image>& vkImage, VkImageLayout oldLayout, VkImageLayout newLayout, uint32_t mipLevels)
+void Sandbox::CommandBuffer::TransitionImageLayout(const std::shared_ptr<Image>& vkImage, VkImageLayout oldLayout, VkImageLayout newLayout, uint32_t mipLevels,
+                                                   uint32_t layerCount)
 {
     // LOGD("VulkanRHI", "Transition Image Layout from {} to {}\n{}", std::to_string(oldLayout), std::to_string(newLayout), GetCallStack())
 
@@ -359,7 +405,7 @@ void Sandbox::CommandBuffer::TransitionImageLayout(const std::shared_ptr<Image>&
     barrier.subresourceRange.baseMipLevel   = 0;
     barrier.subresourceRange.levelCount     = mipLevels;
     barrier.subresourceRange.baseArrayLayer = 0;
-    barrier.subresourceRange.layerCount     = 1;
+    barrier.subresourceRange.layerCount     = layerCount;
     // TODO:重构成可查询的数据结构
     if (oldLayout == VK_IMAGE_LAYOUT_UNDEFINED)
     {
@@ -538,7 +584,7 @@ void Sandbox::CommandBuffer::TransitionImageLayout(const std::shared_ptr<Image>&
     // }
     else
     {
-        LOGF("VulkanRHI", "unsupported layout transition from {} to {}!", ToUInt32(oldLayout), ToUInt32(newLayout));
+        LOGF("VulkanRHI", "unsupported layout transition from {} to {}!", ToUInt32(oldLayout), ToUInt32(newLayout))
     }
     vkCmdPipelineBarrier(vkCommandBuffer, sourceStage, destinationStage, 0, 0, nullptr, 0, nullptr, 1, &barrier);
 }

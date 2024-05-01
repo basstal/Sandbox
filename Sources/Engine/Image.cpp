@@ -4,9 +4,11 @@
 
 #include "FileSystem/File.hpp"
 #include "FileSystem/Logger.hpp"
+#include "Misc/TypeCasting.hpp"
 
-Sandbox::Resource::Image::Image(const std::string& path)
+Sandbox::Resource::Image::Image(const std::string& path, bool flipOnLoad)
 {
+    stbi_set_flip_vertically_on_load(flipOnLoad);
     stbi_uc* loadPixels = stbi_load(path.c_str(), &width, &height, &channels, STBI_rgb_alpha);
     // std::cout<< "load image finished" << std::endl;
     if (!loadPixels)
@@ -26,3 +28,4 @@ Sandbox::Resource::Image::~Image()
         stbi_image_free(pixels);
     }
 }
+VkExtent3D Sandbox::Resource::Image::GetExtent3D() const { return {ToUInt32(width), ToUInt32(height), 1}; }

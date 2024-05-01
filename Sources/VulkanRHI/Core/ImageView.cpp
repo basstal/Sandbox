@@ -30,7 +30,7 @@ Sandbox::ImageView::ImageView(const std::shared_ptr<Device>& device, VkImage ima
     //     }
     // }
     // else
-        if (std::string(vk::componentName(vkFormat, 0)) == "D")
+    if (std::string(vk::componentName(vkFormat, 0)) == "D")
     {
         subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
     }

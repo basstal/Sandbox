@@ -20,6 +20,7 @@ namespace Sandbox
         ~Buffer();
 
         void Cleanup();
+        void UpdateOffsetSize(const void* inData, size_t inOffset, size_t inSize);
 
         void Update(const void* inData);
 

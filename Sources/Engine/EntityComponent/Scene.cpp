@@ -7,6 +7,7 @@
 #include "Components/Mesh.hpp"
 #include "Engine/PhysicsSystem.hpp"
 #include "Engine/RendererSource/RendererSource.hpp"
+#include "Engine/Skybox.hpp"
 #include "Generated/Scene.rfks.h"
 #include "VulkanRHI/Renderer.hpp"
 #include "VulkanRHI/Rendering/UniformBuffer.hpp"
@@ -89,9 +90,10 @@ void Sandbox::Scene::TranslateRenderData(const std::shared_ptr<Renderer>& render
         LOGF_OLD("Renderer source for view mode '{}' not found", VIEW_MODE_NAMES[static_cast<uint32_t>(renderer->viewMode)])
     }
     rendererSource->Tick(renderer);
-    onRendererSourceTick.Trigger(renderer);
+    onOtherRendererSourceTick.Trigger(renderer);
 
     // TODO:临时将 mesh 添加到队列中支持当帧绘制
+    // TODO:天空盒等其他需要在场景中绘制的对象也可以添加为 Mesh，就是需要改几何数据集成的地方
     for (auto& mesh : renderMeshes)
     {
         if (!mesh->IsValid())

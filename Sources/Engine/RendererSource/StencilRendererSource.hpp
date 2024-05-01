@@ -4,6 +4,7 @@
 
 namespace Sandbox
 {
+    
     class StencilRendererSource : public WireframeRendererSource
     {
     public:

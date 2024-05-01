@@ -26,3 +26,6 @@
 [submodule "Plugins/JoltPhysics/JoltPhysics"]
 	path = Plugins/JoltPhysics/JoltPhysics
 	url = https://github.com/jrouwe/JoltPhysics
+[submodule "Plugins/ktx/KTX-Software"]
+	path = Plugins/ktx/KTX-Software
+	url = https://github.com/KhronosGroup/KTX-Software

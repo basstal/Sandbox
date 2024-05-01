@@ -52,8 +52,10 @@ namespace Sandbox
     };
     struct RasterizationState
     {
-        VkPolygonMode polygonMode                                 = VK_POLYGON_MODE_FILL;
-        bool          operator==(const RasterizationState&) const = default;
+        VkPolygonMode   polygonMode                                 = VK_POLYGON_MODE_FILL;
+        VkCullModeFlags cullMode                                    = VK_CULL_MODE_BACK_BIT;
+        VkFrontFace     frontFace                                   = VK_FRONT_FACE_COUNTER_CLOCKWISE;
+        bool            operator==(const RasterizationState&) const = default;
     };
 
     struct DepthStencilState
@@ -168,6 +170,8 @@ namespace std
         {
             size_t result = 0;
             Sandbox::HashCombined(result, rasterizationState.polygonMode);
+            Sandbox::HashCombined(result, rasterizationState.cullMode);
+            Sandbox::HashCombined(result, rasterizationState.frontFace);
             return result;
         }
     };

@@ -38,6 +38,7 @@ namespace Sandbox
         void Cleanup();
 
         void CleanupOnGui();
+        void CleanupDescriptorSets();
 
         void PrepareOnGui();
         void UpdateDescriptorSets(EViewMode inViewMode);

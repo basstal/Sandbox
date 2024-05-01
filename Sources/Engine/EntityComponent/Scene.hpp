@@ -10,11 +10,23 @@ namespace Sandbox NAMESPACE()
 {
     struct Models;
     class Renderer;
+    class Skybox;
+
     class Mesh;
 
     class CLASS() Scene : public ISerializable  //<Scene>
     {
     public:
+        static std::shared_ptr<Scene>               currentScene;
+        static Event<const std::shared_ptr<Scene>&> onSceneChange;
+        static Event<void>                          onReconstructMeshes;
+
+        static std::shared_ptr<Scene> GetCurrentScene();
+        static std::shared_ptr<Scene> LoadScene(std::shared_ptr<File> sceneFile);
+
+        static void NewScene();
+
+
         FIELD()
         List<SharedPtr<GameObject>> rootGameObjects;
 
@@ -22,9 +34,11 @@ namespace Sandbox NAMESPACE()
 
         bool isRenderMeshesDirty = true;
 
-        static std::shared_ptr<Scene> currentScene;
+        std::vector<std::shared_ptr<Models>> models;
 
-        static std::shared_ptr<Scene> GetCurrentScene();
+        Event<const std::shared_ptr<Renderer>&> onOtherRendererSourceTick;
+        Event<void>                             onHierarchyChanged;
+
 
         void Cleanup();
 
@@ -32,23 +46,12 @@ namespace Sandbox NAMESPACE()
 
         void ReconstructMeshes(const std::shared_ptr<Renderer>& renderer);
 
-        void                                 TranslateRenderData(const std::shared_ptr<Renderer>& renderer);
+        void TranslateRenderData(const std::shared_ptr<Renderer>& renderer);
+
         std::shared_ptr<Sandbox::GameObject> AddEmptyGameObject(const std::string& name, const Vector3& position);
 
         std::shared_ptr<Sandbox::GameObject> AddEmptyGameObject();
 
-        static std::shared_ptr<Scene> LoadScene(std::shared_ptr<File> sceneFile);
-
-        static void NewScene();
-
-
-        std::vector<std::shared_ptr<Models>> models;
-
-        static Event<const std::shared_ptr<Scene>&> onSceneChange;
-        static Event<void>                          onReconstructMeshes;
-        
-        Event<const std::shared_ptr<Renderer>&> onRendererSourceTick;
-        Event<void> onHierarchyChanged;
 
     private:
         bool m_cleaned = false;

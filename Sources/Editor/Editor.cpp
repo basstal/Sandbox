@@ -40,8 +40,7 @@ void Sandbox::Editor::Prepare(const std::shared_ptr<Renderer>& renderer, const s
 
     grid = std::make_shared<Grid>();
     grid->Prepare(renderer, shared_from_this());
-    renderer->onBeforeRendererDraw.BindMember<Grid, &Grid::DrawGrid>(grid);
-
+    renderer->onBeforeRendererDraw.BindMember<Grid, &Grid::DrawGrid>(grid, 0);
     PrepareOnGui();
 }
 
@@ -74,8 +73,8 @@ void Sandbox::Editor::CleanupOnGui()
 
 void Sandbox::Editor::PrepareOnGui()
 {
-    auto device = m_renderer->device;
-    shaderLinkage = std::make_shared<ShaderLinkage>();
+    auto device             = m_renderer->device;
+    shaderLinkage           = std::make_shared<ShaderLinkage>();
     auto vertexShaderSource = std::make_shared<ShaderSource>(Directory::GetAssetsDirectory().GetFile("Shaders/FillModeNonSolidGrid.vert"), "");
     auto vertexShaderModule = shaderLinkage->LinkShaderModule(m_renderer, VK_SHADER_STAGE_VERTEX_BIT, vertexShaderSource);
     vertexShaderModule->SetUniformDescriptorMode("Model", Dynamic);
@@ -83,17 +82,17 @@ void Sandbox::Editor::PrepareOnGui()
     shaderLinkage->LinkShaderModule(m_renderer, VK_SHADER_STAGE_FRAGMENT_BIT, fragmentShaderSource);
 
     // pipelineLayout                                     = std::make_shared<PipelineLayout>(device, shaderModules);
-    auto renderPass                                    = m_renderer->renderPass;
-    auto pipelineStateLineList                         = std::make_shared<PipelineState>(shaderLinkage, renderPass);
+    auto renderPass                                              = m_renderer->renderPass;
+    auto pipelineStateLineList                                   = std::make_shared<PipelineState>(shaderLinkage, renderPass);
     pipelineStateLineList->multisampleState.rasterizationSamples = device->GetMaxUsableSampleCount();
-    pipelineStateLineList->inputAssemblyState.topology = VK_PRIMITIVE_TOPOLOGY_LINE_LIST;
-    pipelineLineList                                   = m_renderer->pipelineCaching->GetOrCreatePipeline(pipelineStateLineList);
+    pipelineStateLineList->inputAssemblyState.topology           = VK_PRIMITIVE_TOPOLOGY_LINE_LIST;
+    pipelineLineList                                             = m_renderer->pipelineCaching->GetOrCreatePipeline(pipelineStateLineList);
 
-    auto pipelineState                                = std::make_shared<PipelineState>(shaderLinkage, renderPass);
+    auto pipelineState                                   = std::make_shared<PipelineState>(shaderLinkage, renderPass);
     pipelineState->multisampleState.rasterizationSamples = device->GetMaxUsableSampleCount();
-    pipelineState->depthStencilState.depthTestEnable  = VK_FALSE;
-    pipelineState->depthStencilState.depthWriteEnable = VK_TRUE;
-    pipelineGizmo                                     = m_renderer->pipelineCaching->GetOrCreatePipeline(pipelineState);
+    pipelineState->depthStencilState.depthTestEnable     = VK_FALSE;
+    pipelineState->depthStencilState.depthWriteEnable    = VK_TRUE;
+    pipelineGizmo                                        = m_renderer->pipelineCaching->GetOrCreatePipeline(pipelineState);
     // auto pipelineState1 = std::make_shared<PipelineState>(shaderModules, renderPass, pipelineLayout);
     // pipelineState1->inputAssemblyState.topology = VK_PRIMITIVE_TOPOLOGY_LINE_LIST;
     // pipelineState1->depthStencilState.depthTestEnable = VK_TRUE;
@@ -107,6 +106,7 @@ void Sandbox::Editor::PrepareOnGui()
     }
     UpdateDescriptorSets(m_renderer->viewMode);
     m_renderer->onViewModeChanged.BindMember<Editor, &Editor::UpdateDescriptorSets>(this);
+    Scene::onSceneChange.Bind([this](const std::shared_ptr<Scene>& inScene) { UpdateDescriptorSets(m_renderer->viewMode); });
     Scene::onReconstructMeshes.Bind([this] { UpdateDescriptorSets(m_renderer->viewMode); });
 }
 
@@ -132,7 +132,6 @@ void Sandbox::Editor::UpdateDescriptorSets(EViewMode inViewMode)
             {0, {uniformMvpObjects[i]->vpUbo->GetDescriptorBufferInfo()}},
             {1, {uniformMvpObjects[i]->modelsUbo->GetDescriptorBufferInfo(dynamicAlignment)}},
         };
-        // BindingMap<VkDescriptorImageInfo> imageInfoMapping;
         descriptorSets[i]->BindBufferInfoMapping(bufferInfoMapping, pipelineLineList->pipelineLayout->descriptorSetLayout);
     }
 }

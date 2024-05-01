@@ -69,7 +69,8 @@ void Sandbox::Viewport::Prepare()
         [this](const std::shared_ptr<Scene>& inScene)
         {
             OnViewModeChanged(m_renderer->viewMode);
-            inScene->onRendererSourceTick.Bind([this](const std::shared_ptr<Renderer>& renderer) { m_stencilRendererSource->Tick(renderer); });
+            // 这个是用来做物体选中后效果的 rendererSource
+            inScene->onOtherRendererSourceTick.Bind([this](const std::shared_ptr<Renderer>& renderer) { m_stencilRendererSource->Tick(renderer); });
         });
     Scene::onReconstructMeshes.Bind([this] { m_stencilRendererSource->RecreateUniformModels(m_renderer); });
 }

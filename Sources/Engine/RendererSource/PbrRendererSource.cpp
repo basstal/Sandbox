@@ -44,13 +44,13 @@ void Sandbox::PbrRendererSource::Cleanup()
     {
         camera->postProcess->Cleanup();
     }
+    for (size_t t = 0; t < 4; ++t)
+    {
+        textures[t]->Cleanup();
+    }
     for (size_t i = 0; i < descriptorSets.size(); ++i)
     {
         descriptorSets[i]->Cleanup();
-        for (size_t t = 0; t < 4; ++t)
-        {
-            textures[i][t]->Cleanup();
-        }
         uboLights[i]->Cleanup();
     }
     RendererSource::Cleanup();
@@ -90,7 +90,7 @@ void Sandbox::PbrRendererSource::CreateDescriptorSets(std::shared_ptr<Renderer>&
     uint32_t frameFlightSize = renderer->maxFramesFlight;
     descriptorSets.resize(frameFlightSize);
     uboLights.resize(frameFlightSize);
-    textures.resize(frameFlightSize);
+    // textures.resize(frameFlightSize);
 
     // TODO:简化以下贴图载入
     std::shared_ptr<Sandbox::Resource::Image> albedo    = std::make_shared<Resource::Image>(Directory::GetAssetsDirectory().GetFile("Textures/pbr/rusted_iron/albedo.png"));
@@ -116,21 +116,21 @@ void Sandbox::PbrRendererSource::CreateDescriptorSets(std::shared_ptr<Renderer>&
     renderer->commandBuffers[0]->CopyDataToImage(roughness, roughnessImage, VK_FORMAT_R8G8B8A8_UNORM);
     renderer->commandBuffers[0]->CopyDataToImage(ao, aoImage, VK_FORMAT_R8G8B8A8_UNORM);
 
-    for (size_t i = 0; i < textures.size(); ++i)
-    {
-        textures[i][0]            = std::make_shared<Texture>(device, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE);
-        textures[i][0]->image     = albedoImage;
-        textures[i][0]->imageView = std::make_shared<ImageView>(albedoImage, VK_IMAGE_VIEW_TYPE_2D);
-        textures[i][1]            = std::make_shared<Texture>(device, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE);
-        textures[i][1]->image     = metallicImage;
-        textures[i][1]->imageView = std::make_shared<ImageView>(metallicImage, VK_IMAGE_VIEW_TYPE_2D);
-        textures[i][2]            = std::make_shared<Texture>(device, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE);
-        textures[i][2]->image     = roughnessImage;
-        textures[i][2]->imageView = std::make_shared<ImageView>(roughnessImage, VK_IMAGE_VIEW_TYPE_2D);
-        textures[i][3]            = std::make_shared<Texture>(device, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE);
-        textures[i][3]->image     = aoImage;
-        textures[i][3]->imageView = std::make_shared<ImageView>(aoImage, VK_IMAGE_VIEW_TYPE_2D);
-    }
+    // for (size_t i = 0; i < textures.size(); ++i)
+    // {
+    // }
+    textures[0]            = std::make_shared<Texture>(device, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE);
+    textures[0]->image     = albedoImage;
+    textures[0]->imageView = std::make_shared<ImageView>(albedoImage, VK_IMAGE_VIEW_TYPE_2D);
+    textures[1]            = std::make_shared<Texture>(device, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE);
+    textures[1]->image     = metallicImage;
+    textures[1]->imageView = std::make_shared<ImageView>(metallicImage, VK_IMAGE_VIEW_TYPE_2D);
+    textures[2]            = std::make_shared<Texture>(device, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE);
+    textures[2]->image     = roughnessImage;
+    textures[2]->imageView = std::make_shared<ImageView>(roughnessImage, VK_IMAGE_VIEW_TYPE_2D);
+    textures[3]            = std::make_shared<Texture>(device, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE);
+    textures[3]->image     = aoImage;
+    textures[3]->imageView = std::make_shared<ImageView>(aoImage, VK_IMAGE_VIEW_TYPE_2D);
     for (size_t i = 0; i < frameFlightSize; ++i)
     {
         uboLights[i]      = std::make_shared<UniformBuffer>(device, sizeof(Light));
@@ -154,8 +154,8 @@ void Sandbox::PbrRendererSource::UpdateDescriptorSets(const std::shared_ptr<Rend
         descriptorSets[i]->BindBufferInfoMapping(bufferInfoMapping, pipeline->pipelineLayout->descriptorSetLayout);
         BindingMap<VkDescriptorImageInfo> imageInfoMapping = {
             {2,
-             {textures[i][0]->GetDescriptorImageInfo(), textures[i][1]->GetDescriptorImageInfo(), textures[i][2]->GetDescriptorImageInfo(),
-              textures[i][3]->GetDescriptorImageInfo()}},
+             {textures[0]->GetDescriptorImageInfo(), textures[1]->GetDescriptorImageInfo(), textures[2]->GetDescriptorImageInfo(),
+              textures[3]->GetDescriptorImageInfo()}},
         };
         descriptorSets[i]->BindImageInfoMapping(imageInfoMapping, pipeline->pipelineLayout->descriptorSetLayout);
     }

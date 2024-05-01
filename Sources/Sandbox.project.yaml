@@ -17,7 +17,7 @@ compile_environment:
     - JPH_USE_TZCNT
     - JPH_USE_F16C
     - JPH_USE_FMADD
-#    - CMAKE_INTDIR="Debug"
+  #    - CMAKE_INTDIR="Debug"
   include_paths:
     - .
   additional_include_paths:
@@ -35,3 +35,4 @@ compile_environment:
     - glslang     # 用来反射 shader 填充 shaderModule
     - refureku    # 类似 UE 的反射系统，用来对类型反射字段做序列化
     - JoltPhysics # 物理引擎
+    - ktx         # 扩展纹理加载格式

@@ -70,14 +70,17 @@ namespace Sandbox
         void CopyDataToBuffer(const void* inData, VkDeviceSize size, const std::shared_ptr<Buffer>& dstBuffer);
 
         void CopyDataToImage(const std::shared_ptr<Resource::Image>& imageResource, const std::shared_ptr<Image>& vkImage, VkFormat format);
+        void CopyDataToImageMultiLayers(const std::vector<std::shared_ptr<Resource::Image>>& imageResources, const std::shared_ptr<Image>& image, VkFormat format);
 
         void GenerateMipmaps(VkImage vkImage, VkFormat imageFormat, int32_t texWidth, int32_t texHeight, uint32_t mipLevels);
+        void CopyBufferToImage(Buffer& buffer, VkImage vkImage, uint32_t width, uint32_t height, size_t regionCount, size_t countOffset);
 
         void CopyBufferToImage(Buffer& buffer, VkImage vkImage, uint32_t width, uint32_t height);
         void TransitionImageLayout(const std::shared_ptr<ImageView>& imageView, const ImageMemoryBarrier& barrier, VkDependencyFlags dependencyFlags = 0);
-        void TransitionImageLayoutInstant(const std::shared_ptr<Image>& vkImage, VkImageLayout oldLayout, VkImageLayout newLayout, uint32_t mipLevels = 1);
+        void TransitionImageLayoutInstant(const std::shared_ptr<Image>& vkImage, VkImageLayout oldLayout, VkImageLayout newLayout, uint32_t mipLevels = 1,
+                                          uint32_t layerCount = 1);
+        void TransitionImageLayout(const std::shared_ptr<Image>& vkImage, VkImageLayout oldLayout, VkImageLayout newLayout, uint32_t mipLevels = 1, uint32_t layerCount = 1);
 
-        void TransitionImageLayout(const std::shared_ptr<Image>& vkImage, VkImageLayout oldLayout, VkImageLayout newLayout, uint32_t mipLevels = 1);
 
         void Submit(const std::shared_ptr<Fence>& fence, const std::vector<VkPipelineStageFlags>& waitStages, const std::vector<std::shared_ptr<Semaphore>>& waitSemaphores,
                     const std::vector<std::shared_ptr<Semaphore>>& signalSemaphores);

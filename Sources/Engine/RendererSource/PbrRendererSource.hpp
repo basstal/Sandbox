@@ -24,10 +24,10 @@ namespace Sandbox
         void Tick(const std::shared_ptr<Renderer>& renderer) override;
         // void ApplyPostProcess(const std::shared_ptr<PostProcess>& postProcess);
 
-        std::vector<std::array<std::shared_ptr<Texture>, 4>> textures;
-        std::vector<std::shared_ptr<UniformBuffer>>          uboLights;
-        PushConstantsInfo                                    pushConstantsInfo;
-        std::shared_ptr<Pipeline>                            pipeline;
+        std::array<std::shared_ptr<Texture>, 4>     textures;
+        std::vector<std::shared_ptr<UniformBuffer>> uboLights;
+        PushConstantsInfo                           pushConstantsInfo;
+        std::shared_ptr<Pipeline>                   pipeline;
         // std::vector<std::shared_ptr<PostProcess>>            postProcesses;
     };
 }  // namespace Sandbox

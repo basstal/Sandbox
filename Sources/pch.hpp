@@ -93,3 +93,8 @@
 #include <Jolt/Physics/Collision/RayCast.h>
 #include <Jolt/Physics/Collision/Shape/ConvexHullShape.h>
 #include <Jolt/Physics/Collision/CastResult.h>
+
+
+// ktx
+#include <ktx.h>
+#include <ktxvulkan.h>

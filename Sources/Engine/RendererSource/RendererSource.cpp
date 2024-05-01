@@ -6,25 +6,26 @@
 #include "Engine/EntityComponent/Components/Transform.hpp"
 #include "Engine/EntityComponent/Scene.hpp"
 #include "Engine/PhysicsSystem.hpp"
+#include "Engine/Skybox.hpp"
+#include "FileSystem/Directory.hpp"
 #include "Misc/Memory.hpp"
 #include "VulkanRHI/Core/CommandBuffer.hpp"
 #include "VulkanRHI/Core/Device.hpp"
 #include "VulkanRHI/Core/Image.hpp"
 #include "VulkanRHI/Core/ImageView.hpp"
-#include "VulkanRHI/Core/Pipeline.hpp"
-#include "VulkanRHI/Core/PipelineLayout.hpp"
-#include "VulkanRHI/Core/ShaderModule.hpp"
 #include "VulkanRHI/Renderer.hpp"
-#include "VulkanRHI/Rendering/ShaderLinkage.hpp"
 #include "VulkanRHI/Rendering/UniformBuffer.hpp"
 
 void Sandbox::RendererSource::Prepare(std::shared_ptr<Renderer>& renderer)
 {
     uboMvp.resize(renderer->maxFramesFlight);
+    uboMvpNoMoving.resize(renderer->maxFramesFlight);
     viewAndProjection = std::make_shared<ViewAndProjection>();
+    viewAndProjectionNoMoving = std::make_shared<ViewAndProjection>();
     for (size_t i = 0; i < renderer->maxFramesFlight; ++i)
     {
         uboMvp[i] = PrepareUniformBuffers(renderer);
+        uboMvpNoMoving[i] = PrepareUniformBuffers(renderer);
     }
     auto resolution = renderer->resolution;
     outputImage     = std::make_shared<Image>(renderer->device, VkExtent3D{resolution.width, resolution.height, 1}, VK_FORMAT_R8G8B8A8_UNORM,
@@ -98,6 +99,8 @@ void Sandbox::RendererSource::UpdateUniforms(uint32_t frameFlightIndex)
     SyncViewAndProjection();
     // static MVP
     uboMvp[frameFlightIndex]->vpUbo->Update(viewAndProjection.get());
+    uboMvpNoMoving[frameFlightIndex]->vpUbo->Update(viewAndProjectionNoMoving.get());
+
 }
 void Sandbox::RendererSource::Cleanup()
 {
@@ -115,6 +118,8 @@ void Sandbox::RendererSource::Cleanup()
     {
         uboMvp[i]->modelsUbo->Cleanup();
         uboMvp[i]->vpUbo->Cleanup();
+        uboMvpNoMoving[i]->modelsUbo->Cleanup();
+        uboMvpNoMoving[i]->vpUbo->Cleanup();
     }
 }
 
@@ -137,9 +142,11 @@ void Sandbox::RendererSource::SyncViewAndProjection()
         return;
     }
     viewAndProjection->view = camera->GetViewMatrix();
+    viewAndProjectionNoMoving->view = glm::mat4(glm::mat3(viewAndProjection->view));
     auto projection         = camera->GetProjectionMatrix();
     projection[1][1] *= -1;
     viewAndProjection->projection = projection;
+    viewAndProjectionNoMoving->projection = projection;
 }
 
 void Sandbox::RendererSource::Tick(const std::shared_ptr<Renderer>& renderer)
@@ -153,6 +160,20 @@ void Sandbox::RendererSource::Tick(const std::shared_ptr<Renderer>& renderer)
     }
     UpdateModels(renderer, currentScene->models, currentScene->renderMeshes);
     uboMvp[renderer->frameFlightIndex]->modelsUbo->Update(currentScene->models[renderer->frameFlightIndex]->model);
+    if (camera != nullptr && camera->skybox != nullptr)
+    {
+        if (!camera->skybox->IsPrepared())
+        {
+            camera->skybox->Prepare(renderer);
+            std::vector<std::shared_ptr<Resource::Image>> images;
+            for (auto& path : camera->skyboxImagePaths)
+            {
+                auto file = Directory::GetAssetsDirectory().GetFile(path);
+                images.push_back(std::make_shared<Resource::Image>(file));
+            }
+            camera->skybox->CreateCubemapImages(images);
+        }
+    }
 }
 
 void Sandbox::RendererSource::SetCamera(const std::shared_ptr<Camera>& inCamera) { camera = inCamera; }

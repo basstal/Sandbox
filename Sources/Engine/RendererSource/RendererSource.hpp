@@ -47,7 +47,9 @@ namespace Sandbox
         std::vector<std::shared_ptr<DescriptorSet>> descriptorSets;
         std::shared_ptr<ShaderLinkage>              shaderLinkage;
         std::vector<std::shared_ptr<MVPUboObjects>> uboMvp;
+        std::vector<std::shared_ptr<MVPUboObjects>> uboMvpNoMoving;
         std::shared_ptr<ViewAndProjection>          viewAndProjection;
+        std::shared_ptr<ViewAndProjection>          viewAndProjectionNoMoving;
         // std::shared_ptr<PipelineLayout>             pipelineLayout;
         // std::shared_ptr<Pipeline>                   pipeline;
         std::shared_ptr<PipelineState> pipelineState;

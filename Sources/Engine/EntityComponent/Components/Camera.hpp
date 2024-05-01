@@ -14,6 +14,7 @@ namespace Sandbox NAMESPACE()
     class ShaderSource;
     class PostProcess;
     class Renderer;
+    class Skybox;
 
     struct ViewAndProjection
     {
@@ -131,6 +132,16 @@ namespace Sandbox NAMESPACE()
         FIELD()
         float aspectRatio = 16 / 9.0f;
 
+        FIELD()
+        bool useSkybox = true;
+
+        std::shared_ptr<Skybox> skybox;
+
+        // TODO:临时数据
+        std::vector<std::string> skyboxImagePaths = {
+            "Textures/skybox/left.png", "Textures/skybox/right.png", "Textures/skybox/front.png",
+            "Textures/skybox/back.jpg", "Textures/skybox/top.png",   "Textures/skybox/bottom.jpg",
+        };
         glm::vec3 worldUp;
         Vector3   worldUp1;
         glm::vec3 front;
@@ -148,8 +159,10 @@ namespace Sandbox NAMESPACE()
 
         Vector3 NdcToWorld(const Vector3& ndcCoordinate);
 
+        void Cleanup() override;
+
         Dictionary<std::shared_ptr<ShaderSource>, bool> postProcessFragShaders;
-        std::shared_ptr<PostProcess> postProcess;
+        std::shared_ptr<PostProcess>                    postProcess;
         Sandbox_Camera_GENERATED
 	};
 } // namespace Sandbox NAMESPACE()

@@ -59,20 +59,22 @@ void Sandbox::Buffer::Cleanup()
     m_cleaned = true;
 }
 
-void Sandbox::Buffer::Update(const void* inData)
+void Sandbox::Buffer::UpdateOffsetSize(const void* inData, size_t inOffset, size_t inSize)
 {
     if (m_mappedData == nullptr)
     {
         vkMapMemory(m_device->vkDevice, vkDeviceMemory, 0, size, 0, &m_mappedData);
     }
-    memcpy(m_mappedData, inData, size);
+    memcpy(static_cast<char*>(m_mappedData) + inOffset, inData, inSize);
     if (m_isNonCoherent)
     {
         VkMappedMemoryRange mappedRange{};
         mappedRange.sType  = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
         mappedRange.memory = vkDeviceMemory;
-        mappedRange.offset = 0;
-        mappedRange.size   = size;
+        mappedRange.offset = inOffset;
+        mappedRange.size   = inSize;
         vkFlushMappedMemoryRanges(m_device->vkDevice, 1, &mappedRange);
     }
 }
+
+void Sandbox::Buffer::Update(const void* inData) { UpdateOffsetSize(inData, 0, size);}

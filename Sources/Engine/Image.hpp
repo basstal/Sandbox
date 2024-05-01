@@ -11,11 +11,12 @@ namespace Sandbox::Resource
     class Image
     {
     public:
-        Image(const std::string& path);
-
+        Image(const std::string& path, bool flipOnLoad = false);
         Image(const File& path);
 
         ~Image();
+
+        VkExtent3D GetExtent3D() const;
 
         int            width     = 0;
         int            height    = 0;
