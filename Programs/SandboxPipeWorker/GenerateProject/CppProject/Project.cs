@@ -183,6 +183,10 @@ public abstract class Project
 
     public void AddProject(Project project)
     {
+        // if (project.PrecompileEnvironment != null)
+        // {
+        //     Console.WriteLine($"project {project.Name}, dllpaths : {project.PrecompileEnvironment.DllPaths.Count}");
+        // }
         SubProjects.Add(project);
     }
 
@@ -250,7 +254,7 @@ public abstract class Project
         switch (CppSubType)
         {
             case CppSubType.Source:
-                ParseCppModule(root, fileReference.GetDirectory());
+                ParseCpp(root, fileReference.GetDirectory());
                 break;
             case CppSubType.Library:
                 ParseDynamicLibrary(root, fileReference.GetDirectory());
@@ -355,7 +359,7 @@ public abstract class Project
         return result;
     }
 
-    internal void ParseCppModule(YamlMappingNode root, DirectoryReference sourceDirectory)
+    internal void ParseCpp(YamlMappingNode root, DirectoryReference sourceDirectory)
     {
         var compileEnvironment = root["compile_environment"];
         {
@@ -442,6 +446,7 @@ public abstract class Project
         var subProjectFiles = ProjectDirectory!.SearchFiles($"*{ProjectFileExtension}");
         foreach (var subProjectFile in subProjectFiles)
         {
+            // Console.WriteLine(subProjectFile.FullName);
             Project subProject = GetProject(subProjectFile);
             if (subProject.TryParse(subProjectFile))
             {

@@ -55,17 +55,19 @@ void Sandbox::ContentBrowser::OnGui() { TreeView::OnGui(); }
 
 void Sandbox::ContentBrowser::Cleanup() { TreeView::Cleanup(); }
 
-
-void Sandbox::ContentBrowser::OnTreeNodeDoubleClickDispatch(TreeNodeClickEvent& treeNodeClickEvent)
+void Sandbox::ContentBrowser::OnTreeNodeClickDispatch(TreeNodeClickEvent& treeNodeClickEvent)
 {
-    TreeView::OnTreeNodeDoubleClickDispatch(treeNodeClickEvent);
+    TreeView::OnTreeNodeClickDispatch(treeNodeClickEvent);
     auto item = LeafIdToSharedPtr(treeNodeClickEvent.nodeId);
     if (item->IsLeaf())
     {
         auto file = std::dynamic_pointer_cast<AssetFileTreeViewSource>(item->source)->file;
         if (file->GetExtension() == ".scene")
         {
-            Scene::LoadScene(file);
+            if (treeNodeClickEvent.clickType == LeftMouseDouble)
+            {
+                Scene::LoadScene(file);
+            }
         }
         // LOGF("Double clicked on file: %s", file->GetPath().c_str());
     }
@@ -74,4 +76,5 @@ void Sandbox::ContentBrowser::OnTreeNodeDoubleClickDispatch(TreeNodeClickEvent& 
     //     auto directory = std::dynamic_pointer_cast<AssetDirectoryTreeViewSource>(item->source)->directory;
     //     LOGF("Double clicked on directory: %s", directory->GetPath().c_str());
     // }
+    
 }

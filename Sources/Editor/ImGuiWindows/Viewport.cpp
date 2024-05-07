@@ -48,15 +48,23 @@ Sandbox::Viewport::Viewport(const std::shared_ptr<Renderer>& inRenderer)
     IComponent::onComponentCreate.Bind(
         [this](const std::shared_ptr<IComponent>& inComponent)
         {
-            if (mainCamera == nullptr && inComponent->GetDerivedClass() == &Camera::staticGetArchetype())
+            if (inComponent->GetDerivedClass() == &Camera::staticGetArchetype())
             {
-                mainCamera = std::dynamic_pointer_cast<Camera>(inComponent);
-                m_stencilRendererSource->SetCamera(mainCamera);
+                SetMainCamera(std::dynamic_pointer_cast<Camera>(inComponent));
             }
         });
     // inRenderer->onAfterDrawMesh.BindMember<Viewport, &Viewport::OnAfterDrawMesh>(this);
 }
 
+
+void Sandbox::Viewport::SetMainCamera(const std::shared_ptr<Camera>& inCamera)
+{
+    if (mainCamera == nullptr || mainCamera != inCamera)
+    {
+        mainCamera = inCamera;
+        m_stencilRendererSource->SetCamera(mainCamera);
+    }
+}
 void Sandbox::Viewport::Prepare()
 {
     IImGuiWindow::Prepare();
@@ -448,14 +456,15 @@ void Sandbox::Viewport::DrawOverlay()
 void Sandbox::Viewport::OnRecreateFramebuffer()
 {
     auto rendererSource = m_renderer->GetCurrentRendererSource();
-    
+
     // outputImageView     = std::make_shared<ImageView>(rendererSource->outputImage, VK_IMAGE_VIEW_TYPE_2D);
-    auto imageViewSize  = m_renderer->swapchain->imageViews.size();
+    auto imageViewSize = m_renderer->swapchain->imageViews.size();
     presentDescriptorSets.resize(imageViewSize);
     for (size_t i = 0; i < imageViewSize; ++i)
     {
         // VkImageView offlineImageView = m_renderer->renderAttachments[i]->resolveImageView->vkImageView;  // Vulkan图像视图，已经创建并指向包含渲染结果的图像
-        presentDescriptorSets[i] = ImGui_ImplVulkan_AddTexture(presentSampler->vkSampler, rendererSource->outputImageView->vkImageView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+        presentDescriptorSets[i] =
+            ImGui_ImplVulkan_AddTexture(presentSampler->vkSampler, rendererSource->outputImageView->vkImageView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
     }
 }
 
@@ -599,7 +608,7 @@ void Sandbox::Viewport::OnViewModeChanged(EViewMode inViewMode)
         std::shared_ptr<PbrRendererSource> pbrRendererSource = std::dynamic_pointer_cast<PbrRendererSource>(rendererSource);
         if (pbrRendererSource != nullptr)
         {
-            pbrRendererSource->pushConstantsInfo.data = mainCamera == nullptr ? nullptr : &mainCamera->gameObject.lock()->transform->position.vec;
+            pbrRendererSource->pushConstantsInfo.data = mainCamera == nullptr || !mainCamera->IsValid() ? nullptr : &mainCamera->gameObject.lock()->transform->position.vec;
         }
         // if (mainCamera == nullptr)
         // {
@@ -614,7 +623,7 @@ void Sandbox::Viewport::OnViewModeChanged(EViewMode inViewMode)
         // m_lastOutputImageView != nullptr ? m_lastOutputImageView->Cleanup() : void();
         // m_lastOutputImageView = outputImageView;
         // outputImageView       = std::make_shared<ImageView>(rendererSource->outputImage, VK_IMAGE_VIEW_TYPE_2D);
-        auto imageViewSize    = m_renderer->swapchain->imageViews.size();
+        auto imageViewSize = m_renderer->swapchain->imageViews.size();
         if (!m_lastPresentDescriptorSets.empty())
         {
             for (auto& presentDescriptorSet : m_lastPresentDescriptorSets)

@@ -3,6 +3,7 @@
 #include "RendererSource.hpp"
 
 #include "Engine/EntityComponent/Components/Camera.hpp"
+#include "Engine/EntityComponent/Components/Mesh.hpp"
 #include "Engine/EntityComponent/Components/Transform.hpp"
 #include "Engine/EntityComponent/Scene.hpp"
 #include "Engine/PhysicsSystem.hpp"
@@ -20,11 +21,11 @@ void Sandbox::RendererSource::Prepare(std::shared_ptr<Renderer>& renderer)
 {
     uboMvp.resize(renderer->maxFramesFlight);
     uboMvpNoMoving.resize(renderer->maxFramesFlight);
-    viewAndProjection = std::make_shared<ViewAndProjection>();
+    viewAndProjection         = std::make_shared<ViewAndProjection>();
     viewAndProjectionNoMoving = std::make_shared<ViewAndProjection>();
     for (size_t i = 0; i < renderer->maxFramesFlight; ++i)
     {
-        uboMvp[i] = PrepareUniformBuffers(renderer);
+        uboMvp[i]         = PrepareUniformBuffers(renderer);
         uboMvpNoMoving[i] = PrepareUniformBuffers(renderer);
     }
     auto resolution = renderer->resolution;
@@ -100,7 +101,6 @@ void Sandbox::RendererSource::UpdateUniforms(uint32_t frameFlightIndex)
     // static MVP
     uboMvp[frameFlightIndex]->vpUbo->Update(viewAndProjection.get());
     uboMvpNoMoving[frameFlightIndex]->vpUbo->Update(viewAndProjectionNoMoving.get());
-
 }
 void Sandbox::RendererSource::Cleanup()
 {
@@ -137,15 +137,15 @@ void Sandbox::RendererSource::CustomDrawOverlay(const std::shared_ptr<Sandbox::M
 }
 void Sandbox::RendererSource::SyncViewAndProjection()
 {
-    if (camera == nullptr)
+    if (camera == nullptr || !camera->IsValid())
     {
         return;
     }
-    viewAndProjection->view = camera->GetViewMatrix();
+    viewAndProjection->view         = camera->GetViewMatrix();
     viewAndProjectionNoMoving->view = glm::mat4(glm::mat3(viewAndProjection->view));
-    auto projection         = camera->GetProjectionMatrix();
+    auto projection                 = camera->GetProjectionMatrix();
     projection[1][1] *= -1;
-    viewAndProjection->projection = projection;
+    viewAndProjection->projection         = projection;
     viewAndProjectionNoMoving->projection = projection;
 }
 

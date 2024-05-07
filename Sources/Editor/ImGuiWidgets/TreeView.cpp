@@ -60,6 +60,14 @@ void Sandbox::TreeView::ConstructImGuiTreeNodes(const std::shared_ptr<Sandbox::T
     {
         return;
     }
+    if (target == root)  // root 不展示，即使它是叶节点
+    {
+        for (auto& item : target->items)
+        {
+            ConstructImGuiTreeNodes(item);
+        }
+        return;
+    }
     auto treeViewItem = std::dynamic_pointer_cast<TreeViewItem>(target);
     if (treeViewItem->IsLeaf())
     {
@@ -78,9 +86,26 @@ void Sandbox::TreeView::ConstructImGuiTreeNodes(const std::shared_ptr<Sandbox::T
         if (ImGui::IsItemClicked(0) && ImGui::IsMouseDoubleClicked(0))
         {
             // 构建事件信息
-            TreeNodeClickEvent event(treeViewItem->source->name, leafId);
+            TreeNodeClickEvent event(treeViewItem->source->name, leafId, LeftMouseDouble);
             // 派发事件
-            OnTreeNodeDoubleClickDispatch(event);
+            OnTreeNodeClickDispatch(event);
+        }
+
+        // 检测鼠标左键点击事件
+        if (ImGui::IsItemClicked(0))
+        {
+            // 构建事件信息
+            TreeNodeClickEvent event(treeViewItem->source->name, leafId, LeftMouse);
+            // 派发事件
+            OnTreeNodeClickDispatch(event);
+        }
+
+        if (ImGui::IsItemClicked(1))
+        {
+            // 构建事件信息
+            TreeNodeClickEvent event(treeViewItem->source->name, leafId, RightMouse);
+            // 派发事件
+            OnTreeNodeClickDispatch(event);
         }
 
         if (ImGui::BeginDragDropSource())
@@ -89,13 +114,6 @@ void Sandbox::TreeView::ConstructImGuiTreeNodes(const std::shared_ptr<Sandbox::T
             ImGui::SetDragDropPayload("_TREENODE", NULL, 0);
             ImGui::Text("This is a drag and drop source");
             ImGui::EndDragDropSource();
-        }
-    }
-    else if (target == root)  // root 不展示
-    {
-        for (auto& item : target->items)
-        {
-            ConstructImGuiTreeNodes(item);
         }
     }
     else if (ImGui::TreeNode(target->source->name.c_str()))
@@ -108,6 +126,11 @@ void Sandbox::TreeView::ConstructImGuiTreeNodes(const std::shared_ptr<Sandbox::T
     }
 }
 
-void Sandbox::TreeView::OnTreeNodeDoubleClickDispatch(TreeNodeClickEvent& clicked)
+void Sandbox::TreeView::OnTreeNodeClickDispatch(TreeNodeClickEvent& treeNodeClickEvent)
 {
+    if (treeNodeClickEvent.clickType == RightMouse)
+    {
+        m_singleClicked = treeNodeClickEvent.nodeId;
+    }
 }
+

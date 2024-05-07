@@ -45,6 +45,6 @@ namespace Sandbox
 
         void Cleanup() override;
 
-        void OnTreeNodeDoubleClickDispatch(TreeNodeClickEvent&) override;
+        void OnTreeNodeClickDispatch(TreeNodeClickEvent&) override;
     };
 }  // namespace Sandbox

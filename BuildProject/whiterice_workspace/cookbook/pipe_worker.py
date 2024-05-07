@@ -1,6 +1,6 @@
 import os
 import whiterice
-
+import pyutils.simplelogger as logger
 
 class PipeWorker(whiterice.ITable):
     @whiterice.priority(-10)
@@ -9,5 +9,6 @@ class PipeWorker(whiterice.ITable):
         sandbox_pipe_worker_dir = os.path.join(
             cook.config.project, "Programs/SandboxPipeWorker"
         )
-        cook.exec.execute_straight("dotnet", ["run"], work_dir=sandbox_pipe_worker_dir)
+        result = cook.exec.execute_straight("dotnet", ["run"], work_dir=sandbox_pipe_worker_dir)
+        logger.info(result.out_str)
         return super().make(cook)

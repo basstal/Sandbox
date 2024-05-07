@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include <memory>
 
+#include "Engine/Concepts.hpp"
 #include "GameObject.hpp"
 #include "Generated/Scene.rfkh.h"
 #include "Serialization/ISerializable.hpp"
@@ -11,6 +12,7 @@ namespace Sandbox NAMESPACE()
     struct Models;
     class Renderer;
     class Skybox;
+    class Camera;
 
     class Mesh;
 
@@ -52,12 +54,38 @@ namespace Sandbox NAMESPACE()
 
         std::shared_ptr<Sandbox::GameObject> AddEmptyGameObject();
 
+        void RemoveGameObject(const std::shared_ptr<Sandbox::GameObject>& gameObject);
+
+        std::shared_ptr<Camera> FindFirstCamera();
+
+        template <DerivedFromIComponent T>
+        std::shared_ptr<T> RecursiveFindComponent(std::shared_ptr<GameObject>& gameObject);
 
     private:
         bool m_cleaned = false;
 
         Sandbox_Scene_GENERATED
     };
+
+
+    template <DerivedFromIComponent T>
+    std::shared_ptr<T> Scene::RecursiveFindComponent(std::shared_ptr<GameObject>& gameObject)
+    {
+        auto component = gameObject->GetComponent<T>();
+        if (component != nullptr)
+        {
+            return component;
+        }
+        for (auto& child : gameObject->children)
+        {
+            component = RecursiveFindComponent<T>(child);
+            if (component != nullptr)
+            {
+                return component;
+            }
+        }
+        return nullptr;
+    }
 }  // namespace Sandbox NAMESPACE()
 
 File_Scene_GENERATED

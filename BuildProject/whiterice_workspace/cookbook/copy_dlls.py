@@ -9,12 +9,15 @@ class CopyDlls(whiterice.ITable):
     def build(self, cook: whiterice.Cook) -> int:
         import pyutils.simplelogger as logger
 
-        bin_path = os.path.join(cook.config.project, "build/Bin")
-        dlls = get_files_glob(bin_path, "*.dll", recursive=False)
+        dll_paths = os.path.join(cook.config.project, "Temp/DllPaths")
+        # 读取 dll 路径
+        with open(dll_paths, "r") as f:
+            dlls = [path.strip() for path in f.readlines()]
         logger.info(f"dlls : {dlls}")
+        bin_path = os.path.join(cook.config.project, "Output")
         for src in dlls:
             name_with_extension = os.path.split(src)[1]
-            dst = os.path.join(bin_path, "Debug", name_with_extension)
+            dst = os.path.join(bin_path, name_with_extension)
             logger.info(f"copy from {src} to {dst}")
             shutil.copy2(
                 src,

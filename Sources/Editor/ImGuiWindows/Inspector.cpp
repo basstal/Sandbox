@@ -3,6 +3,7 @@
 #include "Inspector.hpp"
 
 #include "Editor/IImGuiWindow.hpp"
+#include "Engine/EntityComponent/Components/Camera.hpp"
 #include "Engine/EntityComponent/Components/Mesh.hpp"
 #include "Generated/Inspector.rfks.h"
 #include "Serialization/Property/InspectComponentName.hpp"
@@ -75,6 +76,10 @@ void Sandbox::Inspector::OnGui()
                 {
                     target->AddComponent<Mesh>();
                 }
+                if (ImGui::MenuItem("Create/Camera"))
+                {
+                    target->AddComponent<Camera>();
+                }
                 ImGui::EndPopup();
             }
         }
@@ -85,7 +90,7 @@ void Sandbox::Inspector::OnGui()
         auto childName  = name.c_str();
         auto childFlags = ImGuiChildFlags_AlwaysAutoResize | ImGuiChildFlags_AutoResizeY;
         ImGui::BeginChild(childName, ImVec2(0, 0), childFlags);
-        if (!ImGui::CollapsingHeader(childName, ImGuiTreeNodeFlags_DefaultOpen))
+        if (!ImGui::CollapsingHeader(childName, &isComponentExist, ImGuiTreeNodeFlags_DefaultOpen))
         {
             ImGui::EndChild();
             return;
@@ -97,6 +102,8 @@ void Sandbox::Inspector::OnGui()
     }
 }
 
+std::vector<std::shared_ptr<Sandbox::IComponent>> toBeRemoved;
+
 void Sandbox::Inspector::DrawComponentInspectors()
 {
     if (target == nullptr)
@@ -104,6 +111,7 @@ void Sandbox::Inspector::DrawComponentInspectors()
         return;
     }
     auto components = target->GetComponents();
+    toBeRemoved.clear();
     for (auto component : components)
     {
         std::string className = component->GetDerivedClassName();
@@ -113,7 +121,19 @@ void Sandbox::Inspector::DrawComponentInspectors()
             continue;
         }
         auto inspector = componentNameToInspector[className];
-        inspector->OnGui();
+        if (!inspector->isComponentExist)
+        {
+            toBeRemoved.push_back(component);
+            inspector->isComponentExist = true;
+        }
+        else
+        {
+            inspector->OnGui();
+        }
+    }
+    for (auto& toBeRemovedComponent : toBeRemoved)
+    {
+        target->RemoveComponent(toBeRemovedComponent);
     }
 }
 

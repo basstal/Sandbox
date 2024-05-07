@@ -18,8 +18,7 @@ static rfk::NamespaceFragment fragment("Sandbox", 7028080843842788705u);
 static bool initialized = false;
 if (!initialized) {
 initialized = true;
-fragment.setNestedEntitiesCapacity(2u);
-fragment.addNestedEntity(*rfk::getArchetype<Sandbox::Camera>());
+fragment.setNestedEntitiesCapacity(1u);
 fragment.addNestedEntity(*rfk::getArchetype<Sandbox::Viewport>());
 }
 return fragment; }

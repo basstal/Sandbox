@@ -474,3 +474,4 @@ imgui.ini
 /CMakeLists.txt
 /Sources/CMakeLists.txt
 /BuildProject/whiterice_workspace/*.json
+/Temp

@@ -9,13 +9,11 @@
 #include "Serialization/ISerializable.hpp"
 #include "Serialization/List.hpp"
 #include "Serialization/SharedPtr.hpp"
+#include "Engine/Concepts.hpp"
 
 namespace Sandbox NAMESPACE()
 {
     class IComponent;
-
-    template <typename T>
-    concept DerivedFromIComponent = std::is_base_of_v<IComponent, T>;
 
     class CLASS() GameObject : public ISerializable, public std::enable_shared_from_this<GameObject>
     {
@@ -41,6 +39,8 @@ namespace Sandbox NAMESPACE()
 
         template <DerivedFromIComponent T>
         std::shared_ptr<T> GetComponent();
+
+        void RemoveComponent(std::shared_ptr<IComponent>& component);
 
         Sandbox::List<Sandbox::SharedPtr<IComponent>> GetComponents();
 

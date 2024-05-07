@@ -34,6 +34,7 @@ namespace Sandbox NAMESPACE()
         void OnCursorPosition(GLFWwindow* window, double xPos, double yPos);
 
         Viewport(const std::shared_ptr<Renderer>& inRenderer);
+        void SetMainCamera(const std::shared_ptr<Camera>& inCamera);
 
         void Prepare() override;
 

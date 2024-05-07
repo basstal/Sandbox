@@ -4,6 +4,7 @@
 
 #include "Editor/Grid.hpp"
 #include "Engine.hpp"
+#include "EntityComponent/Components/Camera.hpp"
 #include "FileSystem/Directory.hpp"
 #include "FileSystem/Logger.hpp"
 #include "Image.hpp"
@@ -69,9 +70,9 @@ void Sandbox::Skybox::Prepare(const std::shared_ptr<Renderer>& renderer)
     {
         m_descriptorSets[i] = renderer->descriptorSetCaching->GetOrCreateDescriptorSet(m_pipeline->pipelineLayout->descriptorSetLayout, i);
     }
-    m_sampler = std::make_shared<Sampler>(m_renderer->device, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE);
-    m_cleaned = false;
-    renderer->onBeforeRendererDraw.BindMember<Skybox, &Skybox::Draw>(this, 1);
+    m_sampler                  = std::make_shared<Sampler>(m_renderer->device, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE);
+    m_cleaned                  = false;
+    m_beforeRendererDrawHandle = renderer->onBeforeRendererDraw.BindMember<Skybox, &Skybox::Draw>(this, 1);
 }
 
 bool Sandbox::Skybox::IsPrepared() { return m_cleaned == false; }
@@ -129,8 +130,10 @@ void Sandbox::Skybox::Cleanup()
         return;
     }
     m_cleaned = true;
+    m_renderer->onBeforeRendererDraw.Unbind(m_beforeRendererDrawHandle);
     m_imageView != nullptr ? m_imageView->Cleanup() : void();
     m_image != nullptr ? m_image->Cleanup() : void();
     m_sampler->Cleanup();
     m_vertexBuffer->Cleanup();
+    
 }

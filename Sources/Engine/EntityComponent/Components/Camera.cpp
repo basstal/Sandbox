@@ -3,6 +3,7 @@
 #include "Camera.hpp"
 
 #include "Engine/EntityComponent/GameObject.hpp"
+#include "Engine/EntityComponent/Scene.hpp"
 #include "Engine/PostProcess.hpp"
 #include "Engine/RendererSource/PbrRendererSource.hpp"
 #include "Engine/Skybox.hpp"
@@ -23,6 +24,7 @@ constexpr float SENSITIVITY = 0.05f;
 
 const glm::vec3 DEFAULT_WORLD_UP = glm::vec3(0.0f, 0.0f, 1.0f);
 
+Sandbox::Event<const std::shared_ptr<Sandbox::Camera>&> Sandbox::Camera::onCameraChange = Sandbox::Event<const std::shared_ptr<Sandbox::Camera>&>();
 
 Sandbox::Camera::Camera()
 {
@@ -45,6 +47,7 @@ Sandbox::Camera::Camera()
         std::shared_ptr<ShaderSource> postProcessSource = std::make_shared<ShaderSource>(file, "");
         postProcessFragShaders[postProcessSource]       = false;
     }
+    m_cleaned = false;
 }
 
 Sandbox::Camera::Camera(float inAspectRatio)
@@ -159,6 +162,8 @@ void Sandbox::Camera::UpdateCameraVectors()
     up1    = up;
 }
 
+bool Sandbox::Camera::IsValid() { return !m_cleaned; }
+
 std::string Sandbox::Camera::GetDerivedClassName() { return getArchetype().getName(); }
 
 const rfk::Class* Sandbox::Camera::GetDerivedClass() { return rfk::classCast(rfk::getArchetype<Camera>()); }
@@ -186,4 +191,7 @@ void Sandbox::Camera::Cleanup()
 {
     IComponent::Cleanup();
     skybox != nullptr ? skybox->Cleanup() : void();
+    postProcess != nullptr ? postProcess->Cleanup() : void();
+    m_cleaned = true;
+    Camera::onCameraChange.Trigger(Scene::GetCurrentScene()->FindFirstCamera());
 }

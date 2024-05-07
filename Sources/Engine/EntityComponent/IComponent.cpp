@@ -14,4 +14,8 @@ const rfk::Class* Sandbox::IComponent::GetDerivedClass()
     LOGW("Engine", "GetDerivedClass not implemented! Serialization component {} will fail!", GetDerivedClassName())
     return nullptr;
 }
-void Sandbox::IComponent::Cleanup() {}
+void Sandbox::IComponent::Cleanup()
+{
+    gameObject.reset();
+    transform.reset();
+}

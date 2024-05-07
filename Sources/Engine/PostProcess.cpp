@@ -5,13 +5,12 @@
 #include "BasicMeshData.hpp"
 #include "FileSystem/Directory.hpp"
 #include "FileSystem/File.hpp"
-#include "Misc/TypeCasting.hpp"
+#include "FileSystem/Logger.hpp"
 #include "VulkanRHI/Common/Caching/DescriptorSetCaching.hpp"
 #include "VulkanRHI/Common/Caching/PipelineCaching.hpp"
 #include "VulkanRHI/Common/SubpassComponents.hpp"
 #include "VulkanRHI/Core/CommandBuffer.hpp"
 #include "VulkanRHI/Core/DescriptorSet.hpp"
-#include "VulkanRHI/Core/Framebuffer.hpp"
 #include "VulkanRHI/Core/Image.hpp"
 #include "VulkanRHI/Core/ImageMemoryBarrier.hpp"
 #include "VulkanRHI/Core/ImageView.hpp"
@@ -266,11 +265,14 @@ void Sandbox::PostProcess::OnRecreateSwapchain()
 
 void Sandbox::PostProcess::AddPostProcess(const std::shared_ptr<ShaderSource>& shaderSource)
 {
+    if (m_renderer == nullptr)
+    {
+        LOGF("Engine", "Renderer is nullptr, please call Prepare first!")
+    }
     // 如果不存在则添加
     if (std::find(m_postProcessShaderSource.begin(), m_postProcessShaderSource.end(), shaderSource) == m_postProcessShaderSource.end())
     {
         m_postProcessShaderSource.push_back(shaderSource);
-
         Cleanup();
         Prepare(m_renderer);
     }

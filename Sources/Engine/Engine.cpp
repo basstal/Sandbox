@@ -129,10 +129,10 @@ void Sandbox::Engine::MainLoop()
         glfwPollEvents();
         editor->Update();
 
-        if (pause)
-        {
-            continue;
-        }
+        // if (pause)
+        // {
+        //     continue;
+        // }
 
         // 逻辑以固定步长（时长）更新
         logicTimer->UpdateInFixed(logicUpdateDeltaTime);
@@ -193,10 +193,11 @@ void Sandbox::Engine::MainLoop()
 
 void Sandbox::Engine::Pause(GLFWwindow* inWindow, int key, int scancode, int action, int mods)
 {
-    if (key == GLFW_KEY_P && action == GLFW_PRESS)
-    {
-        pause = !pause;
-    }
+    // TODO:pause 整个 engine 不合理
+    // if (key == GLFW_KEY_P && action == GLFW_PRESS)
+    // {
+    //     pause = !pause;
+    // }
 }
 
 void Sandbox::Engine::Cleanup()

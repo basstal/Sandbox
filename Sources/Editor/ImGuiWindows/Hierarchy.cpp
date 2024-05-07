@@ -6,11 +6,14 @@
 #include "Engine/EntityComponent/GameObject.hpp"
 #include "Engine/EntityComponent/Scene.hpp"
 #include "Inspector.hpp"
+#include "Misc/Debug.hpp"
 
 Sandbox::Hierarchy::Hierarchy(const std::shared_ptr<Inspector>& inspector)
 {
-    name        = "Hierarchy";
-    m_inspector = inspector;
+    name                     = "Hierarchy";
+    m_inspector              = inspector;
+    m_createNewGameObject    = false;
+    m_deleteSelectGameObject = false;
     Scene::onSceneChange.Bind(
         [this](const std::shared_ptr<Scene>& inScene)
         {
@@ -32,7 +35,7 @@ std::vector<std::shared_ptr<Sandbox::TreeViewItem>> Sandbox::Hierarchy::CreateTr
         auto item   = std::make_shared<HierarchyTreeViewItem>();
         auto source = std::make_shared<HierarchyTreeViewSource>();
         // TODO: restore gameObject as ptr
-        LOGD_OLD("gameObject.name: {}", gameObject->name.ToStdString())
+        LOGD("Editor", "gameObject.name: {}", gameObject->name.ToStdString())
         source->name       = gameObject->name.ToStdString();
         source->gameObject = gameObject.ToStdSharedPtr();
         item->items        = ChildGameObjects(gameObject);
@@ -86,45 +89,53 @@ void ShowExampleMenuFile()
 
 void Sandbox::Hierarchy::OnGui()
 {
+    std::shared_ptr<GameObject> createdGameObject = nullptr;
+    if (m_createNewGameObject)
+    {
+        createdGameObject = Scene::currentScene->AddEmptyGameObject();
+    }
+    if (m_deleteSelectGameObject)
+    {
+        for (auto& selection : m_selections)
+        {
+            auto gameObject = LeafIdToGameObject(selection);
+            Scene::currentScene->RemoveGameObject(gameObject);
+        }
+        ImGuiRenderer::Instance->onTargetChanged.Trigger(nullptr);
+    }
+    m_deleteSelectGameObject = false;
     TreeView::OnGui();
-    // // 假设我们创建一个文本区域，右键点击它会弹出菜单
-    // if (ImGui::BeginPopupContextItem("MyPopup"))
-    // {
-    //     if (ImGui::MenuItem("Action 1"))
-    //     {
-    //         // 当'Action 1'被选中时执行的代码
-    //     }
-    //     if (ImGui::MenuItem("Action 2"))
-    //     {
-    //         // 当'Action 2'被选中时执行的代码
-    //     }
-    //     // 更多动作...
-    //     ImGui::EndPopup();
-    // }
+    if (m_createNewGameObject)
+    {
+        m_selections.emplace(GameObjectToLeafId(createdGameObject));
+        ImGuiRenderer::Instance->onTargetChanged.Trigger(createdGameObject);
+    }
+    m_createNewGameObject = false;
+
+    if (m_singleClicked != -1 && !m_selections.empty())
+    {
+        auto gameObject = LeafIdToGameObject(*m_selections.cbegin());
+        ImGuiRenderer::Instance->onTargetChanged.Trigger(gameObject);
+    }
 
     // 如果窗口是右键点击，弹出上下文菜单
     if (ImGui::BeginPopupContextWindow())
     {
         if (ImGui::MenuItem("New GameObject"))
         {
-            auto newGameObject = std::make_shared<GameObject>();
-            Scene::currentScene->AddEmptyGameObject();
+            m_createNewGameObject = true;
+        }
+        if (ImGui::MenuItem("Delete"))
+        {
+            m_deleteSelectGameObject = true;
         }
         // 也可以复用其他的菜单
-        ShowExampleMenuFile();
+        // ShowExampleMenuFile();
         ImGui::EndPopup();
     }
 }
 
-void Sandbox::Hierarchy::Tick(float deltaTime)
-{
-    TreeView::Tick(deltaTime);
-    if (m_selections.size() > 0)
-    {
-        auto gameObject = LeafIdToGameObject(*m_selections.cbegin());
-        ImGuiRenderer::Instance->onTargetChanged.Trigger(gameObject);
-    }
-}
+void Sandbox::Hierarchy::Tick(float deltaTime) { TreeView::Tick(deltaTime); }
 
 
 std::shared_ptr<Sandbox::GameObject> Sandbox::Hierarchy::LeafIdToGameObject(intptr_t inPtr)
@@ -132,6 +143,32 @@ std::shared_ptr<Sandbox::GameObject> Sandbox::Hierarchy::LeafIdToGameObject(intp
     HierarchyTreeViewItem* item = reinterpret_cast<HierarchyTreeViewItem*>(inPtr);
     return std::dynamic_pointer_cast<HierarchyTreeViewSource>(item->source)->gameObject;
 }
+
+
+intptr_t Sandbox::Hierarchy::FindGameObjectInTree(std::shared_ptr<Sandbox::TreeViewItem> target, std::shared_ptr<Sandbox::GameObject>& gameObject)
+{
+    if (std::dynamic_pointer_cast<Sandbox::HierarchyTreeViewSource>(target->source)->gameObject == gameObject)
+    {
+        return GetLeafId(target);
+    }
+    if (target->IsLeaf())
+    {
+        return -1;
+    }
+    for (auto& item : target->items)
+    {
+        auto leafId = FindGameObjectInTree(item, gameObject);
+        if (leafId != -1)
+        {
+            return leafId;
+        }
+    }
+    return -1;
+}
+
+intptr_t Sandbox::Hierarchy::GameObjectToLeafId(std::shared_ptr<Sandbox::GameObject>& gameObject) { return FindGameObjectInTree(root, gameObject); }
+
+
 void Sandbox::Hierarchy::SetScene(const std::shared_ptr<Scene>& inScene)
 {
     if (inScene == nullptr)
@@ -165,7 +202,7 @@ void Sandbox::Hierarchy::GameObjectToSelection(std::shared_ptr<GameObject> inTar
             return;
         }
     }
-    LOGF("Editor", "GameObject not found in Hierarchy tree!")
+    LOGF("Editor", "GameObject not found in Hierarchy tree!\n{}", GetCallStack())
     // TODO:处理子节点
     // for (auto& item : items)
     // {

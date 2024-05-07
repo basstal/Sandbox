@@ -97,7 +97,9 @@ public class DirectoryReference : FileSystemBase, IEquatable<DirectoryReference>
         {
             try
             {
-                matchedFiles.AddRange(Directory.GetFiles(FullName, pattern, recursive ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly)
+                matchedFiles.AddRange(Directory.GetFiles(FullName, pattern, recursive
+                        ? SearchOption.AllDirectories
+                        : SearchOption.TopDirectoryOnly)
                     .Select(file => new FileReference(file)));
             }
             catch (Exception ex)
@@ -137,5 +139,12 @@ public class DirectoryReference : FileSystemBase, IEquatable<DirectoryReference>
     public override bool Exists()
     {
         return Directory.Exists(FullName);
+    }
+
+
+    public DirectoryReference Create()
+    {
+        Directory.CreateDirectory(FullName);
+        return this;
     }
 }

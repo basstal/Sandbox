@@ -3,6 +3,8 @@
 
 namespace Sandbox
 {
+    class UniformBuffer;
+    
     class WireframeRendererSource : public RendererSource
     {
     public:

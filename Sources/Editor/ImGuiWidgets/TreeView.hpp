@@ -27,13 +27,20 @@ namespace Sandbox
         virtual ~TreeViewItem() = default;
     };
 
+    enum ClickType
+    {
+        LeftMouse,
+        RightMouse,
+        LeftMouseDouble,
+    };
     // 示例事件类型
     struct TreeNodeClickEvent
     {
         std::string nodeName;
         intptr_t    nodeId;
+        ClickType   clickType;
 
-        TreeNodeClickEvent(const std::string& name, intptr_t id) : nodeName(name), nodeId(id) {}
+        TreeNodeClickEvent(const std::string& name, intptr_t id, ClickType inClickType) : nodeName(name), nodeId(id), clickType(inClickType) {}
     };
 
     class TreeView : public IImGuiWindow
@@ -55,7 +62,7 @@ namespace Sandbox
 
         virtual void ConstructImGuiTreeNodes(const std::shared_ptr<Sandbox::TreeViewItem>& target);
 
-        virtual void OnTreeNodeDoubleClickDispatch(TreeNodeClickEvent&);
+        virtual void OnTreeNodeClickDispatch(TreeNodeClickEvent&);
 
     protected:
         std::map<intptr_t, std::shared_ptr<TreeViewItem>> m_idToItem;

@@ -1,6 +1,4 @@
 ﻿#pragma once
-#include "Engine/EntityComponent/Components/Camera.hpp"
-#include "Engine/EntityComponent/Components/Mesh.hpp"
 #include "VulkanRHI/Rendering/PipelineState.hpp"
 #include "VulkanRHI/Rendering/RenderAttachments.hpp"
 
@@ -15,6 +13,11 @@ namespace Sandbox
     class ShaderSource;
     class PipelineState;
     class ShaderLinkage;
+    class Camera;
+    struct Models;
+    struct ViewAndProjection;
+    class CommandBuffer;
+    class Mesh;
 
     class RendererSource : public std::enable_shared_from_this<RendererSource>
     {

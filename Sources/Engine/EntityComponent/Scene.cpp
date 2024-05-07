@@ -123,6 +123,33 @@ std::shared_ptr<Sandbox::GameObject> Sandbox::Scene::AddEmptyGameObject()
     return gameObject;
 }
 
+void Sandbox::Scene::RemoveGameObject(const std::shared_ptr<Sandbox::GameObject>& gameObject)
+{
+    // TODO:目前暂时没有 gameObject 父子关系
+    rootGameObjects.erase(std::remove(rootGameObjects.begin(), rootGameObjects.end(), gameObject), rootGameObjects.end());
+    gameObject->Cleanup();
+    onHierarchyChanged.Trigger();
+}
+
+std::shared_ptr<Sandbox::Camera> Sandbox::Scene::FindFirstCamera()
+{
+    for (auto& gameObject : rootGameObjects)
+    {
+        auto camera = gameObject->GetComponent<Camera>();
+        if (camera != nullptr)
+        {
+            return camera;
+        }
+        camera = RecursiveFindComponent<Camera>(gameObject);
+        if (camera != nullptr)
+        {
+            return camera;
+        }
+    }
+    return nullptr;
+}
+
+
 std::shared_ptr<Sandbox::Scene> Sandbox::Scene::LoadScene(std::shared_ptr<File> sceneFile)
 {
     std::shared_ptr<Scene> scene = std::make_shared<Scene>();
@@ -132,23 +159,6 @@ std::shared_ptr<Sandbox::Scene> Sandbox::Scene::LoadScene(std::shared_ptr<File> 
     }
     Scene::currentScene = scene;
     scene->LoadFromFile(*sceneFile);
-    // std::shared_ptr<GameObject> gameObject       = std::make_shared<GameObject>();
-    // gameObject->name                             = "Test";
-    // Scene::currentScene                          = scene;
-    // scene->rootGameObjects.push_back(gameObject);
-
-    // std::shared_ptr<GameObject> cameraGameObject = std::make_shared<GameObject>();
-    // cameraGameObject->name                       = "Camera";
-    // auto  camera                                 = cameraGameObject->AddComponent<Camera>();
-    // auto& resolution                             = renderer->resolution;
-    // auto  aspectRatio                            = static_cast<float>(resolution.width) / static_cast<float>(resolution.height);
-    // camera->aspectRatio                          = aspectRatio;
-    // static Sandbox::File editorCameraConfigCache = Sandbox::Directory::GetLibraryDirectory().GetFile("EditorCamera.yaml");
-    // camera->LoadFromFile(editorCameraConfigCache);
-    // camera->UpdateCameraVectors();
-    // editor->imGuiRenderer->viewport->mainCamera = camera;
-    // scene->rootGameObjects.push_back(cameraGameObject);
-    //
 
     Scene::onSceneChange.Trigger(scene);
     return scene;
@@ -163,17 +173,10 @@ void Sandbox::Scene::NewScene()
     {
         Scene::currentScene->Cleanup();
     }
-    currentScene                                 = scene;
-    std::shared_ptr<GameObject> cameraGameObject = std::make_shared<GameObject>();
-    cameraGameObject->name                       = "Camera";
-    auto camera                                  = cameraGameObject->AddComponent<Camera>();
-    // auto& resolution                             = renderer->resolution;
-    // auto  aspectRatio                            = static_cast<float>(resolution.width) / static_cast<float>(resolution.height);
-    // camera->aspectRatio                          = aspectRatio;
-    // static Sandbox::File editorCameraConfigCache = Sandbox::Directory::GetLibraryDirectory().GetFile("EditorCamera.yaml");
-    // camera->LoadFromFile(editorCameraConfigCache);
-    // camera->UpdateCameraVectors();
-    // editor->imGuiRenderer->viewport->mainCamera = camera;
+    currentScene = scene;
+    // std::shared_ptr<GameObject> cameraGameObject = std::make_shared<GameObject>();
+    // cameraGameObject->name                       = "Camera";
+    // auto camera                                  = cameraGameObject->AddComponent<Camera>();
     // scene->rootGameObjects.push_back(cameraGameObject);
     
     onSceneChange.Trigger(scene);

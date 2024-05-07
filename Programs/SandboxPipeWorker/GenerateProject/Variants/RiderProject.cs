@@ -36,7 +36,7 @@ public class RiderProject : Project
         ProjectInstanceType = typeof(RiderProject);
     }
 
-    public void GenerateVcxproj()
+    public void GenerateVcxproj(out List<FileReference> dllPaths)
     {
         string content = Sandbox.SourceDirectory.GetFile("ScribanTemplates/vcxproj.scriban").ReadAllText();
         var vcxprojTemplate = Scriban.Template.Parse(content);
@@ -46,32 +46,33 @@ public class RiderProject : Project
         var includeDirectoryReferences = PrimaryCompileEnvironment.AdditionalIncludePaths.ToList();
         var additionalIncludeDirectoriesParameter = string.Join(";", includeDirectoryReferences.Select(directory => directory.FullName));
         var additionalDependencies = PrimaryCompileEnvironment.ProjectDependencies.SelectMany(module => module.PrecompileEnvironment?.LibPaths ?? FileReference.EmptyList).ToList();
-        var dllPaths = PrimaryCompileEnvironment.ProjectDependencies.SelectMany(module => module.PrecompileEnvironment?.DllPaths ?? FileReference.EmptyList).ToList();
+        dllPaths = PrimaryCompileEnvironment.ProjectDependencies.SelectMany(module => module.PrecompileEnvironment?.DllPaths ?? FileReference.EmptyList).ToList();
         cppSourceInfos.AddRange(
             PrimaryCompileEnvironment.SourceFiles
                 .Where(file => file != PrecompileEnvironment?.PrecompiledSourceFile) // 过滤掉预编译头文件
                 .Select(file => new CppSourceInfo(file.GetRelativePath(sourceRelativeTo), additionalIncludeDirectoriesParameter)));
         foreach (var dependency in PrimaryCompileEnvironment.ProjectDependencies.Where(project => project.CppSubType != CppSubType.None))
         {
+            // Console.WriteLine($"dependency : {dependency.Name}");
             includeDirectoryReferences.AddRange(dependency.PrimaryCompileEnvironment.AdditionalIncludePaths);
             if (dependency.PrecompileEnvironment != null)
             {
                 includeDirectoryReferences.AddRange(dependency.PrecompileEnvironment.AdditionalIncludePaths);
+                dllPaths.AddRange(dependency.PrecompileEnvironment.DllPaths);
             }
 
-            // var dependencyAdditionalIncludeDirectoriesParameter = string.Join(";", dependencyDirectoryReferences.Select(directory => directory.FullName));
-            // dependency.PrimaryCompileEnvironment.SourceFiles.ForEach(file => cppSourceInfos.Add(new CppSourceInfo(file.GetRelativePath(sourceRelativeTo), dependencyAdditionalIncludeDirectoriesParameter)));
             additionalDependencies.AddRange(
-                dependency.PrimaryCompileEnvironment.ProjectDependencies.SelectMany(module => module.PrecompileEnvironment?.LibPaths ?? FileReference.EmptyList));
-            dllPaths.AddRange(dependency.PrimaryCompileEnvironment.ProjectDependencies.SelectMany(module => module.PrecompileEnvironment?.DllPaths ?? FileReference.EmptyList));
+                dependency.PrimaryCompileEnvironment.ProjectDependencies.SelectMany(project => project.PrecompileEnvironment?.LibPaths ?? FileReference.EmptyList));
+            dllPaths.AddRange(dependency.PrimaryCompileEnvironment.ProjectDependencies.SelectMany(project => project.PrecompileEnvironment?.DllPaths ?? FileReference.EmptyList));
         }
 
+        dllPaths = dllPaths.Distinct().ToList();
         var outputDir = Sandbox.RootDirectory.GetDirectory("Output").FullName;
-
         // 导出构建后执行的命令
         var postBuildCommandsPath = GenerateCommands(outputDir, dllPaths, "PostBuildCommands");
         // 导出构建前执行的命令
         var preBuildCommandsPath = GenerateCommands(outputDir, dllPaths, "PreBuildCommands");
+
 
         var referenceProjects = PrimaryCompileEnvironment.ProjectDependencies.Where(dependProject => dependProject.ProjectType == ProjectType.Cpp)
             .Select(dependProject =>
@@ -166,7 +167,24 @@ public class RiderProject : Project
 
             // if (subProject.ProjectType == ProjectType.Cpp)
             // {
-            vcxProject.GenerateVcxproj();
+            vcxProject.GenerateVcxproj(out var dllPaths);
+            if (subProject.Name == "Sandbox")
+            {
+                var tempDllPaths = Sandbox.RootDirectory.GetFile("Temp/DllPaths");
+                var tempDllDirectory = tempDllPaths.GetDirectory();
+                if (!tempDllDirectory.Exists())
+                {
+                    tempDllDirectory.Create();
+                }
+
+                // 将 dllPaths 按行顺序输出到文件中
+                File.WriteAllLines(tempDllPaths.FullName, dllPaths.Select(file => file.FullName));
+                // Console.WriteLine($"dllPaths : {dllPaths.Count}");
+                // foreach (var dllPath in dllPaths)
+                // {
+                //     Console.WriteLine(dllPath.FullName);
+                // }
+            }
             // }
         }
     }

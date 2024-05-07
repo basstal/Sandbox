@@ -2,6 +2,7 @@
 
 #include "StencilRendererSource.hpp"
 
+#include "Engine/EntityComponent/Components/Mesh.hpp"
 #include "Engine/EntityComponent/Scene.hpp"
 #include "FileSystem/Directory.hpp"
 #include "Misc/Debug.hpp"

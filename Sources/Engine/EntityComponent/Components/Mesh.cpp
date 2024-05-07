@@ -112,6 +112,7 @@ void Sandbox::Mesh::SetModelPath(const std::string& inPath)
     {
         m_modelPath         = inPath;
         auto modelAssetPath = Directory::GetAssetsDirectory().GetFile(m_modelPath.ToStdString());
+        Cleanup();
         LoadModelFromFile(modelAssetPath);
     }
 }

@@ -40,10 +40,10 @@ void Sandbox::PbrRendererSource::UpdateUniforms(uint32_t frameFlightIndex)
 }
 void Sandbox::PbrRendererSource::Cleanup()
 {
-    if (camera != nullptr)
-    {
-        camera->postProcess->Cleanup();
-    }
+    // if (camera != nullptr)
+    // {
+    //     camera->postProcess->Cleanup();
+    // }
     for (size_t t = 0; t < 4; ++t)
     {
         textures[t]->Cleanup();

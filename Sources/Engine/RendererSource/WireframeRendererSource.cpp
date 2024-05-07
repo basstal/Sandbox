@@ -2,7 +2,9 @@
 
 #include "WireframeRendererSource.hpp"
 
+#include "Engine/EntityComponent/Components/Camera.hpp"
 #include "FileSystem/Directory.hpp"
+#include "FileSystem/File.hpp"
 #include "VulkanRHI/Common/Caching/DescriptorSetCaching.hpp"
 #include "VulkanRHI/Common/Caching/PipelineCaching.hpp"
 #include "VulkanRHI/Common/Caching/ShaderModuleCaching.hpp"

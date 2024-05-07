@@ -4,6 +4,7 @@
 #include <memory>
 
 #include "Engine/EntityComponent/IComponent.hpp"
+#include "Engine/RendererSource/RendererSource.hpp"
 #include "Generated/Camera.rfkh.h"
 #include "Math/Vector3.hpp"
 #include "Standard/Dictionary.hpp"
@@ -52,6 +53,7 @@ namespace Sandbox NAMESPACE()
 
         Camera();
 
+        // ~Camera();
         Camera(float inAspectRatio);
 
         /**
@@ -95,6 +97,8 @@ namespace Sandbox NAMESPACE()
          * Calculates the front vector from the Camera's (updated) Euler Angles
          */
         void UpdateCameraVectors();
+
+        bool IsValid();
 
         // /**
         //  * \brief 位置
@@ -151,6 +155,7 @@ namespace Sandbox NAMESPACE()
         glm::vec3 up;
         Vector3   up1;
 
+
         std::string GetDerivedClassName() override;
 
         const rfk::Class* GetDerivedClass() override;
@@ -163,6 +168,11 @@ namespace Sandbox NAMESPACE()
 
         Dictionary<std::shared_ptr<ShaderSource>, bool> postProcessFragShaders;
         std::shared_ptr<PostProcess>                    postProcess;
+
+        static Event<const std::shared_ptr<Camera>&> onCameraChange;
+
+    private:
+        bool m_cleaned;
         Sandbox_Camera_GENERATED
 	};
 } // namespace Sandbox NAMESPACE()

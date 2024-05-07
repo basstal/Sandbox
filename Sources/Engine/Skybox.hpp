@@ -4,6 +4,7 @@
 
 #include "FileSystem/File.hpp"
 #include "Image.hpp"
+#include "Misc/Delegate.hpp"
 #include "VulkanRHI/Core/Sampler.hpp"
 
 namespace Sandbox
@@ -45,5 +46,7 @@ namespace Sandbox
 
         std::shared_ptr<Renderer> m_renderer;
         std::shared_ptr<Sampler>  m_sampler;
+
+        DelegateHandle m_beforeRendererDrawHandle;
     };
 }  // namespace Sandbox

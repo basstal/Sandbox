@@ -17,14 +17,21 @@ void Sandbox::GameObject::Cleanup()
     {
         return;
     }
+    m_cleaned = true;
     for (auto& component : m_components)
     {
         component->Cleanup();
     }
-    m_cleaned = true;
 }
 
 void Sandbox::GameObject::AddComponent(std::shared_ptr<IComponent> component) { m_components.push_back(component); }
+
+void Sandbox::GameObject::RemoveComponent(std::shared_ptr<IComponent>& component)
+{
+    std::erase(m_components, component);
+    // TODO:不允许 component 被多个 GameObject 共享
+    component->Cleanup();
+}
 
 Sandbox::List<Sandbox::SharedPtr<Sandbox::IComponent>> Sandbox::GameObject::GetComponents() { return m_components; }
 

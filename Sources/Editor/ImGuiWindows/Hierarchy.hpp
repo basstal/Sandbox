@@ -32,6 +32,8 @@ namespace Sandbox
         void Tick(float deltaTime) override;
 
         std::shared_ptr<GameObject> LeafIdToGameObject(intptr_t inPtr);
+        intptr_t                    FindGameObjectInTree(std::shared_ptr<Sandbox::TreeViewItem> target, std::shared_ptr<Sandbox::GameObject>& gameObject);
+        intptr_t                    GameObjectToLeafId(std::shared_ptr<Sandbox::GameObject>& gameObject);
 
         void SetScene(const std::shared_ptr<Scene>& inScene);
         void GameObjectToSelection(std::shared_ptr<GameObject> inTarget);
@@ -39,5 +41,7 @@ namespace Sandbox
 
     private:
         std::shared_ptr<Inspector> m_inspector;
+        bool                       m_createNewGameObject;
+        bool                       m_deleteSelectGameObject;
     };
 }  // namespace Sandbox

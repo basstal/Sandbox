@@ -4,6 +4,7 @@
 
 #include "Engine/BasicMeshData.hpp"
 #include "FileSystem/Directory.hpp"
+#include "FileSystem/File.hpp"
 #include "Misc/TypeCasting.hpp"
 #include "VulkanRHI/Common/Caching/DescriptorSetCaching.hpp"
 #include "VulkanRHI/Common/Caching/PipelineCaching.hpp"

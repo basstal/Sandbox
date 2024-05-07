@@ -40,7 +40,6 @@ void Sandbox::Editor::Prepare(const std::shared_ptr<Renderer>& renderer, const s
 
     grid = std::make_shared<Grid>();
     grid->Prepare(renderer, shared_from_this());
-    renderer->onBeforeRendererDraw.BindMember<Grid, &Grid::DrawGrid>(grid, 0);
     PrepareOnGui();
 }
 
@@ -106,7 +105,23 @@ void Sandbox::Editor::PrepareOnGui()
     }
     UpdateDescriptorSets(m_renderer->viewMode);
     m_renderer->onViewModeChanged.BindMember<Editor, &Editor::UpdateDescriptorSets>(this);
-    Scene::onSceneChange.Bind([this](const std::shared_ptr<Scene>& inScene) { UpdateDescriptorSets(m_renderer->viewMode); });
+    Scene::onSceneChange.Bind(
+        [this](const std::shared_ptr<Scene>& inScene)
+        {
+            auto camera = inScene->FindFirstCamera();
+            Camera::onCameraChange.Trigger(camera);
+            imGuiRenderer->onTargetChanged.Trigger(nullptr);
+            UpdateDescriptorSets(m_renderer->viewMode);
+        });
+    Camera::onCameraChange.Bind(
+        [this](const std::shared_ptr<Camera>& inCamera)
+        {
+            imGuiRenderer->viewport->SetMainCamera(inCamera);
+            for (auto& [_, rendererSource] : m_renderer->rendererSourceMapping)
+            {
+                rendererSource->SetCamera(inCamera);
+            }
+        });
     Scene::onReconstructMeshes.Bind([this] { UpdateDescriptorSets(m_renderer->viewMode); });
 }
 

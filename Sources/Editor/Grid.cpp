@@ -86,6 +86,7 @@ void Sandbox::Grid::Prepare(const std::shared_ptr<Renderer>& renderer, const std
     VkDeviceSize bufferSize    = sizeof(SimpleVertex) * lineListProperties.size();
     lineListBuffer = std::make_shared<Buffer>(device, bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
     commandBuffer->CopyDataToBuffer(lineListProperties.data(), bufferSize, lineListBuffer);
+    renderer->onBeforeRendererDraw.BindMember<Grid, &Grid::DrawGrid>(this, 0);
     m_prepared = true;
 }
 

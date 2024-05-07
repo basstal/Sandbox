@@ -3,29 +3,9 @@ rootGameObjects:
       m_rawString: Default
     transform:
       position:
-        x: 0
-        y: -2.22233009
-        z: 0
-      rotation:
-        x: 0
-        y: 0
-        z: 0
-        w: 1
-      scale:
-        x: 0.99999994
-        y: 0.99999994
-        z: 0.99999994
-    m_components:
-      - __Class__: 17055644869723107221
-        m_modelPath:
-          m_rawString: Models/viking_room.obj
-  - name:
-      m_rawString: Default
-    transform:
-      position:
-        x: -0.106895469
-        y: -5.68273115
-        z: 1.12496734
+        x: 2.77426672
+        y: -3.4085741
+        z: 2.35703707
       rotation:
         x: 0
         y: 0
@@ -37,68 +17,10 @@ rootGameObjects:
         z: 1
     m_components:
       - __Class__: 10866052711324808399
-        rotationX: -10.1002617
+        rotationX: -22.8500004
         nearPlane: 0.100000001
-        rotationZ: -1073.45129
+        rotationZ: -36.5999222
         fieldOfView: 45
         aspectRatio: 1.77777779
         farPlane: 100
-  - name:
-      m_rawString: Default
-    transform:
-      position:
-        x: 0
-        y: 0
-        z: 0
-      rotation:
-        x: 0
-        y: 0
-        z: 0
-        w: 1
-      scale:
-        x: 1
-        y: 1
-        z: 1
-    m_components:
-      - __Class__: 17055644869723107221
-        m_modelPath: ~
-  - name:
-      m_rawString: TestGameObject
-    transform:
-      position:
-        x: 0
-        y: -0.376721203
-        z: 0
-      rotation:
-        x: 0
-        y: 0
-        z: 0
-        w: 1
-      scale:
-        x: 0.99999994
-        y: 0.99999994
-        z: 0.99999994
-    m_components:
-      - __Class__: 17055644869723107221
-        m_modelPath:
-          m_rawString: Models/uvsphere.fbx
-  - name:
-      m_rawString: Default
-    transform:
-      position:
-        x: 0
-        y: 1.87133539
-        z: 0
-      rotation:
-        x: 0
-        y: 0
-        z: 0
-        w: 1
-      scale:
-        x: 0.99999994
-        y: 0.99999994
-        z: 0.99999994
-    m_components:
-      - __Class__: 17055644869723107221
-        m_modelPath:
-          m_rawString: Models/MonkeyHead.obj
+        useSkybox: true
