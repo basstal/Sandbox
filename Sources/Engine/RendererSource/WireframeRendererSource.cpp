@@ -49,7 +49,7 @@ void Sandbox::WireframeRendererSource::CreateDescriptorSets(std::shared_ptr<Rend
     descriptorSets.resize(frameFlightSize);
     for (size_t i = 0; i < frameFlightSize; ++i)
     {
-        descriptorSets[i] = renderer->descriptorSetCaching->GetOrCreateDescriptorSet(pipeline->pipelineLayout->descriptorSetLayout, i);
+        descriptorSets[i] = renderer->descriptorSetCaching->GetOrCreateDescriptorSet("default", pipeline->pipelineLayout->descriptorSetLayouts[0], i);
     }
     UpdateDescriptorSets(renderer);
 }
@@ -66,7 +66,7 @@ void Sandbox::WireframeRendererSource::UpdateDescriptorSets(const std::shared_pt
             {1, {uboMvp[i]->modelsUbo->GetDescriptorBufferInfo(dynamicAlignment)}},
             {2, {colorUniformBuffer->GetDescriptorBufferInfo()}},
         };
-        descriptorSets[i]->BindBufferInfoMapping(bufferInfoMapping, pipeline->pipelineLayout->descriptorSetLayout);
+        descriptorSets[i]->BindBufferInfoMapping(bufferInfoMapping, pipeline->pipelineLayout->descriptorSetLayouts[0]);
     }
 }
 void Sandbox::WireframeRendererSource::Cleanup()

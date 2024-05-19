@@ -6,7 +6,7 @@
 #include "CommandPool.hpp"
 #include "DescriptorSet.hpp"
 #include "Device.hpp"
-#include "Engine/Image.hpp"
+#include "Engine/Images/Image.hpp"
 #include "Fence.hpp"
 #include "FileSystem/Logger.hpp"
 #include "Framebuffer.hpp"
@@ -199,17 +199,28 @@ void Sandbox::CommandBuffer::CopyDataToBuffer(const void* inData, VkDeviceSize s
     EndAndSubmit();
 }
 
-void Sandbox::CommandBuffer::CopyDataToImage(const std::shared_ptr<Resource::Image>& imageResource, const std::shared_ptr<Image>& image, VkFormat format)
+void Sandbox::CommandBuffer::CopyDataToImage(const std::shared_ptr<Image>& image, const std::shared_ptr<Resource::Image>& imageResource, VkFormat format)
 {
-    VkDeviceSize imageSize = (VkDeviceSize)imageResource->width * imageResource->height * sizeof(float);
+    VkExtent2D extent2D;
+    extent2D.width  = imageResource->width;
+    extent2D.height = imageResource->height;
+    return CopyDataToImage(image, imageResource->pixels.data(), extent2D, format, imageResource->mipLevels);
+}
+
+
+void Sandbox::CommandBuffer::CopyDataToImage(const std::shared_ptr<Image>& image, const unsigned char* pixels, VkExtent2D extent2D, VkFormat format, uint32_t mipLevels)
+{
+    auto         height    = extent2D.height;
+    auto         width     = extent2D.width;
+    VkDeviceSize imageSize = (VkDeviceSize)width * height * sizeof(float);
     Buffer       stagingBuffer(m_device, imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-    stagingBuffer.Update(imageResource->pixels);
+    stagingBuffer.Update(pixels);
 
     Begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
-    TransitionImageLayout(image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, imageResource->mipLevels);
+    TransitionImageLayout(image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, mipLevels);
     auto vkImage = image->vkImage;
-    CopyBufferToImage(stagingBuffer, vkImage, static_cast<uint32_t>(imageResource->width), static_cast<uint32_t>(imageResource->height));
-    GenerateMipmaps(vkImage, format, imageResource->width, imageResource->height, imageResource->mipLevels);
+    CopyBufferToImage(stagingBuffer, vkImage, static_cast<uint32_t>(width), static_cast<uint32_t>(height));
+    GenerateMipmaps(vkImage, format, ToInt32(width), ToInt32(height), mipLevels);
     EndAndSubmit();
 }
 
@@ -226,7 +237,7 @@ void Sandbox::CommandBuffer::CopyDataToImageMultiLayers(const std::vector<std::s
     for (size_t i = 0; i < imageCount; ++i)
     {
         // 加载每个图像到对应的位置
-        stagingBuffer.UpdateOffsetSize(imageResources[i]->pixels, singleImageSize * i, singleImageSize);
+        stagingBuffer.UpdateOffsetSize(imageResources[i]->pixels.data(), singleImageSize * i, singleImageSize);
     }
 
     Begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
@@ -239,18 +250,6 @@ void Sandbox::CommandBuffer::CopyDataToImageMultiLayers(const std::vector<std::s
 
 void Sandbox::CommandBuffer::GenerateMipmaps(VkImage vkImage, VkFormat imageFormat, int32_t texWidth, int32_t texHeight, uint32_t mipLevels)
 {
-    if (mipLevels <= 1)
-    {
-        return;
-    }
-    // Check if image format supports linear blitting
-    VkFormatProperties formatProperties;
-    vkGetPhysicalDeviceFormatProperties(m_device->vkPhysicalDevice, imageFormat, &formatProperties);
-    if (!(formatProperties.optimalTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_LINEAR_BIT))
-    {
-        Logger::Fatal("texture image format does not support linear blitting!");
-    }
-
     VkImageMemoryBarrier barrier{};
     barrier.sType                           = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
     barrier.image                           = vkImage;
@@ -260,52 +259,62 @@ void Sandbox::CommandBuffer::GenerateMipmaps(VkImage vkImage, VkFormat imageForm
     barrier.subresourceRange.baseArrayLayer = 0;
     barrier.subresourceRange.layerCount     = 1;
     barrier.subresourceRange.levelCount     = 1;
-
-    int32_t mipWidth  = texWidth;
-    int32_t mipHeight = texHeight;
-
-    for (uint32_t i = 1; i < mipLevels; i++)
+    if (mipLevels > 1)
     {
-        barrier.subresourceRange.baseMipLevel = i - 1;
-        barrier.oldLayout                     = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-        barrier.newLayout                     = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
-        barrier.srcAccessMask                 = VK_ACCESS_TRANSFER_WRITE_BIT;
-        barrier.dstAccessMask                 = VK_ACCESS_TRANSFER_READ_BIT;
-
-        vkCmdPipelineBarrier(vkCommandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &barrier);
-
-        VkImageBlit blit{};
-        blit.srcOffsets[0]                 = {0, 0, 0};
-        blit.srcOffsets[1]                 = {mipWidth, mipHeight, 1};
-        blit.srcSubresource.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
-        blit.srcSubresource.mipLevel       = i - 1;
-        blit.srcSubresource.baseArrayLayer = 0;
-        blit.srcSubresource.layerCount     = 1;
-        blit.dstOffsets[0]                 = {0, 0, 0};
-        blit.dstOffsets[1]                 = {mipWidth > 1 ? mipWidth / 2 : 1, mipHeight > 1 ? mipHeight / 2 : 1, 1};
-        blit.dstSubresource.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
-        blit.dstSubresource.mipLevel       = i;
-        blit.dstSubresource.baseArrayLayer = 0;
-        blit.dstSubresource.layerCount     = 1;
-
-        vkCmdBlitImage(vkCommandBuffer, vkImage, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, vkImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &blit, VK_FILTER_LINEAR);
-
-        barrier.oldLayout     = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
-        barrier.newLayout     = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-        barrier.srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
-        barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-
-        vkCmdPipelineBarrier(vkCommandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, nullptr, 0, nullptr, 1, &barrier);
-        if (mipWidth > 1)
+        // Check if image format supports linear blitting
+        VkFormatProperties formatProperties;
+        vkGetPhysicalDeviceFormatProperties(m_device->vkPhysicalDevice, imageFormat, &formatProperties);
+        if (!(formatProperties.optimalTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_LINEAR_BIT))
         {
-            mipWidth /= 2;
+            Logger::Fatal("texture image format does not support linear blitting!");
         }
-        if (mipHeight > 1)
+
+
+        int32_t mipWidth  = texWidth;
+        int32_t mipHeight = texHeight;
+
+        for (uint32_t i = 1; i < mipLevels; i++)
         {
-            mipHeight /= 2;
+            barrier.subresourceRange.baseMipLevel = i - 1;
+            barrier.oldLayout                     = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+            barrier.newLayout                     = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+            barrier.srcAccessMask                 = VK_ACCESS_TRANSFER_WRITE_BIT;
+            barrier.dstAccessMask                 = VK_ACCESS_TRANSFER_READ_BIT;
+
+            vkCmdPipelineBarrier(vkCommandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &barrier);
+
+            VkImageBlit blit{};
+            blit.srcOffsets[0]                 = {0, 0, 0};
+            blit.srcOffsets[1]                 = {mipWidth, mipHeight, 1};
+            blit.srcSubresource.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
+            blit.srcSubresource.mipLevel       = i - 1;
+            blit.srcSubresource.baseArrayLayer = 0;
+            blit.srcSubresource.layerCount     = 1;
+            blit.dstOffsets[0]                 = {0, 0, 0};
+            blit.dstOffsets[1]                 = {mipWidth > 1 ? mipWidth / 2 : 1, mipHeight > 1 ? mipHeight / 2 : 1, 1};
+            blit.dstSubresource.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
+            blit.dstSubresource.mipLevel       = i;
+            blit.dstSubresource.baseArrayLayer = 0;
+            blit.dstSubresource.layerCount     = 1;
+
+            vkCmdBlitImage(vkCommandBuffer, vkImage, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, vkImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &blit, VK_FILTER_LINEAR);
+
+            barrier.oldLayout     = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+            barrier.newLayout     = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+            barrier.srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+            barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+
+            vkCmdPipelineBarrier(vkCommandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, nullptr, 0, nullptr, 1, &barrier);
+            if (mipWidth > 1)
+            {
+                mipWidth /= 2;
+            }
+            if (mipHeight > 1)
+            {
+                mipHeight /= 2;
+            }
         }
     }
-
     barrier.subresourceRange.baseMipLevel = mipLevels - 1;
     barrier.oldLayout                     = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
     barrier.newLayout                     = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
@@ -380,7 +389,8 @@ void Sandbox::CommandBuffer::TransitionImageLayout(const std::shared_ptr<ImageVi
     vkCmdPipelineBarrier(vkCommandBuffer, barrier.srcStageMask, barrier.dstStageMask, dependencyFlags, 0, nullptr, 0, nullptr, 1, &imageMemoryBarrier);
 }
 
-void Sandbox::CommandBuffer::TransitionImageLayoutInstant(const std::shared_ptr<Image>& vkImage, VkImageLayout oldLayout, VkImageLayout newLayout, uint32_t mipLevels, uint32_t layerCount)
+void Sandbox::CommandBuffer::TransitionImageLayoutInstant(const std::shared_ptr<Image>& vkImage, VkImageLayout oldLayout, VkImageLayout newLayout, uint32_t mipLevels,
+                                                          uint32_t layerCount)
 {
     Begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
     TransitionImageLayout(vkImage, oldLayout, newLayout, mipLevels, layerCount);

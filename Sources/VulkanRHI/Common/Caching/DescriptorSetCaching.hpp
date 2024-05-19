@@ -18,7 +18,8 @@ namespace Sandbox
     public:
         DescriptorSetCaching(const std::shared_ptr<Device>& inDevice, const std::shared_ptr<DescriptorPool>& inDescriptorPool);
 
-        std::shared_ptr<DescriptorSet> GetOrCreateDescriptorSet(const std::shared_ptr<DescriptorSetLayout>& inDescriptorSetLayout, size_t frameFlightIndex);
+        std::shared_ptr<DescriptorSet> GetOrCreateDescriptorSet(const std::string& inName, const std::shared_ptr<DescriptorSetLayout>& inDescriptorSetLayout,
+                                                                size_t frameFlightIndex);
 
     private:
         std::shared_ptr<Sandbox::DescriptorSet>                      CreateDescriptorSet(const std::shared_ptr<DescriptorSetLayout>& inDescriptorSetLayout);

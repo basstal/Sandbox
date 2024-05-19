@@ -11,6 +11,7 @@ namespace Sandbox NAMESPACE()
     public:
 
         void OnInspectorGui() override;
+        bool InspectorProperty(String& property, const std::string& label);
 
 
         Sandbox_MaterialInspector_GENERATED

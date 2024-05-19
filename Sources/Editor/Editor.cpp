@@ -100,7 +100,7 @@ void Sandbox::Editor::PrepareOnGui()
 
     for (size_t i = 0; i < m_renderer->maxFramesFlight; ++i)
     {
-        auto descriptorSet = m_renderer->descriptorSetCaching->GetOrCreateDescriptorSet(pipelineLineList->pipelineLayout->descriptorSetLayout, i);
+        auto descriptorSet = m_renderer->descriptorSetCaching->GetOrCreateDescriptorSet("default", pipelineLineList->pipelineLayout->descriptorSetLayouts[0], i);
         descriptorSets.push_back(descriptorSet);
     }
     UpdateDescriptorSets(m_renderer->viewMode);
@@ -147,7 +147,7 @@ void Sandbox::Editor::UpdateDescriptorSets(EViewMode inViewMode)
             {0, {uniformMvpObjects[i]->vpUbo->GetDescriptorBufferInfo()}},
             {1, {uniformMvpObjects[i]->modelsUbo->GetDescriptorBufferInfo(dynamicAlignment)}},
         };
-        descriptorSets[i]->BindBufferInfoMapping(bufferInfoMapping, pipelineLineList->pipelineLayout->descriptorSetLayout);
+        descriptorSets[i]->BindBufferInfoMapping(bufferInfoMapping, pipelineLineList->pipelineLayout->descriptorSetLayouts[0]);
     }
 }
 

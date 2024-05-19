@@ -16,7 +16,7 @@ namespace Sandbox
         void CreatePipelineWithPreamble(std::shared_ptr<Renderer>& renderer, const std::string& preamble);
         void CreateDescriptorSets(std::shared_ptr<Renderer>& renderer) override;
 
-        void UpdateDescriptorSets(const std::shared_ptr<Renderer>& renderer) override;
+        void UpdateDescriptorSets(const std::shared_ptr<Renderer>& renderer, std::vector<std::shared_ptr<DescriptorSet>>& descriptorSets);
 
         void PushConstants(const std::shared_ptr<CommandBuffer>& inCommandBuffer) override;
         void BindPipeline(const std::shared_ptr<CommandBuffer>& inCommandBuffer) override;
@@ -24,10 +24,10 @@ namespace Sandbox
         void Tick(const std::shared_ptr<Renderer>& renderer) override;
         // void ApplyPostProcess(const std::shared_ptr<PostProcess>& postProcess);
 
-        std::array<std::shared_ptr<Texture>, 4>     textures;
-        std::vector<std::shared_ptr<UniformBuffer>> uboLights;
-        PushConstantsInfo                           pushConstantsInfo;
-        std::shared_ptr<Pipeline>                   pipeline;
+        Event<const std::shared_ptr<RendererSource>&> onUpdateDescriptorSets;
+        std::vector<std::shared_ptr<UniformBuffer>>   uboLights;
+        PushConstantsInfo                             pushConstantsInfo;
+        std::shared_ptr<Pipeline>                     pipeline;
         // std::vector<std::shared_ptr<PostProcess>>            postProcesses;
     };
 }  // namespace Sandbox

@@ -28,6 +28,7 @@ namespace Sandbox
         void Prepare() override;
 
         void OnGui() override;
+        void ShowContextMenu();
 
         void Tick(float deltaTime) override;
 
@@ -37,11 +38,13 @@ namespace Sandbox
 
         void SetScene(const std::shared_ptr<Scene>& inScene);
         void GameObjectToSelection(std::shared_ptr<GameObject> inTarget);
-
+        void DragAndDrop(std::shared_ptr<TreeViewItem>& inTreeViewItem) override;
 
     private:
-        std::shared_ptr<Inspector> m_inspector;
-        bool                       m_createNewGameObject;
-        bool                       m_deleteSelectGameObject;
+        std::shared_ptr<Inspector>  m_inspector;
+        bool                        m_createNewGameObject;
+        bool                        m_deleteSelectGameObject;
+        std::shared_ptr<GameObject> m_copiedGameObject;
+        bool                        m_createPasteGameObject;
     };
 }  // namespace Sandbox

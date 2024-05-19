@@ -105,7 +105,7 @@ void Sandbox::PostProcess::Prepare(const std::shared_ptr<Renderer>& renderer)
             for (size_t j = 0; j < m_renderer->maxFramesFlight; ++j)
             {
                 // NOTE:管线使用同样的资源描述符
-                descriptorSets[i][j] = renderer->descriptorSetCaching->GetOrCreateDescriptorSet(pipelines[i]->pipelineLayout->descriptorSetLayout, j);
+                descriptorSets[i][j] = renderer->descriptorSetCaching->GetOrCreateDescriptorSet("default", pipelines[i]->pipelineLayout->descriptorSetLayouts[0],j);
             }
         }
     }
@@ -146,7 +146,7 @@ void Sandbox::PostProcess::Apply(const std::shared_ptr<Sandbox::CommandBuffer>& 
             imageInfo.sampler     = sampler->vkSampler;
 
             std::map<uint32_t, std::vector<VkDescriptorImageInfo>> imageInfoMapping{{0, {imageInfo}}};
-            descriptorSets[i][frameFlightIndex]->BindImageInfoMapping(imageInfoMapping, pipelines[i]->pipelineLayout->descriptorSetLayout);
+            descriptorSets[i][frameFlightIndex]->BindImageInfoMapping(imageInfoMapping, pipelines[i]->pipelineLayout->descriptorSetLayouts[0]);
         }
         // NOTE:使用同样的资源描述符
         commandBuffer->BindDescriptorSet(pipelines[i]->pipelineLayout, descriptorSets[i][frameFlightIndex]);

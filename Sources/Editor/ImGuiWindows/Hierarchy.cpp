@@ -14,6 +14,7 @@ Sandbox::Hierarchy::Hierarchy(const std::shared_ptr<Inspector>& inspector)
     m_inspector              = inspector;
     m_createNewGameObject    = false;
     m_deleteSelectGameObject = false;
+    m_createPasteGameObject  = false;
     Scene::onSceneChange.Bind(
         [this](const std::shared_ptr<Scene>& inScene)
         {
@@ -67,32 +68,25 @@ void Sandbox::Hierarchy::Prepare()
     SetScene(Scene::GetCurrentScene());
 }
 
-// TODO:temp code
-void ShowExampleMenuFile()
-{
-    // 菜单项
-    if (ImGui::MenuItem("New"))
-    {
-        // 当'New'被选中时执行的代码
-    }
-    if (ImGui::MenuItem("Open", "Ctrl+O"))
-    {
-        // 当'Open'被选中时执行的代码
-    }
-    // 更多菜单项...
-    ImGui::Separator();
-    if (ImGui::MenuItem("Quit", "Alt+F4"))
-    {
-        // 当'Quit'被选中时执行的代码
-    }
-}
-
 void Sandbox::Hierarchy::OnGui()
 {
+    // 在构造树状视图前先创建或删除场景中已被标记的 GameObject
     std::shared_ptr<GameObject> createdGameObject = nullptr;
     if (m_createNewGameObject)
     {
         createdGameObject = Scene::currentScene->AddEmptyGameObject();
+    }
+    if (m_createPasteGameObject && m_copiedGameObject != nullptr)
+    {
+        if (!m_copiedGameObject->IsValid())
+        {
+            m_copiedGameObject      = nullptr;
+            m_createPasteGameObject = false;
+        }
+        else
+        {
+            createdGameObject = Scene::GetCurrentScene()->CreateGameObject(m_copiedGameObject);
+        }
     }
     if (m_deleteSelectGameObject)
     {
@@ -104,13 +98,18 @@ void Sandbox::Hierarchy::OnGui()
         ImGuiRenderer::Instance->onTargetChanged.Trigger(nullptr);
     }
     m_deleteSelectGameObject = false;
+
+    // 构造树状视图
     TreeView::OnGui();
-    if (m_createNewGameObject)
+
+    // 构造树状视图后，如果有新增元素，则选中新增元素
+    if (m_createNewGameObject || m_createPasteGameObject)
     {
         m_selections.emplace(GameObjectToLeafId(createdGameObject));
         ImGuiRenderer::Instance->onTargetChanged.Trigger(createdGameObject);
     }
-    m_createNewGameObject = false;
+    m_createPasteGameObject = false;
+    m_createNewGameObject   = false;
 
     if (m_singleClicked != -1 && !m_selections.empty())
     {
@@ -121,17 +120,29 @@ void Sandbox::Hierarchy::OnGui()
     // 如果窗口是右键点击，弹出上下文菜单
     if (ImGui::BeginPopupContextWindow())
     {
-        if (ImGui::MenuItem("New GameObject"))
-        {
-            m_createNewGameObject = true;
-        }
-        if (ImGui::MenuItem("Delete"))
-        {
-            m_deleteSelectGameObject = true;
-        }
-        // 也可以复用其他的菜单
-        // ShowExampleMenuFile();
+        ShowContextMenu();
         ImGui::EndPopup();
+    }
+}
+
+void Sandbox::Hierarchy::ShowContextMenu()
+{
+    if (ImGui::MenuItem("New GameObject"))
+    {
+        m_createNewGameObject = true;
+    }
+    if (ImGui::MenuItem("Copy"))
+    {
+        auto gameObject    = LeafIdToGameObject(*m_selections.cbegin());
+        m_copiedGameObject = gameObject;
+    }
+    if (ImGui::MenuItem("Paste"))
+    {
+        m_createPasteGameObject = true;
+    }
+    if (ImGui::MenuItem("Delete"))
+    {
+        m_deleteSelectGameObject = true;
     }
 }
 
@@ -220,4 +231,15 @@ void Sandbox::Hierarchy::GameObjectToSelection(std::shared_ptr<GameObject> inTar
     //         }
     //     }
     // }
+}
+
+void Sandbox::Hierarchy::DragAndDrop(std::shared_ptr<TreeViewItem>& inTreeViewItem)
+{
+    TreeView::DragAndDrop(inTreeViewItem);
+    if (ImGui::BeginDragDropSource())
+    {
+        ImGui::SetDragDropPayload("_HIERARCHY_NODE", &inTreeViewItem, sizeof(inTreeViewItem));
+        // ImGui::Text("Dragging shared object with value: %d", *treeViewItem);
+        ImGui::EndDragDropSource();
+    }
 }

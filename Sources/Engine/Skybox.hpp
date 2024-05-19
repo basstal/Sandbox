@@ -3,7 +3,7 @@
 #include <vector>
 
 #include "FileSystem/File.hpp"
-#include "Image.hpp"
+#include "Images/Image.hpp"
 #include "Misc/Delegate.hpp"
 #include "VulkanRHI/Core/Sampler.hpp"
 

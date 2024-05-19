@@ -69,7 +69,7 @@ void Sandbox::RendererSource::RecreateUniformModels(const std::shared_ptr<Render
 
         uboMvp[i]->modelsUbo = std::make_shared<UniformBuffer>(renderer->device, modelsBufferSize);
     }
-    UpdateDescriptorSets(renderer);
+    // UpdateDescriptorSets(renderer);
 }
 
 
@@ -169,7 +169,7 @@ void Sandbox::RendererSource::Tick(const std::shared_ptr<Renderer>& renderer)
             for (auto& path : camera->skyboxImagePaths)
             {
                 auto file = Directory::GetAssetsDirectory().GetFile(path);
-                images.push_back(std::make_shared<Resource::Image>(file));
+                images.push_back(Resource::Image::Load(file, Resource::Color));
             }
             camera->skybox->CreateCubemapImages(images);
         }

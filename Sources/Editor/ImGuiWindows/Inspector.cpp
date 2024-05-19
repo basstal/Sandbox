@@ -2,6 +2,7 @@
 
 #include "Inspector.hpp"
 
+#include "ContentBrowser.hpp"
 #include "Editor/IImGuiWindow.hpp"
 #include "Engine/EntityComponent/Components/Camera.hpp"
 #include "Engine/EntityComponent/Components/Mesh.hpp"
@@ -52,7 +53,8 @@ void Sandbox::Inspector::Prepare()
             continue;
         }
         LOGD("Editor", "Register inspector for class {}", componentName)
-        auto sharedInspectorInstance = componentNameToInspectorClass[componentName]->makeSharedInstance<Inspector>();
+        auto sharedInspectorInstance      = componentNameToInspectorClass[componentName]->makeSharedInstance<Inspector>(); // TODO:这里只能用空参构造吗？
+        sharedInspectorInstance->renderer = renderer;
         sharedInspectorInstance->Prepare();
         componentNameToInspector[componentName] = sharedInspectorInstance;
         // LOGD("Test", "Inspector: {}", derivedClass->getName())
@@ -150,5 +152,34 @@ void Sandbox::Inspector::InspectTarget(std::shared_ptr<GameObject> inTarget)
             }
             pair.second->InspectTarget(inTarget);
         }
+    }
+}
+
+void Sandbox::Inspector::DragAndDropContentBrowser(const std::string supportExtensions[], int length, std::string& outPath)
+{
+    if (ImGui::BeginDragDropTarget())
+    {
+        const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("_CONTENT_BROWSER_NODE");
+        if (payload != nullptr)
+        {
+            auto treeViewItem   = *static_cast<std::shared_ptr<AssetTreeViewItem>*>(payload->Data);
+            auto treeViewSource = std::dynamic_pointer_cast<AssetFileTreeViewSource>(treeViewItem->source);
+            auto extension      = treeViewSource->file->GetExtension();
+            bool isSupport      = false;
+            for (size_t i = 0; i < length; ++i)
+            {
+                auto supportExtension = supportExtensions[i];
+                if (extension == supportExtension)
+                {
+                    isSupport = true;
+                    break;
+                }
+            }
+            if (isSupport)
+            {
+                outPath = treeViewSource->file->GetAssetPath();
+            }
+        }
+        ImGui::EndDragDropTarget();
     }
 }

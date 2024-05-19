@@ -4,6 +4,7 @@
 
 #include "Device.hpp"
 #include "FileSystem/Logger.hpp"
+#include "Misc/TypeCasting.hpp"
 #include "PipelineLayout.hpp"
 #include "RenderPass.hpp"
 #include "ShaderModule.hpp"
@@ -21,7 +22,7 @@
 Sandbox::Pipeline::Pipeline(const std::shared_ptr<Device>& device, const std::shared_ptr<PipelineState>& pipelineState) :
     shaderLinkage(pipelineState->shaderLinkage), m_pipelineState(pipelineState), m_device(device)  // pipelineLayout(pipelineState->pipelineLayout), m_device(device)
 {
-    pipelineLayout = std::make_shared<PipelineLayout>(device, pipelineState->shaderLinkage);
+    pipelineLayout = std::make_shared<PipelineLayout>(device, pipelineState->shaderLinkage, pipelineState->descriptorSetsPreset);
     CreatePipeline(pipelineState);
 }
 
@@ -59,11 +60,10 @@ void Sandbox::Pipeline::CreatePipeline(const std::shared_ptr<PipelineState>& inP
 
     VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
     vertexInputInfo.sType                           = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-    vertexInputInfo.vertexBindingDescriptionCount   = 1;
+    vertexInputInfo.vertexBindingDescriptionCount   = ToUInt32(inPipelineState->vertexInputState.bindings.size());
+    vertexInputInfo.pVertexBindingDescriptions      = inPipelineState->vertexInputState.bindings.data();
     vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(inPipelineState->vertexInputState.attributes.size());
-    assert(inPipelineState->vertexInputState.bindings.size() == 1 && "Only support one vertex binding now");
-    vertexInputInfo.pVertexBindingDescriptions   = &inPipelineState->vertexInputState.bindings[0];
-    vertexInputInfo.pVertexAttributeDescriptions = inPipelineState->vertexInputState.attributes.data();
+    vertexInputInfo.pVertexAttributeDescriptions    = inPipelineState->vertexInputState.attributes.data();
 
 
     std::vector<VkPipelineShaderStageCreateInfo> shaderStages;
@@ -176,6 +176,6 @@ void Sandbox::Pipeline::Reload()
         vkDestroyPipeline(m_device->vkDevice, vkPipeline, nullptr);
         pipelineLayout->Cleanup();
     }
-    pipelineLayout = std::make_shared<PipelineLayout>(m_device, m_pipelineState->shaderLinkage);
+    pipelineLayout = std::make_shared<PipelineLayout>(m_device, m_pipelineState->shaderLinkage, m_pipelineState->descriptorSetsPreset);
     CreatePipeline(m_pipelineState);
 }

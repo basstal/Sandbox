@@ -6,22 +6,47 @@
 #include "Device.hpp"
 #include "FileSystem/Logger.hpp"
 #include "Misc/Debug.hpp"
+#include "Misc/TypeCasting.hpp"
 #include "ShaderModule.hpp"
+#include "VulkanRHI/Rendering/DescriptorSetsPreset.hpp"
 #include "VulkanRHI/Rendering/ShaderLinkage.hpp"
 
-Sandbox::PipelineLayout::PipelineLayout(const std::shared_ptr<Device>& device, const std::shared_ptr<ShaderLinkage>& shaderLinkage)
+Sandbox::PipelineLayout::PipelineLayout(const std::shared_ptr<Device>& device, const std::shared_ptr<ShaderLinkage>& shaderLinkage,
+                                        const std::shared_ptr<DescriptorSetsPreset>& descriptorSetsPreset)
 {
-    m_device            = device;
-    descriptorSetLayout = std::make_shared<DescriptorSetLayout>(device, shaderLinkage);
+    m_device = device;
+    if (descriptorSetsPreset == nullptr)
+    {
+        descriptorSetLayouts.push_back(std::make_shared<DescriptorSetLayout>(device, shaderLinkage));
+    }
+    else
+    {
+        if (descriptorSetsPreset->count <= 0)
+        {
+            LOGF("VulkanRHI", "descriptorSetsPreset->count <= 0!")
+        }
+        for (size_t i = 0; i < descriptorSetsPreset->count; ++i)
+        {
+            descriptorSetLayouts.push_back(std::make_shared<DescriptorSetLayout>(device, shaderLinkage, descriptorSetsPreset->operator[](i)));
+        }
+    }
 
     for (const auto& [_, shaderModule] : shaderLinkage->shaderModules)
     {
         shaderModule->ReflectPushConstantRanges(pushConstantRanges);
     }
+    std::vector<VkDescriptorSetLayout> vkDescriptorSetLayouts;
+
+    vkDescriptorSetLayouts.reserve(descriptorSetLayouts.size());
+    for (const auto& descriptorSetLayout : descriptorSetLayouts)
+    {
+        vkDescriptorSetLayouts.push_back(descriptorSetLayout->vkDescriptorSetLayout);
+    }
+
     VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
     pipelineLayoutInfo.sType                  = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-    pipelineLayoutInfo.setLayoutCount         = 1;
-    pipelineLayoutInfo.pSetLayouts            = &descriptorSetLayout->vkDescriptorSetLayout;
+    pipelineLayoutInfo.setLayoutCount         = ToUInt32(vkDescriptorSetLayouts.size());
+    pipelineLayoutInfo.pSetLayouts            = vkDescriptorSetLayouts.data();
     pipelineLayoutInfo.pushConstantRangeCount = static_cast<uint32_t>(pushConstantRanges.size());
     pipelineLayoutInfo.pPushConstantRanges    = pushConstantRanges.data();
 
@@ -40,7 +65,10 @@ void Sandbox::PipelineLayout::Cleanup()
         return;
     }
     LOGD("VulkanRHI", "PipelineLayout Cleanup called {}", PtrToHexString(vkPipelineLayout))
-    descriptorSetLayout->Cleanup();
+    for (const auto& descriptorSetLayoutRef : descriptorSetLayouts)
+    {
+        descriptorSetLayoutRef->Cleanup();
+    }
     vkDestroyPipelineLayout(m_device->vkDevice, vkPipelineLayout, nullptr);
     m_cleaned = true;
 }

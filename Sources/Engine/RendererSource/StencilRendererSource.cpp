@@ -63,8 +63,8 @@ void Sandbox::StencilRendererSource::CreatePipeline(std::shared_ptr<Renderer>& r
         pipelineState->depthStencilState.back  = backOpState;
         stencilInputLitPipeline                = renderer->pipelineCaching->GetOrCreatePipeline(pipelineState);
     }
-    auto edgeColor            = glm::vec3(243.0f / 255, 151.0f / 255, 44.0f / 255);
-    auto pipelineStateOutline = std::make_shared<PipelineState>(shaderLinkage, renderer->renderPass);
+    auto edgeColor                                              = glm::vec3(243.0f / 255, 151.0f / 255, 44.0f / 255);
+    auto pipelineStateOutline                                   = std::make_shared<PipelineState>(shaderLinkage, renderer->renderPass);
     pipelineStateOutline->multisampleState.rasterizationSamples = renderer->device->GetMaxUsableSampleCount();
     // if (shaderLinkage[0]->GetUniformBlocks().size() != 2)
     // {

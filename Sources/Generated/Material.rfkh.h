@@ -31,9 +31,19 @@ rfk::Struct const& thisClass = staticGetArchetype();\
 if constexpr (!std::is_same_v<ChildClass, Material>)const_cast<rfk::Struct&>(thisClass).addSubclass(childClass, rfk::internal::CodeGenerationHelpers::computeClassPointerOffset<ChildClass, Material>());\
 else\
 {\
-childClass.setFieldsCapacity(0u + rfk::internal::CodeGenerationHelpers::getReflectedFieldsCount< IComponent>()); childClass.setStaticFieldsCapacity(0u + rfk::internal::CodeGenerationHelpers::getReflectedStaticFieldsCount< IComponent>()); \
+childClass.setFieldsCapacity(4u + rfk::internal::CodeGenerationHelpers::getReflectedFieldsCount< IComponent>()); childClass.setStaticFieldsCapacity(0u + rfk::internal::CodeGenerationHelpers::getReflectedStaticFieldsCount< IComponent>()); \
 }\
-rfk::internal::CodeGenerationHelpers::registerChildClass<IComponent, ChildClass>(childClass);\
+[[maybe_unused]] rfk::Field* field = nullptr; [[maybe_unused]] rfk::StaticField* staticField = nullptr;\
+)\
+__RFK_DISABLE_WARNING_PUSH \
+__RFK_DISABLE_WARNING_OFFSETOF \
+RFK_UNPACK_IF_NOT_PARSING(field = childClass.addField("albedoPath", std::hash<std::string>()(std::string("c:@N@Sandbox@S@Material@FI@albedoPath") + rfk::internal::getTypename<ChildClass>()), rfk::getType<String>(), static_cast<rfk::EFieldFlags>(1), offsetof(ChildClass, albedoPath), &thisClass);\
+field = childClass.addField("metallicPath", std::hash<std::string>()(std::string("c:@N@Sandbox@S@Material@FI@metallicPath") + rfk::internal::getTypename<ChildClass>()), rfk::getType<String>(), static_cast<rfk::EFieldFlags>(1), offsetof(ChildClass, metallicPath), &thisClass);\
+field = childClass.addField("roughnessPath", std::hash<std::string>()(std::string("c:@N@Sandbox@S@Material@FI@roughnessPath") + rfk::internal::getTypename<ChildClass>()), rfk::getType<String>(), static_cast<rfk::EFieldFlags>(1), offsetof(ChildClass, roughnessPath), &thisClass);\
+field = childClass.addField("aoPath", std::hash<std::string>()(std::string("c:@N@Sandbox@S@Material@FI@aoPath") + rfk::internal::getTypename<ChildClass>()), rfk::getType<String>(), static_cast<rfk::EFieldFlags>(1), offsetof(ChildClass, aoPath), &thisClass);\
+)\
+__RFK_DISABLE_WARNING_POP \
+RFK_UNPACK_IF_NOT_PARSING(rfk::internal::CodeGenerationHelpers::registerChildClass<IComponent, ChildClass>(childClass);\
 }\
 \
 public:  static rfk::Class const& staticGetArchetype() noexcept;\

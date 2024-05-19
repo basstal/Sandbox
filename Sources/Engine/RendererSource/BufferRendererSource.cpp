@@ -74,7 +74,7 @@ void Sandbox::BufferRendererSource::Prepare(std::shared_ptr<Renderer>& renderer)
         blitDepthDescriptorSets.resize(renderer->maxFramesFlight);
         for (uint32_t i = 0; i < renderer->maxFramesFlight; ++i)
         {
-            blitDepthDescriptorSets[i] = renderer->descriptorSetCaching->GetOrCreateDescriptorSet(blitDepthPipeline->pipelineLayout->descriptorSetLayout, i);
+            blitDepthDescriptorSets[i] = renderer->descriptorSetCaching->GetOrCreateDescriptorSet("default", blitDepthPipeline->pipelineLayout->descriptorSetLayouts[0],i);
         }
         // uint32_t frameFlightSize = renderer->maxFramesFlight;
         // // uint32_t dynamicAlignment = renderer->GetUniformDynamicAlignment(sizeof(glm::mat4));
@@ -154,7 +154,7 @@ void Sandbox::BufferRendererSource::BlitImage(const std::shared_ptr<CommandBuffe
 
             std::map<uint32_t, std::vector<VkDescriptorImageInfo>> imageInfoMapping{{0, {imageInfo}}};
 
-            blitDepthDescriptorSets[m_renderer->frameFlightIndex]->BindImageInfoMapping(imageInfoMapping, blitDepthPipeline->pipelineLayout->descriptorSetLayout);
+            blitDepthDescriptorSets[m_renderer->frameFlightIndex]->BindImageInfoMapping(imageInfoMapping, blitDepthPipeline->pipelineLayout->descriptorSetLayouts[0]);
         }
         commandBuffer->BindDescriptorSet(blitDepthPipeline->pipelineLayout, blitDepthDescriptorSets[m_renderer->frameFlightIndex]);
 

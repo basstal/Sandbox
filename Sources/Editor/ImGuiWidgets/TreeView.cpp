@@ -2,6 +2,8 @@
 
 #include "TreeView.hpp"
 
+#include "Misc/Debug.hpp"
+
 bool Sandbox::TreeViewItem::IsLeaf() { return items.size() == 0; }
 
 void Sandbox::TreeView::Prepare() { IImGuiWindow::Prepare(); }
@@ -108,13 +110,7 @@ void Sandbox::TreeView::ConstructImGuiTreeNodes(const std::shared_ptr<Sandbox::T
             OnTreeNodeClickDispatch(event);
         }
 
-        if (ImGui::BeginDragDropSource())
-        {
-            // TODO:待完善
-            ImGui::SetDragDropPayload("_TREENODE", NULL, 0);
-            ImGui::Text("This is a drag and drop source");
-            ImGui::EndDragDropSource();
-        }
+        DragAndDrop(treeViewItem);
     }
     else if (ImGui::TreeNode(target->source->name.c_str()))
     {
@@ -124,6 +120,16 @@ void Sandbox::TreeView::ConstructImGuiTreeNodes(const std::shared_ptr<Sandbox::T
         }
         ImGui::TreePop();
     }
+}
+
+void Sandbox::TreeView::DragAndDrop(std::shared_ptr<TreeViewItem>& inTreeViewItem)
+{
+    // if (ImGui::BeginDragDropSource())
+    // {
+    //     ImGui::SetDragDropPayload("_TREENODE", &inTreeViewItem, sizeof(inTreeViewItem));
+    //     // ImGui::Text("Dragging shared object with value: %d", *treeViewItem);
+    //     ImGui::EndDragDropSource();
+    // }
 }
 
 void Sandbox::TreeView::OnTreeNodeClickDispatch(TreeNodeClickEvent& treeNodeClickEvent)

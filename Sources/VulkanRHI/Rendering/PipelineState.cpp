@@ -6,33 +6,42 @@
 #include "VulkanRHI/Core/PipelineLayout.hpp"
 #include "VulkanRHI/Core/ShaderModule.hpp"
 
+Sandbox::PipelineState::PipelineState(const std::shared_ptr<ShaderLinkage>& inShaderLinkage, const std::shared_ptr<RenderPass>& inRenderPass,
+                                      const std::shared_ptr<VertexInputStateBindingModifier>& inBindingModifier) :
+    subpassIndex(0), shaderLinkage(inShaderLinkage), renderPass(inRenderPass), m_vertexInputStateBindingModifier(inBindingModifier)
+{
+    ReflectVertexInputStateFromShader();
+}
+
 Sandbox::PipelineState::PipelineState(const std::shared_ptr<ShaderLinkage>& inShaderLinkage, const std::shared_ptr<RenderPass>& inRenderPass)
 {
-    subpassIndex      = 0;
-    renderPass        = inRenderPass;
-    shaderLinkage     = inShaderLinkage;
+    subpassIndex  = 0;
+    renderPass    = inRenderPass;
+    shaderLinkage = inShaderLinkage;
+    ReflectVertexInputStateFromShader();
+}
+
+
+Sandbox::PipelineState::PipelineState(const std::shared_ptr<ShaderLinkage>& inShaderLinkage, const std::shared_ptr<RenderPass>& renderPass, uint32_t inSubpassIndex) :
+    PipelineState(inShaderLinkage, renderPass)
+{
+    subpassIndex = inSubpassIndex;
+}
+
+void Sandbox::PipelineState::ReflectVertexInputStateFromShader()
+{
     auto vertexShader = shaderLinkage->GetShaderModuleByStage(VK_SHADER_STAGE_VERTEX_BIT);
     if (vertexShader != nullptr)
     {
-        vertexShader->ReflectVertexInputState(vertexInputState);
+        vertexShader->ReflectVertexInputState(vertexInputState, m_vertexInputStateBindingModifier);
         vertexShader->onShaderRecompile.Bind(
             [this](const std::shared_ptr<ShaderModule>& recompiledShader)
             {
                 vertexInputState.attributes.clear();
                 vertexInputState.bindings.clear();
-                recompiledShader->ReflectVertexInputState(vertexInputState);
+                recompiledShader->ReflectVertexInputState(vertexInputState, m_vertexInputStateBindingModifier);
             });
     }
-    // pipelineLayout = inPipelineLayout;
-    // if (!pipelineLayout->pushConstantRanges.empty())
-    // {
-    //     pushConstantsInfo = {pipelineLayout->pushConstantRanges[0].size, nullptr, VK_SHADER_STAGE_FRAGMENT_BIT};
-    // }
-}
-Sandbox::PipelineState::PipelineState(const std::shared_ptr<ShaderLinkage>& inShaderLinkage, const std::shared_ptr<RenderPass>& renderPass, uint32_t inSubpassIndex) :
-    PipelineState(inShaderLinkage, renderPass)
-{
-    subpassIndex = inSubpassIndex;
 }
 
 Sandbox::PipelineState::PipelineState(const PipelineState& other)

@@ -7,10 +7,10 @@
 #include "Components/Mesh.hpp"
 #include "Engine/PhysicsSystem.hpp"
 #include "Engine/RendererSource/RendererSource.hpp"
+#include "Engine/RendererSource/WireframeRendererSource.hpp"
 #include "Engine/Skybox.hpp"
 #include "Generated/Scene.rfks.h"
 #include "VulkanRHI/Renderer.hpp"
-#include "VulkanRHI/Rendering/UniformBuffer.hpp"
 
 std::shared_ptr<Sandbox::Scene> Sandbox::Scene::currentScene = nullptr;
 
@@ -71,13 +71,54 @@ void Sandbox::Scene::ReconstructMeshes(const std::shared_ptr<Renderer>& renderer
             mesh->RegisterModelToPhysicsWorld();
             renderMeshes.push_back(mesh);
         }
+        auto material = gameObject->GetComponent<Material>();
+        if (material == nullptr)
+        {
+            continue;
+        }
+        material->Prepare(renderer);
     }
     for (auto& [viewMode, rendererSource] : renderer->rendererSourceMapping)
     {
         rendererSource->RecreateUniformModels(renderer);
     }
     onReconstructMeshes.Trigger();
+    auto pbrRendererSource = std::dynamic_pointer_cast<PbrRendererSource>(renderer->rendererSourceMapping[Lit]);
+    if (pbrRendererSource != nullptr)
+    {
+        for (auto& gameObject : rootGameObjects)
+        {
+            auto material = gameObject->GetComponent<Material>();
+            if (material == nullptr)
+            {
+                continue;
+            }
+            material->UpdateDescriptorSets(pbrRendererSource);
+        }
+    }
+    auto wireframeRendererSource = std::dynamic_pointer_cast<WireframeRendererSource>(renderer->rendererSourceMapping[Wireframe]);
+    if (wireframeRendererSource != nullptr)
+    {
+        wireframeRendererSource->UpdateDescriptorSets(renderer);
+    }
 }
+// /**
+//  * TODO:这里每个材质如果用 gpu instance，需要用数组描述符或动态描述符，
+//  * 即使不用 gpu instance，也需要用独立的描述符，除非材质完全共享了资源
+//  * @param rendererSource
+//  */
+// void Sandbox::Scene::UpdateDescriptorSets(const std::shared_ptr<RendererSource>& rendererSource)
+// {
+//     for (auto& gameObject : rootGameObjects)
+//     {
+//         auto material = gameObject->GetComponent<Material>();
+//         if (material == nullptr)
+//         {
+//             continue;
+//         }
+//         material->UpdateDescriptorSets(rendererSource);
+//     }
+// }
 
 void Sandbox::Scene::TranslateRenderData(const std::shared_ptr<Renderer>& renderer)
 {
@@ -89,6 +130,7 @@ void Sandbox::Scene::TranslateRenderData(const std::shared_ptr<Renderer>& render
     {
         LOGF_OLD("Renderer source for view mode '{}' not found", VIEW_MODE_NAMES[static_cast<uint32_t>(renderer->viewMode)])
     }
+
     rendererSource->Tick(renderer);
     onOtherRendererSourceTick.Trigger(renderer);
 
@@ -147,6 +189,34 @@ std::shared_ptr<Sandbox::Camera> Sandbox::Scene::FindFirstCamera()
         }
     }
     return nullptr;
+}
+
+std::shared_ptr<Sandbox::GameObject> Sandbox::Scene::CreateGameObject(const std::shared_ptr<GameObject>& copyFrom)
+{
+    auto gameObject = std::make_shared<GameObject>();
+    gameObject->DeserializeFromYaml(copyFrom->SerializeToYaml());
+    // gameObject->name                = copyFrom->name;
+    // gameObject->transform->position = copyFrom->transform->position;
+    // gameObject->transform->rotation = copyFrom->transform->rotation;
+    // gameObject->transform->scale    = copyFrom->transform->scale;
+    // for (auto& component : copyFrom->GetComponents())
+    // {
+    //     auto derivedClass = component->GetDerivedClass();
+    //     if (derivedClass == nullptr)
+    //     {
+    //         continue;
+    //     }
+    //     if (std::string(derivedClass->getName()) == "Transform")
+    //     {
+    //         continue;  // Transform 类型单独处理
+    //     }
+    //     auto copiedComponent = derivedClass->makeSharedInstance<IComponent>();
+    //     gameObject->AddComponent(copiedComponent);
+    //     copiedComponent->DeserializeFromYaml(component->SerializeToYaml());
+    // }
+    rootGameObjects.push_back(gameObject);
+    onHierarchyChanged.Trigger();
+    return gameObject;
 }
 
 

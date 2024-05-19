@@ -14,21 +14,41 @@ Sandbox::DescriptorSetLayout::DescriptorSetLayout(const std::shared_ptr<Device>&
     std::vector<VkDescriptorSetLayoutBinding> vkDescriptorSetLayoutBindings;
     for (const auto& [_, shaderModule] : shaderLinkage->shaderModules)
     {
-        shaderModule->ReflectDescriptorSetLayoutBindings(vkDescriptorSetLayoutBindings, nameToBinding, m_bindingToLayoutBinding);
+        shaderModule->ReflectDescriptorSetLayoutBindings(m_bindingToLayoutBinding);
     }
-    // for (auto& vkDescriptorSetLayoutBinding : vkDescriptorSetLayoutBindings)
-    // {
-    //     // 查找 vkDescriptorSetLayoutBinding.binding 是否在 dynamicBindings 中
-    //     auto it = std::find(dynamicBindings.begin(), dynamicBindings.end(), vkDescriptorSetLayoutBinding.binding);
-    //     if (it != dynamicBindings.end())
-    //     {
-    //         vkDescriptorSetLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
-    //     }
-    // }
-    // for (auto& dynamicBinding : dynamicBindings)
-    // {
-    //     m_bindingToLayoutBinding[dynamicBinding].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
-    // }
+    // 将 m_bindingToLayoutBinding 的 value 填充到 vkDescriptorSetLayoutBindings
+    for (auto [_, layoutBinding] : m_bindingToLayoutBinding)
+    {
+        vkDescriptorSetLayoutBindings.push_back(layoutBinding);
+    }
+    CreateDescriptorSetLayout(vkDescriptorSetLayoutBindings);
+}
+
+Sandbox::DescriptorSetLayout::DescriptorSetLayout(const std::shared_ptr<Device>& device, const std::shared_ptr<ShaderLinkage>& shaderLinkage,
+                                                  const std::set<uint32_t>& filteredBindingIndex)
+{
+    m_device = device;
+    std::vector<VkDescriptorSetLayoutBinding> vkDescriptorSetLayoutBindings;
+    for (const auto& [_, shaderModule] : shaderLinkage->shaderModules)
+    {
+        shaderModule->ReflectDescriptorSetLayoutBindings(m_bindingToLayoutBinding);
+    }
+    // 将 m_bindingToLayoutBinding 的 value 填充到 vkDescriptorSetLayoutBindings
+    for (auto [binding, layoutBinding] : m_bindingToLayoutBinding)
+    {
+        if (filteredBindingIndex.contains(binding))
+        {
+            vkDescriptorSetLayoutBindings.push_back(layoutBinding);
+        }
+    }
+    CreateDescriptorSetLayout(vkDescriptorSetLayoutBindings);
+}
+
+Sandbox::DescriptorSetLayout::~DescriptorSetLayout() { Cleanup(); }
+
+
+void Sandbox::DescriptorSetLayout::CreateDescriptorSetLayout(const std::vector<VkDescriptorSetLayoutBinding>& vkDescriptorSetLayoutBindings)
+{
     VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo{};
     descriptorSetLayoutCreateInfo.sType        = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
     descriptorSetLayoutCreateInfo.bindingCount = static_cast<uint32_t>(vkDescriptorSetLayoutBindings.size());
@@ -41,7 +61,6 @@ Sandbox::DescriptorSetLayout::DescriptorSetLayout(const std::shared_ptr<Device>&
 
     LOGI("VulkanRHI", "{}\n{}", PtrToHexString(vkDescriptorSetLayout), GetCallStack())
 }
-Sandbox::DescriptorSetLayout::~DescriptorSetLayout() { Cleanup(); }
 
 void Sandbox::DescriptorSetLayout::Cleanup()
 {

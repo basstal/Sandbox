@@ -4,6 +4,7 @@
 
 #include "Misc/Event.hpp"
 #include "Misc/Hasher.hpp"
+#include "VertexInputStateBindingModifier.hpp"
 #include "VulkanRHI/Core/RenderPass.hpp"
 
 
@@ -12,6 +13,7 @@ namespace Sandbox
     class PipelineLayout;
     class ShaderModule;
     class ShaderLinkage;
+    class DescriptorSetsPreset;
     /**
      * \brief 顶点输入状态
      */
@@ -87,8 +89,14 @@ namespace Sandbox
     class PipelineState : public std::enable_shared_from_this<PipelineState>
     {
     public:
+        PipelineState(const std::shared_ptr<ShaderLinkage>& inShaderLinkage, const std::shared_ptr<RenderPass>& inRenderPass,
+                      const std::shared_ptr<VertexInputStateBindingModifier>& inBindingModifier);
+
         PipelineState(const std::shared_ptr<ShaderLinkage>& inShaderLinkage, const std::shared_ptr<RenderPass>& renderPass);
+
         PipelineState(const std::shared_ptr<ShaderLinkage>& inShaderLinkage, const std::shared_ptr<RenderPass>& renderPass, uint32_t inSubpassIndex);
+
+        void ReflectVertexInputStateFromShader();
 
         ~PipelineState() = default;
 
@@ -111,6 +119,10 @@ namespace Sandbox
         // std::shared_ptr<PipelineLayout> pipelineLayout;
         std::shared_ptr<RenderPass> renderPass;
         // Event<const std::shared_ptr<PipelineState>&> onPipelineStateChanged;
+        std::shared_ptr<DescriptorSetsPreset> descriptorSetsPreset;
+
+    private:
+        std::shared_ptr<VertexInputStateBindingModifier> m_vertexInputStateBindingModifier;
     };
 }  // namespace Sandbox
 
@@ -229,6 +241,7 @@ namespace std
             // }
             // Sandbox::HashCombined(result, pipelineState.pipelineLayout->vkPipelineLayout);
             Sandbox::HashCombined(result, pipelineState.renderPass->vkRenderPass);
+            Sandbox::HashCombined(result, pipelineState.descriptorSetsPreset);
             return result;
         }
     };

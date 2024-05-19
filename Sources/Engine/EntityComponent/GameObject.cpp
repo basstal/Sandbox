@@ -11,6 +11,8 @@ Sandbox::GameObject::GameObject() { transform = AddComponent<Transform>(); }
 
 Sandbox::GameObject::~GameObject() { Cleanup(); }
 
+bool Sandbox::GameObject::IsValid() { return !m_cleaned; }
+
 void Sandbox::GameObject::Cleanup()
 {
     if (m_cleaned)

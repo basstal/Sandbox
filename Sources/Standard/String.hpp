@@ -22,6 +22,7 @@ namespace Sandbox NAMESPACE()
 
         String& operator=(const char* inString);
         String& operator=(const std::string& inString);
+        String& operator=(const String& inString);
 
         static std::vector<std::string> Split(const std::string& source, const char& seperator);
 

@@ -13,7 +13,8 @@ Sandbox::DescriptorSetCaching::DescriptorSetCaching(const std::shared_ptr<Device
 {
 }
 
-std::shared_ptr<Sandbox::DescriptorSet> Sandbox::DescriptorSetCaching::GetOrCreateDescriptorSet(const std::shared_ptr<DescriptorSetLayout>& inDescriptorSetLayout,
+std::shared_ptr<Sandbox::DescriptorSet> Sandbox::DescriptorSetCaching::GetOrCreateDescriptorSet(const std::string&                          inName,
+                                                                                                const std::shared_ptr<DescriptorSetLayout>& inDescriptorSetLayout,
                                                                                                 size_t                                      frameFlightIndex)
 {
     // uint64_t hash;
@@ -21,6 +22,7 @@ std::shared_ptr<Sandbox::DescriptorSet> Sandbox::DescriptorSetCaching::GetOrCrea
     // HashCombined(hash, inDescriptorSetLayout->vkDescriptorSetLayout);
     // HashCombined(hash, frameFlightIndex);
     auto key = DescriptorSetKey{
+        .name                = inName,
         .descriptorPool      = m_descriptorPool,
         .descriptorSetLayout = inDescriptorSetLayout,
         .frameFlightIndex    = frameFlightIndex,

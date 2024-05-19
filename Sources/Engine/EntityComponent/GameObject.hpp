@@ -4,12 +4,12 @@
 #include <vector>
 
 #include "Components/Transform.hpp"
+#include "Engine/Concepts.hpp"
 #include "Generated/GameObject.rfkh.h"
-#include "Standard/String.hpp"
 #include "Serialization/ISerializable.hpp"
 #include "Serialization/List.hpp"
 #include "Serialization/SharedPtr.hpp"
-#include "Engine/Concepts.hpp"
+#include "Standard/String.hpp"
 
 namespace Sandbox NAMESPACE()
 {
@@ -28,6 +28,8 @@ namespace Sandbox NAMESPACE()
         GameObject();
 
         ~GameObject();
+
+        bool IsValid();
 
         void Cleanup();
 

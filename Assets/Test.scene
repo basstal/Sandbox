@@ -3,9 +3,9 @@ rootGameObjects:
       m_rawString: Default
     transform:
       position:
-        x: 2.77426672
-        y: -3.4085741
-        z: 2.35703707
+        x: -1.86174631
+        y: -2.01893187
+        z: 1.81007111
       rotation:
         x: 0
         y: 0
@@ -17,10 +17,290 @@ rootGameObjects:
         z: 1
     m_components:
       - __Class__: 10866052711324808399
-        rotationX: -22.8500004
+        rotationX: -35.3500252
         nearPlane: 0.100000001
-        rotationZ: -36.5999222
+        rotationZ: 36.8000183
         fieldOfView: 45
         aspectRatio: 1.77777779
         farPlane: 100
         useSkybox: true
+  - name:
+      m_rawString: Default
+    transform:
+      position:
+        x: -1.07687569
+        y: 0
+        z: 0
+      rotation:
+        x: 0
+        y: 0
+        z: 0
+        w: 1
+      scale:
+        x: 0.99999994
+        y: 0.99999994
+        z: 0.99999994
+    m_components:
+      - __Class__: 17055644869723107221
+        m_modelPath:
+          m_rawString: Models/rock.gltf
+  - name:
+      m_rawString: Default
+    transform:
+      position:
+        x: 0
+        y: 1.77899623
+        z: 0
+      rotation:
+        x: 0
+        y: 0
+        z: 0
+        w: 1
+      scale:
+        x: 0.99999994
+        y: 0.99999994
+        z: 0.99999994
+    m_components:
+      - __Class__: 17055644869723107221
+        m_modelPath:
+          m_rawString: Models/rock.gltf
+  - name:
+      m_rawString: Default
+    transform:
+      position:
+        x: 0
+        y: -1.05072927
+        z: 0
+      rotation:
+        x: 0
+        y: 0
+        z: 0
+        w: 1
+      scale:
+        x: 0.99999994
+        y: 0.99999994
+        z: 0.99999994
+    m_components:
+      - __Class__: 17055644869723107221
+        m_modelPath:
+          m_rawString: Models/rock.gltf
+  - name:
+      m_rawString: Default
+    transform:
+      position:
+        x: -1.84643435
+        y: 0
+        z: 0
+      rotation:
+        x: 0
+        y: 0
+        z: 0
+        w: 1
+      scale:
+        x: 0.99999994
+        y: 0.99999994
+        z: 0.99999994
+    m_components:
+      - __Class__: 17055644869723107221
+        m_modelPath:
+          m_rawString: Models/rock.gltf
+  - name:
+      m_rawString: Default
+    transform:
+      position:
+        x: -0.509744823
+        y: 0.629244685
+        z: 0
+      rotation:
+        x: 0
+        y: 0
+        z: 0
+        w: 1
+      scale:
+        x: 0.99999994
+        y: 0.99999994
+        z: 0.99999994
+    m_components:
+      - __Class__: 17055644869723107221
+        m_modelPath:
+          m_rawString: Models/rock.gltf
+  - name:
+      m_rawString: Default
+    transform:
+      position:
+        x: 0.544115961
+        y: 0
+        z: 0.445617735
+      rotation:
+        x: 0
+        y: 0
+        z: 0
+        w: 1
+      scale:
+        x: 0.99999994
+        y: 0.99999994
+        z: 0.99999994
+    m_components:
+      - __Class__: 17055644869723107221
+        m_modelPath:
+          m_rawString: Models/rock.gltf
+  - name:
+      m_rawString: Default
+    transform:
+      position:
+        x: 0.440661043
+        y: 0
+        z: 0
+      rotation:
+        x: 0
+        y: 0
+        z: 0
+        w: 1
+      scale:
+        x: 0.99999994
+        y: 0.99999994
+        z: 0.99999994
+    m_components:
+      - __Class__: 17055644869723107221
+        m_modelPath:
+          m_rawString: Models/rock.gltf
+  - name:
+      m_rawString: Default
+    transform:
+      position:
+        x: 0
+        y: 0
+        z: 0.365187496
+      rotation:
+        x: 0
+        y: 0
+        z: 0
+        w: 1
+      scale:
+        x: 0.99999994
+        y: 0.99999994
+        z: 0.99999994
+    m_components:
+      - __Class__: 17055644869723107221
+        m_modelPath:
+          m_rawString: Models/rock.gltf
+  - name:
+      m_rawString: Default
+    transform:
+      position:
+        x: 1.26157355
+        y: 0
+        z: 0
+      rotation:
+        x: 0
+        y: 0
+        z: 0
+        w: 1
+      scale:
+        x: 0.99999994
+        y: 0.99999994
+        z: 0.99999994
+    m_components:
+      - __Class__: 17055644869723107221
+        m_modelPath:
+          m_rawString: Models/rock.gltf
+  - name:
+      m_rawString: Default
+    transform:
+      position:
+        x: 0
+        y: -1.26141143
+        z: 0.642376244
+      rotation:
+        x: 0
+        y: 0
+        z: 0
+        w: 1
+      scale:
+        x: 0.99999994
+        y: 0.99999994
+        z: 0.99999994
+    m_components:
+      - __Class__: 17055644869723107221
+        m_modelPath:
+          m_rawString: Models/rock.gltf
+  - name:
+      m_rawString: Default
+    transform:
+      position:
+        x: 0
+        y: -0.65581274
+        z: 0
+      rotation:
+        x: 0
+        y: 0
+        z: 0
+        w: 1
+      scale:
+        x: 0.99999994
+        y: 0.99999994
+        z: 0.99999994
+    m_components:
+      - __Class__: 17055644869723107221
+        m_modelPath:
+          m_rawString: Models/rock.gltf
+  - name:
+      m_rawString: Default
+    transform:
+      position:
+        x: -0.577652454
+        y: 0
+        z: 0
+      rotation:
+        x: 0
+        y: 0
+        z: 0
+        w: 1
+      scale:
+        x: 0.99999994
+        y: 0.99999994
+        z: 0.99999994
+    m_components:
+      - __Class__: 17055644869723107221
+        m_modelPath:
+          m_rawString: Models/rock.gltf
+  - name:
+      m_rawString: Default
+    transform:
+      position:
+        x: -0.223403931
+        y: -0.0363120958
+        z: -0.144697696
+      rotation:
+        x: 0
+        y: 0
+        z: 0
+        w: 1
+      scale:
+        x: 0.99999994
+        y: 0.99999994
+        z: 0.99999994
+    m_components:
+      - __Class__: 17055644869723107221
+        m_modelPath:
+          m_rawString: Models/rock.gltf
+  - name:
+      m_rawString: Default
+    transform:
+      position:
+        x: 0.134526849
+        y: 0
+        z: 0.191369116
+      rotation:
+        x: 0
+        y: 0
+        z: 0
+        w: 1
+      scale:
+        x: 0.99999994
+        y: 0.99999994
+        z: 0.99999994
+    m_components:
+      - __Class__: 17055644869723107221
+        m_modelPath:
+          m_rawString: Models/rock.gltf

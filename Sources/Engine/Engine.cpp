@@ -102,7 +102,8 @@ void Sandbox::Engine::CreateRenderer()
     auto pbrRendererSource = std::make_shared<PbrRendererSource>();
     pbrRendererSource->Prepare(renderer);
     renderer->rendererSourceMapping[EViewMode::Lit] = pbrRendererSource;
-
+    // Scene::onSceneChange.Bind([pbrRendererSource](std::shared_ptr<Scene> inScene)
+    //                           { pbrRendererSource->onUpdateDescriptorSets.BindMember<Scene, &Scene::UpdateDescriptorSets>(inScene); });
     auto unlitRendererSource = std::make_shared<UnlitRendererSource>();
     unlitRendererSource->Prepare(renderer);
     renderer->rendererSourceMapping[EViewMode::Unlit] = unlitRendererSource;

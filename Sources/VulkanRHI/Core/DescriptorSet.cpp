@@ -48,6 +48,15 @@ void Sandbox::DescriptorSet::BindBufferInfoMapping(const BindingMap<VkDescriptor
                                                    const std::shared_ptr<DescriptorSetLayout>& descriptorSetLayout)
 {
     m_bufferInfoMapping = inBufferInfoMapping;
+    // 如果 writeDescriptorSetsImage 不为空，对于每个 WriteDescriptorSet，清理对应的 m_updatedBindings 中的 pair
+    for (auto& writeDescriptorSet : writeDescriptorSets)
+    {
+        auto it = m_updatedBindings.find(writeDescriptorSet);
+        if (it != m_updatedBindings.end())
+        {
+            m_updatedBindings.erase(it);
+        }
+    }
     writeDescriptorSets.clear();
     auto                         maxUniformBuffer = m_device->GetMaxUniformBuffer();
     auto                         maxStorageBuffer = m_device->GetMaxStorageBuffer();
@@ -98,6 +107,19 @@ void Sandbox::DescriptorSet::BindImageInfoMapping(const std::map<uint32_t, std::
     VkDescriptorSetLayoutBinding out;
 
     m_imageInfoMapping = inImageInfoMapping;
+    // if (!writeDescriptorSetsImage.empty())
+    // {
+    //     LOGW("VulkanRHI", "writeDescriptorSetsImage cleared with non empty size\n{}", GetCallStack())
+    // }
+    // 如果 writeDescriptorSetsImage 不为空，对于每个 WriteDescriptorSet，清理对应的 m_updatedBindings 中的 pair
+    for (auto& writeDescriptorSet : writeDescriptorSetsImage)
+    {
+        auto it = m_updatedBindings.find(writeDescriptorSet);
+        if (it != m_updatedBindings.end())
+        {
+            m_updatedBindings.erase(it);
+        }
+    }
     writeDescriptorSetsImage.clear();
     for (auto& [bindingIndex, imageInfos] : m_imageInfoMapping)
     {

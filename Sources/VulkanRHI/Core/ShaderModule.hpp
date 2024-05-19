@@ -11,6 +11,7 @@
 namespace Sandbox
 {
     struct VertexInputState;
+    class VertexInputStateBindingModifier;
     /**
      * \brief 反射着色器统一缓冲区
      */
@@ -76,13 +77,15 @@ namespace Sandbox
         void Compile(const std::string& shaderName, const std::string& inShaderSource, const std::string& preamble, VkShaderStageFlagBits stage);
 
         void SetUniformDescriptorMode(const std::string& uniformName, DescriptorMode inMode);
+        void ReflectDescriptorSetLayoutBindings(std::map<uint32_t, VkDescriptorSetLayoutBinding>& bindingToLayoutBinding) const;
 
         void ReflectDescriptorSetLayoutBindings(std::vector<VkDescriptorSetLayoutBinding>& vkDescriptorSetLayoutBindings, std::map<std::string, uint32_t>& nameToBinding,
                                                 std::map<uint32_t, VkDescriptorSetLayoutBinding>& bindingToLayoutBinding) const;
 
         void ReflectPushConstantRanges(std::vector<VkPushConstantRange>& vkPushConstantRanges) const;
 
-        void ReflectVertexInputState(VertexInputState& vertexInputState) const;
+        void ReflectVertexInputState(VertexInputState&                                       vertexInputState,
+                                     const std::shared_ptr<VertexInputStateBindingModifier>& vertexInputStateBindingModifier = nullptr) const;
 
         std::shared_ptr<Device> GetDevice();
 

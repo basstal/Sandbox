@@ -3,6 +3,7 @@
 #include "Editor/IImGuiWindow.hpp"
 #include "Engine/EntityComponent/GameObject.hpp"
 #include "Generated/Inspector.rfkh.h"
+#include "VulkanRHI/Renderer.hpp"
 
 namespace Sandbox NAMESPACE()
 {
@@ -21,6 +22,8 @@ namespace Sandbox NAMESPACE()
 
         void InspectTarget(std::shared_ptr<GameObject> inTarget);
 
+        void DragAndDropContentBrowser(const std::string supportExtensions[], int length, std::string& outPath);
+
         static std::map<std::string, std::shared_ptr<Sandbox::Inspector>> componentNameToInspector;
 
         template <DerivedFromIComponent T>
@@ -31,6 +34,9 @@ namespace Sandbox NAMESPACE()
 
         // TODO:记在这里太分散了，最好还是使用 hierarchy 一致的 target 记录
         std::shared_ptr<GameObject> target;
+
+        std::shared_ptr<Renderer> renderer;
+
     protected:
         bool isComponentExist = true;
         Sandbox_Inspector_GENERATED

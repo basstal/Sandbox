@@ -3,7 +3,7 @@
 #include "ImGuiRenderer.hpp"
 
 #include "Editor.hpp"
-#include "Engine/Image.hpp"
+#include "Engine/Images/Image.hpp"
 #include "FileSystem/Directory.hpp"
 #include "IImGuiWindow.hpp"
 #include "ImGuiWidgets/MenuBar.hpp"
@@ -59,7 +59,7 @@ void Sandbox::ImGuiRenderer::Prepare(const std::shared_ptr<Renderer>& renderer, 
     subpass.colorAttachments.push_back(0);
     subpassInfos.emplace_back(subpass);
     VkSubpassDependency2KHR subpassDependency{};
-    subpassDependency.sType = VK_STRUCTURE_TYPE_SUBPASS_DEPENDENCY_2;
+    subpassDependency.sType         = VK_STRUCTURE_TYPE_SUBPASS_DEPENDENCY_2;
     subpassDependency.srcSubpass    = VK_SUBPASS_EXTERNAL;
     subpassDependency.dstSubpass    = 0;
     subpassDependency.srcStageMask  = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
@@ -95,12 +95,12 @@ void Sandbox::ImGuiRenderer::Prepare(const std::shared_ptr<Renderer>& renderer, 
 void Sandbox::ImGuiRenderer::LoadImageToGuiTexture(const std::string& name, const std::string& assetPath)
 {
     auto assetDirectory          = Directory::GetAssetsDirectory();
-    auto resourceImage           = std::make_shared<Resource::Image>(assetDirectory.GetFile(assetPath));
+    auto resourceImage           = Resource::Image::Load(assetDirectory.GetFile(assetPath), Resource::Color);
     guiNameToResourceImage[name] = resourceImage;
     auto image = std::make_shared<Image>(m_renderer->device, VkExtent3D{ToUInt32(resourceImage->width), ToUInt32(resourceImage->height), 1}, VK_FORMAT_R8G8B8A8_UNORM,
                                          VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_HEAP_DEVICE_LOCAL_BIT,
                                          VK_SAMPLE_COUNT_1_BIT, VK_IMAGE_TILING_OPTIMAL, resourceImage->mipLevels);
-    m_renderer->commandBuffers[0]->CopyDataToImage(resourceImage, image, VK_FORMAT_R8G8B8A8_UNORM);
+    m_renderer->commandBuffers[0]->CopyDataToImage(image, resourceImage, VK_FORMAT_R8G8B8A8_UNORM);
     guiNameToImage[name]     = image;
     auto imageView           = std::make_shared<ImageView>(image, VK_IMAGE_VIEW_TYPE_2D);
     guiNameToImageView[name] = imageView;
@@ -113,8 +113,9 @@ void Sandbox::ImGuiRenderer::RegisterWindows(const std::shared_ptr<Renderer>& re
     viewport = std::make_shared<Viewport>(renderer);
     RegisterWindow(viewport);
     RegisterWindow(std::make_shared<ContentBrowser>());
-    auto inspector = std::make_shared<Inspector>();
-    hierarchy      = std::make_shared<Hierarchy>(inspector);
+    auto inspector      = std::make_shared<Inspector>();
+    inspector->renderer = renderer;
+    hierarchy           = std::make_shared<Hierarchy>(inspector);
     onTargetChanged.BindMember<Inspector, &Inspector::InspectTarget>(inspector.get());
     onTargetChanged.BindMember<Viewport, &Viewport::InspectTarget>(viewport.get());
 
@@ -156,12 +157,12 @@ void Sandbox::ImGuiRenderer::ImGuiPrepare(const std::shared_ptr<Renderer>& rende
 
     // 加载中文字符支持的字体 - 微软雅黑
     // 注意: 这里的大小和主字体大小相匹配是很重要的，以保证文本渲染时的一致性
-    static const ImWchar icons_ranges[] = {0x0020, 0xFFFF, 0};
-    ImFontConfig         icons_config;
-    icons_config.MergeMode  = true;
-    icons_config.PixelSnapH = true;
-    auto msyh               = Directory::GetAssetsDirectory().GetFile("Fonts/msyh.ttc");
-    io.Fonts->AddFontFromFileTTF(msyh.path.generic_string().c_str(), fontSize, &icons_config, icons_ranges);
+    static const ImWchar iconsRanges[] = {0x0020, 0xFFFF, 0};
+    ImFontConfig         iconsConfig;
+    iconsConfig.MergeMode  = true;
+    iconsConfig.PixelSnapH = true;
+    auto msyh              = Directory::GetAssetsDirectory().GetFile("Fonts/msyh.ttc");
+    io.Fonts->AddFontFromFileTTF(msyh.path.generic_string().c_str(), fontSize, &iconsConfig, iconsRanges);
     io.Fonts->Build();
 
     // // 可以添加其他字体作为备选，例如 Courier New
@@ -180,22 +181,22 @@ void Sandbox::ImGuiRenderer::ImGuiPrepare(const std::shared_ptr<Renderer>& rende
 
     // Setup Platform/Renderer backends
     ImGui_ImplGlfw_InitForVulkan(renderer->surface->window->glfwWindow, false);
-    ImGui_ImplVulkan_InitInfo init_info = {};
-    init_info.Instance                  = renderer->instance->vkInstance;
-    init_info.PhysicalDevice            = renderer->device->vkPhysicalDevice;
-    init_info.Device                    = renderer->device->vkDevice;
-    init_info.QueueFamily               = *renderer->device->queueFamilyIndices.graphicsFamily;
-    init_info.Queue                     = renderer->device->graphicsQueue;
-    init_info.PipelineCache             = VK_NULL_HANDLE;  // TODO: PipelineCache
-    init_info.DescriptorPool            = renderer->descriptorPool->vkDescriptorPool;
-    init_info.RenderPass                = inRenderPass->vkRenderPass;
-    init_info.Subpass                   = 0;
-    init_info.MinImageCount             = static_cast<uint32_t>(renderer->swapchain->vkImages.size());
-    init_info.ImageCount                = static_cast<uint32_t>(renderer->swapchain->vkImages.size());
-    init_info.MSAASamples               = VK_SAMPLE_COUNT_1_BIT;
-    init_info.Allocator                 = nullptr;
-    init_info.CheckVkResultFn           = ValidateVkResult;
-    ImGui_ImplVulkan_Init(&init_info);
+    ImGui_ImplVulkan_InitInfo initInfo = {};
+    initInfo.Instance                  = renderer->instance->vkInstance;
+    initInfo.PhysicalDevice            = renderer->device->vkPhysicalDevice;
+    initInfo.Device                    = renderer->device->vkDevice;
+    initInfo.QueueFamily               = *renderer->device->queueFamilyIndices.graphicsFamily;
+    initInfo.Queue                     = renderer->device->graphicsQueue;
+    initInfo.PipelineCache             = VK_NULL_HANDLE;  // TODO: PipelineCache
+    initInfo.DescriptorPool            = renderer->descriptorPool->vkDescriptorPool;
+    initInfo.RenderPass                = inRenderPass->vkRenderPass;
+    initInfo.Subpass                   = 0;
+    initInfo.MinImageCount             = static_cast<uint32_t>(renderer->swapchain->vkImages.size());
+    initInfo.ImageCount                = static_cast<uint32_t>(renderer->swapchain->vkImages.size());
+    initInfo.MSAASamples               = VK_SAMPLE_COUNT_1_BIT;
+    initInfo.Allocator                 = nullptr;
+    initInfo.CheckVkResultFn           = ValidateVkResult;
+    ImGui_ImplVulkan_Init(&initInfo);
 }
 
 void Sandbox::ImGuiRenderer::Cleanup()

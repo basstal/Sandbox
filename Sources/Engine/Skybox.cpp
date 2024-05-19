@@ -7,7 +7,7 @@
 #include "EntityComponent/Components/Camera.hpp"
 #include "FileSystem/Directory.hpp"
 #include "FileSystem/Logger.hpp"
-#include "Image.hpp"
+#include "Images/Image.hpp"
 #include "Misc/TypeCasting.hpp"
 #include "RendererSource/RendererSource.hpp"
 #include "VulkanRHI/Common/Caching/DescriptorSetCaching.hpp"
@@ -68,7 +68,7 @@ void Sandbox::Skybox::Prepare(const std::shared_ptr<Renderer>& renderer)
     m_descriptorSets.resize(renderer->maxFramesFlight);
     for (size_t i = 0; i < m_descriptorSets.size(); ++i)
     {
-        m_descriptorSets[i] = renderer->descriptorSetCaching->GetOrCreateDescriptorSet(m_pipeline->pipelineLayout->descriptorSetLayout, i);
+        m_descriptorSets[i] = renderer->descriptorSetCaching->GetOrCreateDescriptorSet("default", m_pipeline->pipelineLayout->descriptorSetLayouts[0], i);
     }
     m_sampler                  = std::make_shared<Sampler>(m_renderer->device, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE);
     m_cleaned                  = false;
@@ -105,14 +105,14 @@ void Sandbox::Skybox::CreateCubemapImages(const std::vector<std::shared_ptr<Reso
         BindingMap<VkDescriptorBufferInfo> bufferInfoMapping = {
             {0, {uniformMvpObjectsNoMoving[i]->vpUbo->GetDescriptorBufferInfo()}},
         };
-        m_descriptorSets[i]->BindBufferInfoMapping(bufferInfoMapping, m_pipeline->pipelineLayout->descriptorSetLayout);
+        m_descriptorSets[i]->BindBufferInfoMapping(bufferInfoMapping, m_pipeline->pipelineLayout->descriptorSetLayouts[0]);
 
         VkDescriptorImageInfo imageInfo;
         imageInfo.imageLayout                                                     = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
         imageInfo.imageView                                                       = m_imageView->vkImageView;
         imageInfo.sampler                                                         = m_sampler->vkSampler;
         std::map<uint32_t, std::vector<VkDescriptorImageInfo>> inImageInfoMapping = {{1, {imageInfo}}};
-        m_descriptorSets[i]->BindImageInfoMapping(inImageInfoMapping, m_pipeline->pipelineLayout->descriptorSetLayout);
+        m_descriptorSets[i]->BindImageInfoMapping(inImageInfoMapping, m_pipeline->pipelineLayout->descriptorSetLayouts[0]);
     }
 }
 

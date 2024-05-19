@@ -22,6 +22,13 @@ void Sandbox::ContentBrowser::Prepare()
     root               = item;
 }
 
+
+void Sandbox::ContentBrowser::Refresh()
+{
+    auto source = std::dynamic_pointer_cast<AssetDirectoryTreeViewSource>(root->source);
+    root->items = ScanAndConstructContentBrowserTreeViewItems(source->directory);
+}
+
 std::vector<std::shared_ptr<Sandbox::TreeViewItem>> Sandbox::ContentBrowser::ScanAndConstructContentBrowserTreeViewItems(const std::shared_ptr<Directory>& directory)
 {
     std::vector<std::shared_ptr<TreeViewItem>> items;
@@ -51,7 +58,18 @@ std::vector<std::shared_ptr<Sandbox::TreeViewItem>> Sandbox::ContentBrowser::Sca
 
 void Sandbox::ContentBrowser::Tick(float deltaTime) { Sandbox::TreeView::Tick(deltaTime); }
 
-void Sandbox::ContentBrowser::OnGui() { TreeView::OnGui(); }
+void Sandbox::ContentBrowser::OnGui()
+{
+    TreeView::OnGui();
+    if (ImGui::BeginPopupContextWindow())
+    {
+        if (ImGui::MenuItem("Refresh"))
+        {
+            Refresh();
+        }
+        ImGui::EndPopup();
+    }
+}
 
 void Sandbox::ContentBrowser::Cleanup() { TreeView::Cleanup(); }
 
@@ -76,5 +94,15 @@ void Sandbox::ContentBrowser::OnTreeNodeClickDispatch(TreeNodeClickEvent& treeNo
     //     auto directory = std::dynamic_pointer_cast<AssetDirectoryTreeViewSource>(item->source)->directory;
     //     LOGF("Double clicked on directory: %s", directory->GetPath().c_str());
     // }
-    
+}
+
+void Sandbox::ContentBrowser::DragAndDrop(std::shared_ptr<TreeViewItem>& inTreeViewItem)
+{
+    TreeView::DragAndDrop(inTreeViewItem);
+    if (ImGui::BeginDragDropSource())
+    {
+        ImGui::SetDragDropPayload("_CONTENT_BROWSER_NODE", &inTreeViewItem, sizeof(inTreeViewItem));
+        // ImGui::Text("Dragging shared object with value: %d", *treeViewItem);
+        ImGui::EndDragDropSource();
+    }
 }

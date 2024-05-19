@@ -27,7 +27,7 @@ glslang::TShader::Includer::IncludeResult* Sandbox::ShaderIncluder::includeLocal
     {
         Logger::Fatal("File not found: " + std::string(headerName));
     }
-    std::string headerContent = headerFile.ReadFile();
+    std::string headerContent = headerFile.ReadContent();
     return MakeResult(headerName, headerContent);
 }
 
@@ -38,7 +38,7 @@ glslang::TShader::Includer::IncludeResult* Sandbox::ShaderIncluder::includeSyste
     {
         Logger::Fatal("File not found: " + std::string(headerName));
     }
-    std::string headerContent = file.ReadFile();
+    std::string headerContent = file.ReadContent();
     return MakeResult(headerName, headerContent);
 }
 

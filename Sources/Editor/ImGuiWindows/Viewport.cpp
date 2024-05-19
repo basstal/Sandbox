@@ -80,7 +80,12 @@ void Sandbox::Viewport::Prepare()
             // 这个是用来做物体选中后效果的 rendererSource
             inScene->onOtherRendererSourceTick.Bind([this](const std::shared_ptr<Renderer>& renderer) { m_stencilRendererSource->Tick(renderer); });
         });
-    Scene::onReconstructMeshes.Bind([this] { m_stencilRendererSource->RecreateUniformModels(m_renderer); });
+    Scene::onReconstructMeshes.Bind(
+        [this]
+        {
+            m_stencilRendererSource->RecreateUniformModels(m_renderer);
+            m_stencilRendererSource->UpdateDescriptorSets(m_renderer);
+        });
 }
 
 void Sandbox::Viewport::OnGui()
@@ -124,9 +129,9 @@ void Sandbox::Viewport::OnGui()
     // m_editor->transformGizmo->cameraRay->PrepareDebugDrawData(m_renderer->device);
     DrawGizmo(resolution);
     // 如果监听到鼠标左键点击 m_imguiWindow 区域
-    if (ImGui::IsMouseClicked(0) && m_isMouseHoveringInnerRect && mainCamera != nullptr)
+    if (!ImGuizmo::IsUsing() && ImGui::IsMouseClicked(0) && m_isMouseHoveringInnerRect && mainCamera != nullptr)
     {
-        SelectObject();
+        SelectOrDeselectObject();
     }
 }
 
@@ -321,9 +326,9 @@ void Sandbox::Viewport::DrawGizmo(VkExtent2D extent2D)
         auto rectPosition = m_imguiWindow->InnerRect.Min;
         // TODO: 双显示器和 multi viewport 的情况下， rectPosition.x 为负数会导致 gizmo 无法显示
         ImGuizmo::SetRect(rectPosition.x + m_startPosition.x, rectPosition.y + m_startPosition.y, ToFloat(extent2D.width), ToFloat(extent2D.height));
-        ImGuizmo::Manipulate(cameraView, cameraProjection, m_currentGizmoOperation, m_currentGizmoMode, matrix, nullptr, m_useSnap ? &m_snap[0] : nullptr,
-                             boundSizing ? bounds : nullptr, boundSizingSnap ? boundsSnap : nullptr);
-
+        m_isManipulating = ImGuizmo::Manipulate(cameraView, cameraProjection, m_currentGizmoOperation, m_currentGizmoMode, matrix, nullptr, m_useSnap ? &m_snap[0] : nullptr,
+                                                boundSizing ? bounds : nullptr, boundSizingSnap ? boundsSnap : nullptr);
+        // LOGD("Editor", "m_isManipulating {}", m_isManipulating)
         ImGuizmo::DecomposeMatrixToComponents(matrix, translation, rotation, scale);
         m_selectedGameObject->transform->position = translation;
         m_selectedGameObject->transform->rotation = glm::quat(glm::radians(glm::vec3(rotation[0], rotation[1], rotation[2])));
@@ -475,7 +480,7 @@ void Sandbox::Viewport::OnRecreateFramebuffer()
 // }
 
 
-void Sandbox::Viewport::SelectObject()
+void Sandbox::Viewport::SelectOrDeselectObject()
 {
     // 获得 imgui io
     ImGuiIO& io = ImGui::GetIO();

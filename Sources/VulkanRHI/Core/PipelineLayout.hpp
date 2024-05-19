@@ -10,6 +10,7 @@ namespace Sandbox
     class ShaderModule;
     class Device;
     class ShaderLinkage;
+    class DescriptorSetsPreset;
 
     class PipelineLayout
     {
@@ -18,15 +19,16 @@ namespace Sandbox
          * \brief
          * \param shaderLinkage
          */
-        PipelineLayout(const std::shared_ptr<Device>& device, const std::shared_ptr<ShaderLinkage>& shaderLinkage);
+        PipelineLayout(const std::shared_ptr<Device>& device, const std::shared_ptr<ShaderLinkage>& shaderLinkage,
+                       const std::shared_ptr<DescriptorSetsPreset>& descriptorSetsPreset);
 
         ~PipelineLayout();
 
         void Cleanup();
 
-        VkPipelineLayout                     vkPipelineLayout;
-        std::shared_ptr<DescriptorSetLayout> descriptorSetLayout;
-        std::vector<VkPushConstantRange>     pushConstantRanges;
+        VkPipelineLayout                                  vkPipelineLayout;
+        std::vector<std::shared_ptr<DescriptorSetLayout>> descriptorSetLayouts;
+        std::vector<VkPushConstantRange>                  pushConstantRanges;
 
     private:
         std::shared_ptr<Device> m_device;

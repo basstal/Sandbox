@@ -2,6 +2,7 @@
 #include <memory>
 
 #include "Engine/Concepts.hpp"
+#include "Engine/RendererSource/RendererSource.hpp"
 #include "GameObject.hpp"
 #include "Generated/Scene.rfkh.h"
 #include "Serialization/ISerializable.hpp"
@@ -47,6 +48,7 @@ namespace Sandbox NAMESPACE()
         void Tick(const std::shared_ptr<Renderer>& renderer);
 
         void ReconstructMeshes(const std::shared_ptr<Renderer>& renderer);
+        void UpdateDescriptorSets(const std::shared_ptr<RendererSource>& rendererSource);
 
         void TranslateRenderData(const std::shared_ptr<Renderer>& renderer);
 
@@ -60,6 +62,8 @@ namespace Sandbox NAMESPACE()
 
         template <DerivedFromIComponent T>
         std::shared_ptr<T> RecursiveFindComponent(std::shared_ptr<GameObject>& gameObject);
+
+        std::shared_ptr<Sandbox::GameObject> CreateGameObject(const std::shared_ptr<GameObject>& copyFrom);
 
     private:
         bool m_cleaned = false;

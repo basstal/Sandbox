@@ -41,6 +41,17 @@ Sandbox::String& Sandbox::String::operator=(const std::string& inString)
     return *this;
 }
 
+Sandbox::String& Sandbox::String::operator=(const String& inString)
+{
+    if (&inString == this)
+    {
+        return *this;
+    }
+    m_string = inString.m_string;
+    Sync();
+    return *this;
+}
+
 void Sandbox::String::Construct(const std::string& inString)
 {
     m_string = inString;

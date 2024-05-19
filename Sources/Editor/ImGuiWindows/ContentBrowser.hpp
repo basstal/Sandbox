@@ -36,6 +36,7 @@ namespace Sandbox
         ContentBrowser();
 
         void Prepare() override;
+        void Refresh();
 
         std::vector<std::shared_ptr<Sandbox::TreeViewItem>> ScanAndConstructContentBrowserTreeViewItems(const std::shared_ptr<Directory>& directory);
 
@@ -46,5 +47,7 @@ namespace Sandbox
         void Cleanup() override;
 
         void OnTreeNodeClickDispatch(TreeNodeClickEvent&) override;
+
+        void DragAndDrop(std::shared_ptr<TreeViewItem>& inTreeViewItem) override;
     };
 }  // namespace Sandbox

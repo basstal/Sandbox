@@ -9,6 +9,7 @@ namespace Sandbox
     class DescriptorSetLayout;
     struct DescriptorSetKey
     {
+        std::string                                   name;
         std::shared_ptr<Sandbox::DescriptorPool>      descriptorPool;
         std::shared_ptr<Sandbox::DescriptorSetLayout> descriptorSetLayout;
         size_t                                        frameFlightIndex;
@@ -25,6 +26,7 @@ namespace std
         std::size_t operator()(const Sandbox::DescriptorSetKey& key) const noexcept
         {
             std::size_t hash = 0;
+            Sandbox::HashCombined(hash, key.name);
             Sandbox::HashCombined(hash, key.descriptorPool->vkDescriptorPool);
             Sandbox::HashCombined(hash, key.descriptorSetLayout->vkDescriptorSetLayout);
             Sandbox::HashCombined(hash, key.frameFlightIndex);

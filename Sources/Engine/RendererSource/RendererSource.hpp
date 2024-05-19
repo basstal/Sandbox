@@ -33,7 +33,7 @@ namespace Sandbox
         virtual void Cleanup();
         virtual void CreatePipeline(std::shared_ptr<Renderer>& renderer)             = 0;
         virtual void CreateDescriptorSets(std::shared_ptr<Renderer>& renderer)       = 0;
-        virtual void UpdateDescriptorSets(const std::shared_ptr<Renderer>& renderer) = 0;
+        // virtual void UpdateDescriptorSets(const std::shared_ptr<Renderer>& renderer) = 0;
         virtual void PushConstants(const std::shared_ptr<CommandBuffer>& inCommandBuffer);
         virtual void BindPipeline(const std::shared_ptr<CommandBuffer>& inCommandBuffer);
         virtual void CustomDrawMesh(const std::shared_ptr<Mesh>& mesh, const std::shared_ptr<CommandBuffer>& commandBuffer, const std::shared_ptr<DescriptorSet>& descriptorSet,
@@ -47,7 +47,7 @@ namespace Sandbox
 
         virtual void OnRecreateSwapchain();
 
-        std::vector<std::shared_ptr<DescriptorSet>> descriptorSets;
+        // std::vector<std::shared_ptr<DescriptorSet>> descriptorSets;
         std::shared_ptr<ShaderLinkage>              shaderLinkage;
         std::vector<std::shared_ptr<MVPUboObjects>> uboMvp;
         std::vector<std::shared_ptr<MVPUboObjects>> uboMvpNoMoving;

@@ -61,6 +61,7 @@ namespace Sandbox
         std::shared_ptr<Sandbox::TreeViewItem> LeafIdToSharedPtr(intptr_t id);
 
         virtual void ConstructImGuiTreeNodes(const std::shared_ptr<Sandbox::TreeViewItem>& target);
+        virtual void DragAndDrop(std::shared_ptr<TreeViewItem>& inTreeViewItem);
 
         virtual void OnTreeNodeClickDispatch(TreeNodeClickEvent&);
 

@@ -8,6 +8,7 @@
 #include "VulkanRHI/Common/ShaderIncluder.hpp"
 #include "VulkanRHI/Common/ShaderSource.hpp"
 #include "VulkanRHI/Rendering/PipelineState.hpp"
+#include "VulkanRHI/Rendering/VertexInputStateBindingModifier.hpp"
 
 
 const std::map<VkShaderStageFlagBits, EShLanguage> STAGE_TO_LANGUAGE = {{VK_SHADER_STAGE_VERTEX_BIT, EShLangVertex},
@@ -207,6 +208,34 @@ void Sandbox::ShaderModule::SetUniformDescriptorMode(const std::string& uniformN
     }
 }
 
+
+void Sandbox::ShaderModule::ReflectDescriptorSetLayoutBindings(std::map<uint32_t, VkDescriptorSetLayoutBinding>& bindingToLayoutBinding) const
+{
+    for (const auto& [uniformBlockName, uniformBlock] : m_uniformBlocks)
+    {
+        if (!uniformBlock.isLayoutPushConstant)
+        {
+            VkDescriptorSetLayoutBinding layoutBinding{};
+            layoutBinding.binding            = uniformBlock.binding;
+            layoutBinding.descriptorType     = uniformBlock.descriptorType;
+            layoutBinding.descriptorCount    = uniformBlock.descriptorCount;
+            layoutBinding.stageFlags         = uniformBlock.stageFlags;
+            layoutBinding.pImmutableSamplers = nullptr;  // Optional
+            bindingToLayoutBinding.emplace(uniformBlock.binding, layoutBinding);
+        }
+    }
+    for (const auto& [uniformName, uniform] : m_uniforms)
+    {
+        VkDescriptorSetLayoutBinding layoutBinding{};
+        layoutBinding.binding            = uniform.binding;
+        layoutBinding.descriptorType     = uniform.descriptorType;
+        layoutBinding.descriptorCount    = uniform.descriptorCount;
+        layoutBinding.stageFlags         = uniform.stageFlags;
+        layoutBinding.pImmutableSamplers = nullptr;  // Optional
+        bindingToLayoutBinding.emplace(uniform.binding, layoutBinding);
+    }
+}
+// TODO:nameToBinding 没什么用了
 void Sandbox::ShaderModule::ReflectDescriptorSetLayoutBindings(std::vector<VkDescriptorSetLayoutBinding>&        vkDescriptorSetLayoutBindings,
                                                                std::map<std::string, uint32_t>&                  nameToBinding,
                                                                std::map<uint32_t, VkDescriptorSetLayoutBinding>& bindingToLayoutBinding) const
@@ -257,7 +286,8 @@ void Sandbox::ShaderModule::ReflectPushConstantRanges(std::vector<VkPushConstant
     }
 }
 
-void Sandbox::ShaderModule::ReflectVertexInputState(VertexInputState& vertexInputState) const
+void Sandbox::ShaderModule::ReflectVertexInputState(VertexInputState&                                       vertexInputState,
+                                                    const std::shared_ptr<VertexInputStateBindingModifier>& vertexInputStateBindingModifier) const
 {
     uint32_t offset = 0;
     // 按照 layoutLocation 排序
@@ -278,11 +308,25 @@ void Sandbox::ShaderModule::ReflectVertexInputState(VertexInputState& vertexInpu
         vertexInputState.attributes.emplace_back(vertexInputAttributeDescription);
     }
 
-    assert(vertexInputState.bindings.empty());  // TODO:目前仅支持单个 binding（即 binding 为 0 的情况）
-    vertexInputState.bindings.emplace_back();
-    vertexInputState.bindings[0].binding   = 0;
-    vertexInputState.bindings[0].stride    = offset;
-    vertexInputState.bindings[0].inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+    if (vertexInputStateBindingModifier == nullptr)
+    {
+        assert(vertexInputState.bindings.empty());  // 默认仅支持单个 binding（即 binding 为 0 的情况）
+        vertexInputState.bindings.emplace_back();
+        vertexInputState.bindings[0].binding   = 0;
+        vertexInputState.bindings[0].stride    = offset;
+        vertexInputState.bindings[0].inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+    }
+    else
+    {
+        std::vector<VkVertexInputBindingDescription> bindings       = vertexInputStateBindingModifier->CreateBindings();
+        uint32_t                                     modifierOffset = 0;
+        for (auto& binding : bindings)
+        {
+            modifierOffset += binding.stride;
+        }
+        assert(modifierOffset == offset);
+        vertexInputState.bindings = bindings;
+    }
 }
 
 std::shared_ptr<Sandbox::Device> Sandbox::ShaderModule::GetDevice() { return m_device; }

@@ -68,8 +68,9 @@ namespace Sandbox
         void Draw(uint32_t count);
 
         void CopyDataToBuffer(const void* inData, VkDeviceSize size, const std::shared_ptr<Buffer>& dstBuffer);
+        void CopyDataToImage(const std::shared_ptr<Image>& image, const std::shared_ptr<Resource::Image>& imageResource, VkFormat format);
 
-        void CopyDataToImage(const std::shared_ptr<Resource::Image>& imageResource, const std::shared_ptr<Image>& vkImage, VkFormat format);
+        void CopyDataToImage(const std::shared_ptr<Image>& image, const unsigned char* pixels, VkExtent2D extent2D, VkFormat format, uint32_t mipLevels);
         void CopyDataToImageMultiLayers(const std::vector<std::shared_ptr<Resource::Image>>& imageResources, const std::shared_ptr<Image>& image, VkFormat format);
 
         void GenerateMipmaps(VkImage vkImage, VkFormat imageFormat, int32_t texWidth, int32_t texHeight, uint32_t mipLevels);

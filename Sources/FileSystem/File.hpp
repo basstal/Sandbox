@@ -21,13 +21,17 @@ namespace Sandbox
 
         std::string GetExtension() const;
 
-        std::string ReadFile();
+        std::string ReadContent() const;
+
+        std::vector<uint8_t> ReadBytes() const ;
 
         Directory Parent() const;
 
         bool Exists() const;
 
         void CreateDirectory() const;
+
+        std::string GetAssetPath() const;
 
         std::filesystem::path path;
     };
